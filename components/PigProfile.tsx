@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { Pig, TimelineEvent } from '../types';
 
@@ -645,10 +644,17 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                     </div>
                  </div>
                  
-                 <p className="text-xs text-gray-400 mt-4 italic">
+                 <p className="text-xs text-gray-400 mt-4 italic mb-4">
                     <i className="fas fa-info-circle mr-1"></i>
                     Click "Edit Parents" to link existing animals from the database.
                  </p>
+
+                 <button
+                    onClick={onViewHealth}
+                    className="w-full bg-blue-50 text-blue-600 border border-blue-200 py-3 rounded-xl font-bold text-xs hover:bg-blue-100 transition flex items-center justify-center gap-2"
+                >
+                    <i className="fas fa-file-medical-alt"></i> Check Genetic Health History
+                </button>
              </div>
         )}
 
