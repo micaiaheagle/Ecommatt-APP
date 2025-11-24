@@ -106,6 +106,7 @@ const App: React.FC = () => {
   
   // Operations Navigation State
   const [operationsInitialTab, setOperationsInitialTab] = useState<'Tasks' | 'Feed' | 'Health' | undefined>(undefined);
+  const [operationsPigFilter, setOperationsPigFilter] = useState<string | undefined>(undefined);
 
   // Auth & User State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -153,14 +154,18 @@ const App: React.FC = () => {
           setIsAddingPig(false);
           setIsEditingPig(false);
       }
-      // Reset operations tab if navigating away
+      // Reset operations tab and filter if navigating away
       if(view !== ViewState.Operations) {
           setOperationsInitialTab(undefined);
+          setOperationsPigFilter(undefined);
       }
   };
 
   // Link to Health Records from Pig Profile
   const handleViewHealthRecords = () => {
+      if (selectedPig) {
+        setOperationsPigFilter(selectedPig.tagId);
+      }
       setOperationsInitialTab('Health');
       setCurrentView(ViewState.Operations);
   };
@@ -234,7 +239,13 @@ const App: React.FC = () => {
                />;
       
       case ViewState.Operations:
-        return <Operations feeds={feeds} healthRecords={healthRecords} tasks={tasks} initialTab={operationsInitialTab} />;
+        return <Operations 
+            feeds={feeds} 
+            healthRecords={healthRecords} 
+            tasks={tasks} 
+            initialTab={operationsInitialTab}
+            pigFilter={operationsPigFilter}
+        />;
       case ViewState.Finance:
         return <Finance records={financeRecords} />;
       case ViewState.AI_Tools:

@@ -7,9 +7,10 @@ interface OperationsProps {
   healthRecords: HealthRecord[];
   tasks: Task[];
   initialTab?: 'Tasks' | 'Feed' | 'Health';
+  pigFilter?: string;
 }
 
-const Operations: React.FC<OperationsProps> = ({ feeds, healthRecords, tasks, initialTab }) => {
+const Operations: React.FC<OperationsProps> = ({ feeds, healthRecords, tasks, initialTab, pigFilter }) => {
   const [activeTab, setActiveTab] = useState<'Tasks' | 'Feed' | 'Health'>('Tasks');
 
   useEffect(() => {
@@ -138,31 +139,59 @@ const Operations: React.FC<OperationsProps> = ({ feeds, healthRecords, tasks, in
                 <button className="flex-1 text-gray-500 py-1.5 text-xs font-bold">History</button>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border-l-4 border-red-500 shadow-sm mb-6">
-                <div className="flex justify-between mb-1">
-                    <h4 className="text-sm font-bold text-gray-900">Pig #EF-003</h4>
-                    <span className="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded">Active</span>
+            {pigFilter && (
+                <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl mb-4 flex justify-between items-center animate-in slide-in-from-top duration-300">
+                    <p className="text-xs text-blue-700 font-bold">
+                        Filtered for <span className="font-mono bg-white px-1.5 py-0.5 rounded border border-blue-200 ml-1">{pigFilter}</span>
+                    </p>
+                    <i className="fas fa-filter text-blue-400 text-xs"></i>
                 </div>
-                <p className="text-xs text-gray-500 mb-2">Respiratory Issue • Isolation Pen</p>
-                <div className="bg-gray-50 p-2 rounded text-[10px] text-gray-600 border border-gray-100">
-                    <span className="font-bold">Rx:</span> Antibiotics (Daily)
-                </div>
-            </div>
+            )}
 
-            <h3 className="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">Recent Logs</h3>
-            <div className="space-y-3">
-                {healthRecords.map(rec => (
-                    <div key={rec.id} className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex gap-3 items-center">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-500">
-                            <i className="fas fa-syringe"></i>
-                        </div>
-                        <div>
-                            <p className="text-sm font-bold text-gray-900">{rec.type}</p>
-                            <p className="text-xs text-gray-500">{rec.pigId} • {rec.date}</p>
-                        </div>
+            {!pigFilter && (
+                <div className="bg-white p-4 rounded-xl border-l-4 border-red-500 shadow-sm mb-6">
+                    <div className="flex justify-between mb-1">
+                        <h4 className="text-sm font-bold text-gray-900">Pig #EF-003</h4>
+                        <span className="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded">Active</span>
                     </div>
+                    <p className="text-xs text-gray-500 mb-2">Respiratory Issue • Isolation Pen</p>
+                    <div className="bg-gray-50 p-2 rounded text-[10px] text-gray-600 border border-gray-100">
+                        <span className="font-bold">Rx:</span> Antibiotics (Daily)
+                    </div>
+                </div>
+            )}
+
+            <h3 className="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">
+                {pigFilter ? 'Pig Health History' : 'Recent Logs'}
+            </h3>
+            
+            <div className="space-y-3">
+                {healthRecords
+                    .filter(rec => !pigFilter || rec.pigId === pigFilter)
+                    .map(rec => (
+                        <div key={rec.id} className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex gap-3 items-center">
+                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-500">
+                                <i className="fas fa-syringe"></i>
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-gray-900">{rec.type}</p>
+                                <p className="text-xs text-gray-500">{rec.pigId} • {rec.date}</p>
+                                <p className="text-[10px] text-gray-400 mt-1">{rec.description}</p>
+                            </div>
+                        </div>
                 ))}
+                
+                {healthRecords.filter(rec => !pigFilter || rec.pigId === pigFilter).length === 0 && (
+                    <div className="text-center py-8 bg-white rounded-xl border border-gray-100 border-dashed">
+                        <i className="fas fa-notes-medical text-gray-300 text-2xl mb-2"></i>
+                        <p className="text-xs text-gray-500">No health records found.</p>
+                    </div>
+                )}
             </div>
+            
+            <button className="w-full mt-6 bg-red-50 text-red-600 border border-red-100 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-red-100 transition">
+                <i className="fas fa-plus"></i> Record Treatment
+            </button>
         </>
       )}
 
