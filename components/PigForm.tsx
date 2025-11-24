@@ -40,6 +40,7 @@ const PigForm: React.FC<PigFormProps> = ({ onSave, onCancel, initialData }) => {
         sireId: formData.sireId || '',
         damId: formData.damId || '',
         notes: formData.notes || '',
+        lastFed: initialData?.lastFed || undefined, // Preserve lastFed if it exists
         // Preserve existing timeline if editing, else create new
         timeline: initialData?.timeline || [
             {

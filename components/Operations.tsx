@@ -1,14 +1,22 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { FeedInventory, HealthRecord, Task } from '../types';
 
 interface OperationsProps {
   feeds: FeedInventory[];
   healthRecords: HealthRecord[];
   tasks: Task[];
+  initialTab?: 'Tasks' | 'Feed' | 'Health';
 }
 
-const Operations: React.FC<OperationsProps> = ({ feeds, healthRecords, tasks }) => {
+const Operations: React.FC<OperationsProps> = ({ feeds, healthRecords, tasks, initialTab }) => {
   const [activeTab, setActiveTab] = useState<'Tasks' | 'Feed' | 'Health'>('Tasks');
+
+  useEffect(() => {
+    if (initialTab) {
+        setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   return (
     <div className="animate-in fade-in duration-500">

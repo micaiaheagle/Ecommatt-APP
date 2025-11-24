@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import PigManager from './components/PigManager';
@@ -12,9 +12,10 @@ import Login from './components/Login';
 import Settings from './components/Settings';
 import Onboarding from './components/Onboarding';
 import { Pig, Task, PigStatus, PigStage, FeedInventory, HealthRecord, FinanceRecord, ViewState, User, UserRole, TimelineEvent } from './types';
+import { loadData, saveData, STORAGE_KEYS } from './services/storageService';
 
-// Mock Data
-const MOCK_PIGS: Pig[] = [
+// Mock Data (Used as initial seed only)
+const SEED_PIGS: Pig[] = [
   { 
       id: '1', 
       tagId: 'EF-8842', 
@@ -28,35 +29,36 @@ const MOCK_PIGS: Pig[] = [
       imageUrl: '',
       sireId: 'LW-900',
       damId: 'LW-330',
+      lastFed: 'Today 08:00 AM',
       timeline: [
-          { date: '2025-11-20', title: 'Routine Checkup', subtitle: 'Weight check', color: 'green' },
-          { date: '2025-11-10', title: 'Artificial Insemination', subtitle: 'Service 1 • Boar: #D-900', color: 'yellow' },
-          { date: '2025-10-15', title: 'Weaning (Litter 3)', subtitle: '10 Piglets • Moved to Pen 2', color: 'blue' }
+          { id: 'e1', date: '2025-11-20', title: 'Routine Checkup', subtitle: 'Weight check', color: 'green', status: 'Pending' },
+          { id: 'e2', date: '2025-11-10', title: 'Artificial Insemination', subtitle: 'Service 1 • Boar: #D-900', color: 'yellow', status: 'Completed' },
+          { id: 'e3', date: '2025-10-15', title: 'Weaning (Litter 3)', subtitle: '10 Piglets • Moved to Pen 2', color: 'blue', status: 'Completed' }
       ]
   },
-  { id: '2', tagId: 'EF-9001', breed: 'Duroc', dob: '2023-02-20', gender: 'Male', stage: PigStage.Boar, status: PigStatus.Active, penLocation: 'Pen 1A', weight: 210, sireId: 'D-100', damId: 'D-055' },
-  { id: '3', tagId: 'EF-003', breed: 'Landrace', dob: '2023-06-10', gender: 'Female', stage: PigStage.Grower, status: PigStatus.Sick, penLocation: 'Isolation', weight: 65, notes: 'Coughing' },
-  { id: '4', tagId: 'EF-004', breed: 'Large White', dob: '2023-07-01', gender: 'Male', stage: PigStage.Weaner, status: PigStatus.Active, penLocation: 'Pen C2', weight: 25 },
+  { id: '2', tagId: 'EF-9001', breed: 'Duroc', dob: '2023-02-20', gender: 'Male', stage: PigStage.Boar, status: PigStatus.Active, penLocation: 'Pen 1A', weight: 210, sireId: 'D-100', damId: 'D-055', lastFed: 'Today 07:45 AM' },
+  { id: '3', tagId: 'EF-003', breed: 'Landrace', dob: '2023-06-10', gender: 'Female', stage: PigStage.Grower, status: PigStatus.Sick, penLocation: 'Isolation', weight: 65, notes: 'Coughing', lastFed: 'Today 09:00 AM' },
+  { id: '4', tagId: 'EF-004', breed: 'Large White', dob: '2023-07-01', gender: 'Male', stage: PigStage.Weaner, status: PigStatus.Active, penLocation: 'Pen C2', weight: 25, lastFed: 'Yesterday 04:00 PM' },
 ];
 
-const MOCK_TASKS: Task[] = [
+const SEED_TASKS: Task[] = [
   { id: 't1', title: 'Administer Iron', dueDate: 'Today', priority: 'High', status: 'Pending', type: 'Medical' },
   { id: 't2', title: 'Pregnancy Scan', dueDate: 'Today', priority: 'Low', status: 'Completed', type: 'Repro' },
   { id: 't3', title: 'Order Grower Pellets', dueDate: 'Tomorrow', priority: 'Medium', status: 'Pending', type: 'Procurement' },
 ];
 
-const MOCK_FEEDS: FeedInventory[] = [
+const SEED_FEEDS: FeedInventory[] = [
   { id: 'f1', name: 'Sow Meal', type: 'Meal', quantityKg: 450, reorderLevel: 200, lastRestock: 'Nov 1' },
   { id: 'f2', name: 'Grower Pellets', type: 'Pellets', quantityKg: 150, reorderLevel: 300, lastRestock: 'Oct 20' },
   { id: 'f3', name: 'Creep Feed', type: 'Crumble', quantityKg: 80, reorderLevel: 50, lastRestock: 'Nov 10' },
 ];
 
-const MOCK_HEALTH: HealthRecord[] = [
+const SEED_HEALTH: HealthRecord[] = [
   { id: 'h1', pigId: 'EF-003', date: 'Nov 20', type: 'Treatment', description: 'Swine Flu', medication: 'Oxytetracycline', administeredBy: 'Sarah' },
   { id: 'h2', pigId: 'EF-8842', date: 'Nov 15', type: 'Vaccination', description: 'Parvo', administeredBy: 'John' },
 ];
 
-const MOCK_FINANCE: FinanceRecord[] = [
+const SEED_FINANCE: FinanceRecord[] = [
   { id: 'fin1', date: 'Nov 15', type: 'Income', category: 'Sales', amount: 1200, description: 'Pork Sales Batch #21' },
   { id: 'fin2', date: 'Nov 10', type: 'Expense', category: 'Supplies', amount: 150, description: 'Vet Supplies' },
 ];
@@ -81,16 +83,31 @@ const App: React.FC = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [currentView, setCurrentView] = useState<ViewState>(ViewState.Dashboard);
   
-  // Data State
-  const [pigs, setPigs] = useState<Pig[]>(MOCK_PIGS);
+  // Data State - Initialize from Storage or Seed
+  const [pigs, setPigs] = useState<Pig[]>(() => loadData(STORAGE_KEYS.PIGS, SEED_PIGS));
+  const [tasks, setTasks] = useState<Task[]>(() => loadData(STORAGE_KEYS.TASKS, SEED_TASKS));
+  const [feeds, setFeeds] = useState<FeedInventory[]>(() => loadData(STORAGE_KEYS.FEEDS, SEED_FEEDS));
+  const [healthRecords, setHealthRecords] = useState<HealthRecord[]>(() => loadData(STORAGE_KEYS.HEALTH, SEED_HEALTH));
+  const [financeRecords, setFinanceRecords] = useState<FinanceRecord[]>(() => loadData(STORAGE_KEYS.FINANCE, SEED_FINANCE));
+  const [users, setUsers] = useState<User[]>(() => loadData(STORAGE_KEYS.USERS, INITIAL_USERS));
+
+  // Persistence Effects - Auto Save when state changes
+  useEffect(() => saveData(STORAGE_KEYS.PIGS, pigs), [pigs]);
+  useEffect(() => saveData(STORAGE_KEYS.TASKS, tasks), [tasks]);
+  useEffect(() => saveData(STORAGE_KEYS.FEEDS, feeds), [feeds]);
+  useEffect(() => saveData(STORAGE_KEYS.HEALTH, healthRecords), [healthRecords]);
+  useEffect(() => saveData(STORAGE_KEYS.FINANCE, financeRecords), [financeRecords]);
+  useEffect(() => saveData(STORAGE_KEYS.USERS, users), [users]);
   
   // Navigation State for Pig Module
   const [selectedPig, setSelectedPig] = useState<Pig | null>(null);
   const [isAddingPig, setIsAddingPig] = useState(false);
   const [isEditingPig, setIsEditingPig] = useState(false);
+  
+  // Operations Navigation State
+  const [operationsInitialTab, setOperationsInitialTab] = useState<'Tasks' | 'Feed' | 'Health' | undefined>(undefined);
 
   // Auth & User State
-  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loginError, setLoginError] = useState('');
   
@@ -101,6 +118,8 @@ const App: React.FC = () => {
         setCurrentUser(user);
         setIsAuthenticated(true);
         setLoginError('');
+        // Show onboarding only if first time? For now, logic handled by state
+        // In real app, check user.hasOnboarded
         setShowOnboarding(true); 
     } else {
         setLoginError('Invalid email or password.');
@@ -113,7 +132,6 @@ const App: React.FC = () => {
   const handleSaveNewPig = (newPig: Pig) => {
     setPigs([...pigs, newPig]);
     setIsAddingPig(false);
-    alert('Pig Record Created Successfully');
   };
 
   const handleDeletePig = (id: string) => {
@@ -135,6 +153,16 @@ const App: React.FC = () => {
           setIsAddingPig(false);
           setIsEditingPig(false);
       }
+      // Reset operations tab if navigating away
+      if(view !== ViewState.Operations) {
+          setOperationsInitialTab(undefined);
+      }
+  };
+
+  // Link to Health Records from Pig Profile
+  const handleViewHealthRecords = () => {
+      setOperationsInitialTab('Health');
+      setCurrentView(ViewState.Operations);
   };
 
   const handleLogout = () => {
@@ -175,7 +203,7 @@ const App: React.FC = () => {
 
     switch (currentView) {
       case ViewState.Dashboard:
-        return <Dashboard pigs={pigs} tasks={MOCK_TASKS} onViewChange={handleNavClick} />;
+        return <Dashboard pigs={pigs} tasks={tasks} onViewChange={handleNavClick} />;
       
       case ViewState.Pigs:
         if (isAddingPig) {
@@ -191,10 +219,12 @@ const App: React.FC = () => {
         if (selectedPig) {
             return <PigProfile 
                     pig={selectedPig} 
+                    allPigs={pigs} // Pass all pigs for pedigree lookup
                     onBack={() => setSelectedPig(null)} 
                     onDelete={handleDeletePig}
                     onUpdate={handleUpdatePig}
                     onEdit={() => setIsEditingPig(true)}
+                    onViewHealth={handleViewHealthRecords}
                    />;
         }
         return <PigManager 
@@ -204,9 +234,9 @@ const App: React.FC = () => {
                />;
       
       case ViewState.Operations:
-        return <Operations feeds={MOCK_FEEDS} healthRecords={MOCK_HEALTH} tasks={MOCK_TASKS} />;
+        return <Operations feeds={feeds} healthRecords={healthRecords} tasks={tasks} initialTab={operationsInitialTab} />;
       case ViewState.Finance:
-        return <Finance records={MOCK_FINANCE} />;
+        return <Finance records={financeRecords} />;
       case ViewState.AI_Tools:
         return <SmartAssistant />;
       case ViewState.Settings:
@@ -218,7 +248,7 @@ const App: React.FC = () => {
                 onLogout={handleLogout} 
                />;
       default:
-        return <Dashboard pigs={pigs} tasks={MOCK_TASKS} onViewChange={handleNavClick} />;
+        return <Dashboard pigs={pigs} tasks={tasks} onViewChange={handleNavClick} />;
     }
   };
 

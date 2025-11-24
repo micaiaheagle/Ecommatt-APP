@@ -1,22 +1,28 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Pig, TimelineEvent } from '../types';
 
 interface PigProfileProps {
   pig: Pig;
+  allPigs: Pig[];
   onBack: () => void;
   onDelete: (id: string) => void;
   onUpdate: (updatedPig: Pig) => void;
   onEdit: () => void;
+  onViewHealth: () => void;
 }
 
-const PigProfile: React.FC<PigProfileProps> = ({ pig, onBack, onDelete, onUpdate, onEdit }) => {
+const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete, onUpdate, onEdit, onViewHealth }) => {
   const [activeTab, setActiveTab] = useState<'Overview' | 'Lifecycle' | 'Pedigree' | 'Lineage' | 'Gallery'>('Overview');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   // Notes State
   const [notes, setNotes] = useState(pig.notes || '');
   const [isEditingNotes, setIsEditingNotes] = useState(false);
+
+  // Pedigree Edit State
+  const [isEditingLineage, setIsEditingLineage] = useState(false);
+  const [lineageData, setLineageData] = useState({ sireId: pig.sireId || '', damId: pig.damId || '' });
 
   // Timeline Event Modal State
   const [showEventModal, setShowEventModal] = useState(false);
@@ -26,6 +32,12 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, onBack, onDelete, onUpdate
       date: new Date().toISOString().split('T')[0],
       color: 'green'
   });
+
+  // Sync state when pig prop updates
+  useEffect(() => {
+      setNotes(pig.notes || '');
+      setLineageData({ sireId: pig.sireId || '', damId: pig.damId || '' });
+  }, [pig]);
 
   // Helper to calculate age from DOB
   const calculateAge = (dob: string) => {
@@ -59,15 +71,30 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, onBack, onDelete, onUpdate
       setIsEditingNotes(false);
   };
 
+  const handleToggleEventStatus = (idx: number) => {
+      if (!pig.timeline) return;
+      const newTimeline = [...pig.timeline];
+      const event = newTimeline[idx];
+      event.status = event.status === 'Completed' ? 'Pending' : 'Completed';
+      onUpdate({ ...pig, timeline: newTimeline });
+  };
+
+  const handleSaveLineage = () => {
+      onUpdate({ ...pig, sireId: lineageData.sireId, damId: lineageData.damId });
+      setIsEditingLineage(false);
+  };
+
   const handleAddEvent = (e: React.FormEvent) => {
       e.preventDefault();
       if (!newEvent.title || !newEvent.date) return;
 
       const eventToAdd: TimelineEvent = {
+          id: `evt-${Date.now()}`,
           title: newEvent.title,
           subtitle: newEvent.subtitle,
           date: newEvent.date,
-          color: newEvent.color
+          color: newEvent.color,
+          status: 'Pending'
       };
 
       // Create new timeline array (putting new event at top if it's recent, or just prepending)
@@ -95,6 +122,62 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, onBack, onDelete, onUpdate
       { label: 'Finisher', endDay: 180, icon: 'fa-weight-hanging' },
       { label: 'Mature', endDay: 9999, icon: 'fa-medal' },
   ];
+
+  // Helper to render parent card
+  const renderParentCard = (role: 'SIRE' | 'DAM', id?: string) => {
+      const parent = allPigs.find(p => p.tagId === id);
+      const colorClass = role === 'SIRE' ? 'blue' : 'pink';
+      
+      if (isEditingLineage) {
+          return (
+              <div className={`bg-${colorClass}-50 border border-${colorClass}-200 p-4 rounded-2xl flex flex-col items-center gap-2 shadow-sm`}>
+                   <span className={`text-[10px] font-bold text-${colorClass}-600 bg-white px-2 py-0.5 rounded shadow-sm border border-${colorClass}-100`}>{role} ID</span>
+                   <div className="w-full relative">
+                        <input 
+                            type="text" 
+                            className={`w-full p-2 text-sm border border-${colorClass}-200 rounded-lg text-center focus:outline-none focus:border-ecomattGreen focus:ring-1 focus:ring-ecomattGreen`}
+                            value={role === 'SIRE' ? lineageData.sireId : lineageData.damId}
+                            onChange={(e) => role === 'SIRE' ? setLineageData({...lineageData, sireId: e.target.value}) : setLineageData({...lineageData, damId: e.target.value})}
+                            placeholder={`Enter ${role} Tag`}
+                        />
+                        <i className="fas fa-pen absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 text-xs pointer-events-none"></i>
+                   </div>
+              </div>
+          );
+      }
+
+      return (
+        <div className={`bg-${colorClass}-50 border border-${colorClass}-100 p-4 rounded-2xl relative`}>
+            <span className={`text-[10px] font-bold text-${colorClass}-500 bg-white px-2 py-0.5 rounded shadow-sm absolute -top-3 left-1/2 -translate-x-1/2`}>{role}</span>
+            
+            {parent ? (
+                <div className="text-center pt-2">
+                    <h4 className="font-bold text-sm text-gray-900">{parent.tagId}</h4>
+                    <p className="text-xs text-gray-500">{parent.breed}</p>
+                    <p className="text-[10px] text-gray-400 mt-1">{parent.status}</p>
+                </div>
+            ) : id ? (
+                <div className="text-center pt-2">
+                    <h4 className="font-bold text-sm text-gray-900">{id}</h4>
+                    <p className="text-xs text-gray-500 italic">Unknown Details</p>
+                    <button className="mt-2 text-[10px] bg-white border border-gray-200 px-2 py-1 rounded text-gray-600 hover:text-ecomattGreen">
+                        <i className="fas fa-search mr-1"></i> Search
+                    </button>
+                </div>
+            ) : (
+                <div className="text-center pt-2 min-h-[60px] flex flex-col items-center justify-center">
+                    <p className="text-xs text-gray-400 italic">Not Recorded</p>
+                    <button 
+                        onClick={() => { setLineageData({ sireId: pig.sireId || '', damId: pig.damId || '' }); setIsEditingLineage(true); }}
+                        className="mt-2 text-[10px] bg-white border border-gray-200 px-2 py-1 rounded text-gray-600 hover:text-ecomattGreen"
+                    >
+                        <i className="fas fa-plus mr-1"></i> Add
+                    </button>
+                </div>
+            )}
+        </div>
+      );
+  };
 
   return (
     <div className="bg-grayBg min-h-screen pb-20 animate-in slide-in-from-right duration-300 relative">
@@ -140,8 +223,8 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, onBack, onDelete, onUpdate
 
       <div className="p-5 -mt-6 bg-grayBg rounded-t-3xl relative z-10">
           
-        {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        {/* Quick Stats Grid - 2 Columns */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
             <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
                 <p className="text-[10px] text-gray-400 font-bold uppercase">Age</p>
                 <p className="text-lg font-bold text-gray-900">{calculateAge(pig.dob)}</p>
@@ -153,6 +236,15 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, onBack, onDelete, onUpdate
             <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
                 <p className="text-[10px] text-gray-400 font-bold uppercase">Weight</p>
                 <p className="text-lg font-bold text-gray-900">{pig.weight}kg</p>
+            </div>
+             <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
+                <p className="text-[10px] text-gray-400 font-bold uppercase">Last Fed</p>
+                <p className="text-lg font-bold text-gray-900 truncate px-1">
+                    {pig.lastFed ? pig.lastFed.split(' ').slice(1).join(' ') : 'N/A'}
+                </p>
+                <p className="text-[9px] text-gray-400">
+                    {pig.lastFed ? pig.lastFed.split(' ')[0] : ''}
+                </p>
             </div>
         </div>
 
@@ -235,19 +327,28 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, onBack, onDelete, onUpdate
 
                 {/* 2. Overview: Bio Details Card */}
                 {activeTab === 'Overview' && (
-                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between">
-                        <div>
-                            <p className="text-xs text-gray-500 font-bold uppercase mb-1">Date of Birth</p>
-                            <h4 className="text-gray-900 font-bold flex items-center gap-2">
-                                <i className="fas fa-birthday-cake text-pink-400"></i> {pig.dob}
-                            </h4>
+                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                        <div className="flex items-center justify-between mb-4">
+                             <div>
+                                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Date of Birth</p>
+                                <h4 className="text-gray-900 font-bold flex items-center gap-2">
+                                    <i className="fas fa-birthday-cake text-pink-400"></i> {pig.dob}
+                                </h4>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Exact Age</p>
+                                <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">
+                                    {calculateAge(pig.dob)}
+                                </span>
+                            </div>
                         </div>
-                        <div className="text-right">
-                            <p className="text-xs text-gray-500 font-bold uppercase mb-1">Exact Age</p>
-                            <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">
-                                {calculateAge(pig.dob)}
-                            </span>
-                        </div>
+                        
+                        <button 
+                            onClick={onViewHealth}
+                            className="w-full bg-blue-50 text-blue-600 border border-blue-100 py-3 rounded-xl font-bold text-xs hover:bg-blue-100 transition flex items-center justify-center gap-2"
+                        >
+                            <i className="fas fa-file-medical-alt"></i> View Health Records
+                        </button>
                     </div>
                 )}
 
@@ -306,15 +407,33 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, onBack, onDelete, onUpdate
                         
                         {/* Render existing Timeline Events */}
                         {pig.timeline && pig.timeline.map((event, idx) => (
-                             <div key={idx} className="relative pl-8">
-                                <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-white shadow-sm
-                                    ${event.color === 'green' ? 'bg-green-500' : 
+                             <div key={idx} className={`relative pl-8 transition-opacity duration-300 ${event.status === 'Completed' ? 'opacity-60' : 'opacity-100'}`}>
+                                <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-white shadow-sm flex items-center justify-center cursor-pointer hover:scale-110 transition-transform
+                                    ${event.status === 'Completed' ? 'bg-gray-400' :
+                                      event.color === 'green' ? 'bg-green-500' : 
                                       event.color === 'yellow' ? 'bg-yellow-500' :
                                       event.color === 'blue' ? 'bg-blue-500' : 'bg-red-500'}
-                                `}></div>
-                                <p className="text-xs text-gray-400 mb-1 font-mono">{event.date}</p>
-                                <h4 className="font-bold text-gray-900 text-sm">{event.title}</h4>
-                                <p className="text-xs text-gray-500">{event.subtitle}</p>
+                                `} onClick={() => handleToggleEventStatus(idx)}>
+                                    {event.status === 'Completed' && <i className="fas fa-check text-[8px] text-white"></i>}
+                                </div>
+                                
+                                <div className="flex justify-between items-start group">
+                                    <div>
+                                        <p className="text-xs text-gray-400 mb-1 font-mono">{event.date}</p>
+                                        <h4 className={`font-bold text-sm text-gray-900 ${event.status === 'Completed' ? 'line-through text-gray-500' : ''}`}>{event.title}</h4>
+                                        <p className="text-xs text-gray-500">{event.subtitle}</p>
+                                    </div>
+                                    <button 
+                                        onClick={() => handleToggleEventStatus(idx)}
+                                        className={`text-[10px] px-2 py-1 rounded font-bold border transition-colors
+                                            ${event.status === 'Completed' 
+                                                ? 'bg-gray-100 text-gray-500 border-gray-200' 
+                                                : 'bg-white text-ecomattGreen border-green-200 hover:bg-green-50'}
+                                        `}
+                                    >
+                                        {event.status === 'Completed' ? 'Done' : 'Mark Done'}
+                                    </button>
+                                </div>
                             </div>
                         ))}
 
@@ -343,7 +462,26 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, onBack, onDelete, onUpdate
         {/* Pedigree Chart (Screen 18) */}
         {activeTab === 'Pedigree' && (
              <div className="animate-in fade-in text-center">
-                 <h2 className="text-xl font-bold text-gray-900 mb-6">Genetics</h2>
+                 <div className="flex justify-between items-center mb-6">
+                     <h2 className="text-xl font-bold text-gray-900">Genetics</h2>
+                     <button 
+                        onClick={() => {
+                            if (isEditingLineage) handleSaveLineage();
+                            else {
+                                setLineageData({ sireId: pig.sireId || '', damId: pig.damId || '' });
+                                setIsEditingLineage(true);
+                            }
+                        }}
+                        className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${
+                            isEditingLineage 
+                            ? 'bg-ecomattGreen text-white border-ecomattGreen shadow-md' 
+                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                        }`}
+                     >
+                        {isEditingLineage ? 'Save Changes' : 'Edit Genetics'}
+                     </button>
+                 </div>
+
                  <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 relative mb-4">
                     {/* Subject */}
                     <div className="w-20 h-20 mx-auto bg-gray-100 rounded-full mb-3 overflow-hidden border-4 border-white shadow-sm flex items-center justify-center">
@@ -363,14 +501,8 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, onBack, onDelete, onUpdate
                     <div className="absolute -top-4 left-1/4 h-4 w-px bg-gray-300"></div>
                     <div className="absolute -top-4 right-1/4 h-4 w-px bg-gray-300"></div>
 
-                    <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl">
-                         <span className="text-[10px] font-bold text-blue-500 bg-white px-2 py-0.5 rounded shadow-sm">SIRE</span>
-                         <h4 className="font-bold text-sm mt-2 text-gray-900">{pig.sireId || 'Unknown'}</h4>
-                    </div>
-                    <div className="bg-pink-50 border border-pink-100 p-4 rounded-2xl">
-                         <span className="text-[10px] font-bold text-pink-500 bg-white px-2 py-0.5 rounded shadow-sm">DAM</span>
-                         <h4 className="font-bold text-sm mt-2 text-gray-900">{pig.damId || 'Unknown'}</h4>
-                    </div>
+                    {renderParentCard('SIRE', pig.sireId)}
+                    {renderParentCard('DAM', pig.damId)}
                  </div>
              </div>
         )}

@@ -27,11 +27,13 @@ export interface User {
 }
 
 export interface TimelineEvent {
+  id?: string; // Added for unique identification
   date: string;
   title: string;
   subtitle: string;
   color: 'green' | 'yellow' | 'blue' | 'red';
   icon?: string;
+  status?: 'Pending' | 'Completed'; // Added for tracking completion
 }
 
 export interface Pig {
@@ -54,6 +56,7 @@ export interface Pig {
   
   // Extended Data
   timeline?: TimelineEvent[];
+  lastFed?: string; // New Field
 }
 
 export interface Task {
