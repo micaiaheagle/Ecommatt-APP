@@ -1,0 +1,8 @@
+{
+  "name": "Ecomatt Farm Manager",
+  "description": "Intelligent PWA for Ecomatt Farm pig production management, featuring AI-driven insights, offline capabilities, and comprehensive record keeping.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
