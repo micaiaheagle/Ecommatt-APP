@@ -3,9 +3,15 @@ import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 // Safe API Key initialization to prevent crash if process is undefined
 const getApiKey = () => {
   try {
-    return process.env.API_KEY;
+    // Check if process is defined (Node.js/Bundled environment)
+    if (typeof process !== 'undefined' && process.env) {
+      return process.env.API_KEY || '';
+    }
+    // Fallback for browser environments (Vite/Webpack often replace process.env)
+    // If explicitly accessible via globalThis or window (rare but possible in some setups)
+    return '';
   } catch (e) {
-    console.warn("API Key not found in environment.");
+    console.warn("API Key environment check failed. Using empty key.");
     return '';
   }
 };
