@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Pig, TimelineEvent } from '../types';
 
@@ -13,7 +14,7 @@ interface PigProfileProps {
 }
 
 const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete, onUpdate, onEdit, onViewHealth }) => {
-  const [activeTab, setActiveTab] = useState<'Overview' | 'Lifecycle' | 'Pedigree' | 'Lineage' | 'Gallery'>('Overview');
+  const [activeTab, setActiveTab] = useState<'Overview' | 'Lifecycle' | 'Pedigree' | 'Gallery'>('Overview');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   // Notes State
@@ -170,59 +171,45 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
       { label: 'Mature', endDay: 9999, icon: 'fa-medal' },
   ];
 
-  // Helper to render parent card
-  const renderParentCard = (role: 'SIRE' | 'DAM', id?: string) => {
-      const parent = allPigs.find(p => p.tagId === id);
-      const colorClass = role === 'SIRE' ? 'blue' : 'pink';
+  // --- Pedigree Helper Functions ---
+  
+  const getPigDetails = (id?: string) => {
+      if (!id) return null;
+      return allPigs.find(p => p.tagId === id) || { 
+          tagId: id, 
+          breed: 'Unknown', 
+          status: 'Unknown',
+          sireId: undefined,
+          damId: undefined
+      };
+  };
+
+  const TreeNode = ({ role, id, type, isGrandparent = false }: { role: string, id?: string, type: 'sire' | 'dam' | 'subject', isGrandparent?: boolean }) => {
+      const details = getPigDetails(id);
+      const bgColor = type === 'sire' ? 'bg-blue-50 border-blue-200 text-blue-800' : type === 'dam' ? 'bg-pink-50 border-pink-200 text-pink-800' : 'bg-green-50 border-green-200 text-green-800';
+      const iconColor = type === 'sire' ? 'text-blue-400' : type === 'dam' ? 'text-pink-400' : 'text-green-400';
       
-      if (isEditingLineage) {
-          return (
-              <div className={`bg-${colorClass}-50 border border-${colorClass}-200 p-4 rounded-2xl flex flex-col items-center gap-2 shadow-sm`}>
-                   <span className={`text-[10px] font-bold text-${colorClass}-600 bg-white px-2 py-0.5 rounded shadow-sm border border-${colorClass}-100`}>{role} ID</span>
-                   <div className="w-full relative">
-                        <input 
-                            type="text" 
-                            className={`w-full p-2 text-sm border border-${colorClass}-200 rounded-lg text-center focus:outline-none focus:border-ecomattGreen focus:ring-1 focus:ring-ecomattGreen`}
-                            value={role === 'SIRE' ? lineageData.sireId : lineageData.damId}
-                            onChange={(e) => role === 'SIRE' ? setLineageData({...lineageData, sireId: e.target.value}) : setLineageData({...lineageData, damId: e.target.value})}
-                            placeholder={`Enter ${role} Tag`}
-                        />
-                        <i className="fas fa-pen absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 text-xs pointer-events-none"></i>
-                   </div>
+      if (!id) {
+           return (
+              <div className={`flex flex-col items-center justify-center p-2 rounded-xl border border-dashed border-gray-300 bg-gray-50/50 ${isGrandparent ? 'w-24 h-24' : 'w-32 h-32'}`}>
+                  <span className="text-[10px] text-gray-400 font-bold uppercase mb-1">{role}</span>
+                  <span className="text-xs text-gray-300 italic">Unknown</span>
               </div>
-          );
+           );
       }
 
       return (
-        <div className={`bg-${colorClass}-50 border border-${colorClass}-100 p-4 rounded-2xl relative`}>
-            <span className={`text-[10px] font-bold text-${colorClass}-500 bg-white px-2 py-0.5 rounded shadow-sm absolute -top-3 left-1/2 -translate-x-1/2`}>{role}</span>
-            
-            {parent ? (
-                <div className="text-center pt-2">
-                    <h4 className="font-bold text-sm text-gray-900">{parent.tagId}</h4>
-                    <p className="text-xs text-gray-500">{parent.breed}</p>
-                    <p className="text-[10px] text-gray-400 mt-1">{parent.status}</p>
-                </div>
-            ) : id ? (
-                <div className="text-center pt-2">
-                    <h4 className="font-bold text-sm text-gray-900">{id}</h4>
-                    <p className="text-xs text-gray-500 italic">Unknown Details</p>
-                    <button className="mt-2 text-[10px] bg-white border border-gray-200 px-2 py-1 rounded text-gray-600 hover:text-ecomattGreen">
-                        <i className="fas fa-search mr-1"></i> Search
-                    </button>
-                </div>
-            ) : (
-                <div className="text-center pt-2 min-h-[60px] flex flex-col items-center justify-center">
-                    <p className="text-xs text-gray-400 italic">Not Recorded</p>
-                    <button 
-                        onClick={() => { setLineageData({ sireId: pig.sireId || '', damId: pig.damId || '' }); setIsEditingLineage(true); }}
-                        className="mt-2 text-[10px] bg-white border border-gray-200 px-2 py-1 rounded text-gray-600 hover:text-ecomattGreen"
-                    >
-                        <i className="fas fa-plus mr-1"></i> Add
-                    </button>
-                </div>
-            )}
-        </div>
+          <div className={`flex flex-col items-center justify-center p-2 rounded-xl border shadow-sm relative transition-all hover:scale-105 cursor-pointer z-10 ${bgColor} ${isGrandparent ? 'w-24 min-h-[6rem]' : 'w-32 min-h-[8rem]'}`}>
+              <span className={`absolute -top-2 px-2 py-0.5 text-[8px] font-bold uppercase rounded-full bg-white border shadow-sm ${type === 'sire' ? 'text-blue-600 border-blue-100' : type === 'dam' ? 'text-pink-600 border-pink-100' : 'text-green-600 border-green-100'}`}>
+                  {role}
+              </span>
+              <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm ${iconColor}`}>
+                  <i className={`fas ${type === 'sire' ? 'fa-venus-mars' : type === 'dam' ? 'fa-venus' : 'fa-dna'}`}></i>
+              </div>
+              <p className={`font-bold text-center leading-tight break-all ${isGrandparent ? 'text-xs' : 'text-sm'}`}>{details.tagId}</p>
+              {/* @ts-ignore */}
+              {details.breed && <p className="text-[9px] opacity-70 mt-1 text-center leading-tight">{details.breed}</p>}
+          </div>
       );
   };
 
@@ -299,7 +286,6 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                 >
                   <i className="fas fa-plus mr-1"></i> Log
                 </button>
-                {/* Always visible mobile button if needed, but hover covers desktop. Let's make it clickable area or small icon */}
                  <button 
                   onClick={() => setShowFeedModal(true)}
                   className="absolute top-1 right-1 w-6 h-6 bg-ecomattGreen text-white rounded-full flex items-center justify-center shadow-sm md:hidden"
@@ -311,7 +297,7 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
 
         {/* Tab Navigation */}
         <div className="flex overflow-x-auto gap-2 mb-6 no-scrollbar pb-2">
-            {['Overview', 'Lifecycle', 'Pedigree', 'Lineage', 'Gallery'].map(tab => (
+            {['Overview', 'Lifecycle', 'Pedigree', 'Gallery'].map(tab => (
                 <button
                     key={tab}
                     onClick={() => setActiveTab(tab as any)}
@@ -528,11 +514,11 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
             </div>
         )}
 
-        {/* Pedigree Chart (Screen 18) */}
+        {/* Enhanced Pedigree / Lineage Chart */}
         {activeTab === 'Pedigree' && (
              <div className="animate-in fade-in text-center">
                  <div className="flex justify-between items-center mb-6">
-                     <h2 className="text-xl font-bold text-gray-900">Genetics</h2>
+                     <h2 className="text-xl font-bold text-gray-900">Family Tree</h2>
                      <button 
                         onClick={() => {
                             if (isEditingLineage) handleSaveLineage();
@@ -547,70 +533,122 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                             : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                         }`}
                      >
-                        {isEditingLineage ? 'Save Changes' : 'Edit Genetics'}
+                        {isEditingLineage ? 'Save Changes' : 'Edit Parents'}
                      </button>
                  </div>
 
-                 <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 relative mb-4">
-                    {/* Subject */}
-                    <div className="w-20 h-20 mx-auto bg-gray-100 rounded-full mb-3 overflow-hidden border-4 border-white shadow-sm flex items-center justify-center">
-                         <i className="fas fa-dna text-3xl text-gray-300"></i>
+                 {/* Tree Visualization Container */}
+                 <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 overflow-x-auto">
+                    <div className="min-w-[300px] flex flex-col items-center gap-6 py-6">
+                        
+                        {/* Generation 1: Subject */}
+                        <div className="relative z-20">
+                            <TreeNode role="Subject" id={pig.tagId} type="subject" />
+                            {/* Line Up */}
+                            <div className="absolute -bottom-6 left-1/2 w-px h-6 bg-gray-300"></div>
+                        </div>
+
+                        {/* Generation 2: Parents */}
+                        <div className="flex gap-4 sm:gap-12 relative z-10 pt-4">
+                            {/* Horizontal Connector */}
+                             <div className="absolute top-0 left-1/4 right-1/4 h-px bg-gray-300 border-t border-gray-300 rounded-full"></div>
+                             <div className="absolute top-0 left-1/4 h-4 w-px bg-gray-300"></div>
+                             <div className="absolute top-0 right-1/4 h-4 w-px bg-gray-300"></div>
+
+                            {/* Sire Node */}
+                            <div className="flex flex-col items-center">
+                                {isEditingLineage ? (
+                                    <div className="bg-blue-50 border border-blue-200 p-3 rounded-xl w-32">
+                                        <label className="text-[9px] font-bold text-blue-800 uppercase block mb-1">Sire ID</label>
+                                        <input 
+                                            className="w-full text-xs p-1 border rounded"
+                                            value={lineageData.sireId}
+                                            onChange={(e) => setLineageData({...lineageData, sireId: e.target.value})}
+                                            placeholder="Enter ID"
+                                        />
+                                    </div>
+                                ) : (
+                                    <>
+                                        <TreeNode role="Sire" id={pig.sireId} type="sire" />
+                                        {/* Line Down to GPs */}
+                                        <div className="w-px h-6 bg-gray-300 mt-0"></div>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Dam Node */}
+                            <div className="flex flex-col items-center">
+                                {isEditingLineage ? (
+                                     <div className="bg-pink-50 border border-pink-200 p-3 rounded-xl w-32">
+                                        <label className="text-[9px] font-bold text-pink-800 uppercase block mb-1">Dam ID</label>
+                                        <input 
+                                            className="w-full text-xs p-1 border rounded"
+                                            value={lineageData.damId}
+                                            onChange={(e) => setLineageData({...lineageData, damId: e.target.value})}
+                                            placeholder="Enter ID"
+                                        />
+                                    </div>
+                                ) : (
+                                    <>
+                                        <TreeNode role="Dam" id={pig.damId} type="dam" />
+                                        {/* Line Down to GPs */}
+                                        <div className="w-px h-6 bg-gray-300 mt-0"></div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Generation 3: Grandparents (Visible only if not editing) */}
+                        {!isEditingLineage && (
+                            <div className="flex gap-2 sm:gap-6 pt-2">
+                                {/* Paternal GPs */}
+                                <div className="flex gap-1 relative">
+                                    {/* Connector */}
+                                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-full border-t border-gray-300 h-2"></div>
+                                    <div className="absolute -top-6 left-1/4 h-2 w-px bg-gray-300"></div>
+                                    <div className="absolute -top-6 right-1/4 h-2 w-px bg-gray-300"></div>
+                                    
+                                    {(() => {
+                                        const sire = getPigDetails(pig.sireId);
+                                        return (
+                                            <>
+                                                <TreeNode role="G.Sire" id={sire?.sireId} type="sire" isGrandparent />
+                                                <TreeNode role="G.Dam" id={sire?.damId} type="dam" isGrandparent />
+                                            </>
+                                        );
+                                    })()}
+                                </div>
+
+                                {/* Spacer */}
+                                <div className="w-2"></div>
+
+                                {/* Maternal GPs */}
+                                <div className="flex gap-1 relative">
+                                     {/* Connector */}
+                                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-full border-t border-gray-300 h-2"></div>
+                                    <div className="absolute -top-6 left-1/4 h-2 w-px bg-gray-300"></div>
+                                    <div className="absolute -top-6 right-1/4 h-2 w-px bg-gray-300"></div>
+
+                                     {(() => {
+                                        const dam = getPigDetails(pig.damId);
+                                        return (
+                                            <>
+                                                <TreeNode role="G.Sire" id={dam?.sireId} type="sire" isGrandparent />
+                                                <TreeNode role="G.Dam" id={dam?.damId} type="dam" isGrandparent />
+                                            </>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
+                        )}
+
                     </div>
-                    <h3 className="font-bold text-xl text-gray-900">{pig.tagId}</h3>
-                    <p className="text-xs text-gray-500">{pig.breed}</p>
-                    
-                    {/* Connector */}
-                    <div className="absolute bottom-0 left-1/2 w-px h-8 bg-gray-300"></div>
                  </div>
-
-                 {/* Parents */}
-                 <div className="grid grid-cols-2 gap-4 relative mt-8">
-                    {/* Visual Tree Connector lines */}
-                    <div className="absolute -top-4 left-1/4 right-1/4 h-px bg-gray-300 border-t border-gray-300"></div>
-                    <div className="absolute -top-4 left-1/4 h-4 w-px bg-gray-300"></div>
-                    <div className="absolute -top-4 right-1/4 h-4 w-px bg-gray-300"></div>
-
-                    {renderParentCard('SIRE', pig.sireId)}
-                    {renderParentCard('DAM', pig.damId)}
-                 </div>
-             </div>
-        )}
-
-        {/* Lineage Tree (Screen 49) */}
-        {activeTab === 'Lineage' && (
-             <div className="animate-in fade-in">
-                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 min-h-[400px] flex flex-col items-center justify-center relative overflow-hidden">
-                     <div className="absolute top-4 right-4 bg-ecomattGreen text-white text-[10px] font-bold px-2 py-1 rounded">3 Generations</div>
-                     
-                     {/* Simplified Tree Viz */}
-                     <div className="flex flex-col items-center gap-8 scale-90">
-                         {/* Gen 1 */}
-                         <div className="flex flex-col items-center z-10">
-                             <div className="w-16 h-16 bg-ecomattGreen text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg border-4 border-white">{pig.tagId.split('-')[1] || 'Pig'}</div>
-                         </div>
-                         
-                         <div className="w-px h-8 bg-gray-300 -mt-8"></div>
-                         <div className="w-32 h-px bg-gray-300"></div>
-                         
-                         {/* Gen 2 */}
-                         <div className="flex justify-between w-48 -mt-4">
-                             <div className="flex flex-col items-center">
-                                 <div className="w-px h-4 bg-gray-300"></div>
-                                 <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-xs border-2 border-white shadow-sm">Sire</div>
-                             </div>
-                             <div className="flex flex-col items-center">
-                                 <div className="w-px h-4 bg-gray-300"></div>
-                                 <div className="w-12 h-12 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center font-bold text-xs border-2 border-white shadow-sm">Dam</div>
-                             </div>
-                         </div>
-
-                         {/* Gen 3 */}
-                          <div className="flex justify-between w-64 text-[8px] text-gray-400 font-bold uppercase tracking-widest mt-4">
-                              <span>Grand Sire</span><span>Grand Dam</span><span>Grand Sire</span><span>Grand Dam</span>
-                          </div>
-
-                     </div>
-                 </div>
+                 
+                 <p className="text-xs text-gray-400 mt-4 italic">
+                    <i className="fas fa-info-circle mr-1"></i>
+                    Click "Edit Parents" to link existing animals from the database.
+                 </p>
              </div>
         )}
 
