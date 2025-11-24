@@ -82,8 +82,20 @@ export const generateSmartAlerts = async (metrics: any): Promise<any[]> => {
             }
         });
         
-        const text = response.text;
+        let text = response.text;
         if (!text) return [];
+
+        // Cleanup: Remove markdown code blocks if the model adds them despite MIME type
+        if (text.trim().startsWith('```')) {
+            text = text.replace(/^```json\s*/, '').replace(/^```\s*/, '').replace(/```$/, '');
+        }
+
+        // Guard: Check if response is HTML (often happens with 404/500 proxy errors)
+        if (text.trim().startsWith('<')) {
+            console.warn("Gemini returned HTML instead of JSON. ignoring.");
+            return [];
+        }
+        
         const data = JSON.parse(text);
         return data.alerts || [];
     } catch (e) {

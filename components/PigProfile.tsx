@@ -41,6 +41,14 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, onBack, onDelete, onUpdate
     return `${years} years`;
   };
 
+  // Helper for lifecycle progress
+  const getDaysOld = (dob: string) => {
+      if (!dob) return 0;
+      const birth = new Date(dob);
+      const now = new Date();
+      return Math.ceil(Math.abs(now.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
   const confirmDelete = () => {
       onDelete(pig.id);
       setShowDeleteConfirm(false);
@@ -78,6 +86,15 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, onBack, onDelete, onUpdate
           color: 'green'
       });
   };
+
+  // Lifecycle Stages Config
+  const LIFE_STAGES = [
+      { label: 'Piglet', endDay: 30, icon: 'fa-paw' },
+      { label: 'Weaner', endDay: 70, icon: 'fa-cube' },
+      { label: 'Grower', endDay: 110, icon: 'fa-arrow-up' },
+      { label: 'Finisher', endDay: 180, icon: 'fa-weight-hanging' },
+      { label: 'Mature', endDay: 9999, icon: 'fa-medal' },
+  ];
 
   return (
     <div className="bg-grayBg min-h-screen pb-20 animate-in slide-in-from-right duration-300 relative">
@@ -158,73 +175,131 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, onBack, onDelete, onUpdate
 
         {/* --- TAB CONTENT --- */}
 
-        {/* Overview & Lifecycle (Screen 17) */}
+        {/* Overview & Lifecycle Content */}
         {(activeTab === 'Overview' || activeTab === 'Lifecycle') && (
             <div className="animate-in fade-in space-y-4">
                 
-                {/* Bio Details Card */}
-                <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between">
-                    <div>
-                        <p className="text-xs text-gray-500 font-bold uppercase mb-1">Date of Birth</p>
-                        <h4 className="text-gray-900 font-bold flex items-center gap-2">
-                            <i className="fas fa-birthday-cake text-pink-400"></i> {pig.dob}
-                        </h4>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-xs text-gray-500 font-bold uppercase mb-1">Exact Age</p>
-                        <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">
-                            {calculateAge(pig.dob)}
-                        </span>
-                    </div>
-                </div>
+                {/* 1. Lifecycle: Visual Stage Tracker */}
+                {activeTab === 'Lifecycle' && (
+                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 mb-4">
+                        <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <i className="fas fa-chart-line text-ecomattGreen"></i> Growth Progression
+                        </h3>
+                        
+                        <div className="relative">
+                            {/* Connector Line */}
+                            <div className="absolute top-4 left-0 w-full h-1 bg-gray-200 rounded-full z-0"></div>
+                            
+                            {/* Stages */}
+                            <div className="flex justify-between relative z-10">
+                                {LIFE_STAGES.map((stage, idx) => {
+                                    const daysOld = getDaysOld(pig.dob);
+                                    const isCompleted = daysOld > stage.endDay;
+                                    const isCurrent = daysOld <= stage.endDay && (idx === 0 || daysOld > LIFE_STAGES[idx - 1].endDay);
+                                    
+                                    return (
+                                        <div key={idx} className="flex flex-col items-center gap-2 w-14">
+                                            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs border-4 transition-all duration-500
+                                                ${isCompleted ? 'bg-ecomattGreen border-ecomattGreen text-white' : 
+                                                  isCurrent ? 'bg-white border-ecomattGreen text-ecomattGreen shadow-lg scale-110' : 
+                                                  'bg-white border-gray-200 text-gray-300'}
+                                            `}>
+                                                <i className={`fas ${stage.icon}`}></i>
+                                            </div>
+                                            <span className={`text-[9px] font-bold text-center ${isCurrent ? 'text-ecomattGreen' : 'text-gray-400'}`}>
+                                                {stage.label}
+                                            </span>
+                                            {isCurrent && (
+                                                <span className="text-[9px] text-gray-400 font-mono -mt-1">{daysOld}d</span>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
 
-                {/* Notes Section */}
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                    <div className="flex justify-between items-center mb-3">
-                        <h3 className="font-bold text-gray-900">General Notes</h3>
-                        {!isEditingNotes && (
-                            <button onClick={() => setIsEditingNotes(true)} className="text-ecomattGreen text-xs font-bold hover:underline">
-                                <i className="fas fa-pencil-alt mr-1"></i> Edit
-                            </button>
-                        )}
-                    </div>
-                    {isEditingNotes ? (
-                        <div className="animate-in fade-in">
-                            <textarea
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:border-ecomattGreen outline-none mb-2"
-                                rows={4}
-                                placeholder="Add observations, behavioral notes, or medical history..."
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                            />
-                            <div className="flex justify-end gap-2">
-                                <button 
-                                    onClick={() => {
-                                        setNotes(pig.notes || '');
-                                        setIsEditingNotes(false);
-                                    }} 
-                                    className="text-gray-500 text-xs font-bold px-3 py-2 rounded-lg hover:bg-gray-100"
-                                >
-                                    Cancel
-                                </button>
-                                <button 
-                                    onClick={handleSaveNotes} 
-                                    className="bg-ecomattGreen text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm hover:bg-green-600"
-                                >
-                                    Save Notes
-                                </button>
+                            {/* Info Banner */}
+                            <div className="mt-6 bg-blue-50 p-3 rounded-xl border border-blue-100 flex items-start gap-3">
+                                <i className="fas fa-info-circle text-blue-500 mt-1"></i>
+                                <div>
+                                    <p className="text-xs text-blue-800 font-bold">Current Phase: {
+                                        LIFE_STAGES.find((s, i) => getDaysOld(pig.dob) <= s.endDay && (i === 0 || getDaysOld(pig.dob) > LIFE_STAGES[i-1].endDay))?.label || 'Mature'
+                                    }</p>
+                                    <p className="text-[10px] text-blue-600 leading-tight mt-1">
+                                        Monitor feed conversion ratio closely during this stage. Ensure ad-libitum water access.
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    ) : (
-                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                            <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
-                                {notes || <span className="text-gray-400 italic">No notes recorded for this animal.</span>}
-                            </p>
-                        </div>
-                    )}
-                </div>
+                    </div>
+                )}
 
-                {/* Timeline */}
+                {/* 2. Overview: Bio Details Card */}
+                {activeTab === 'Overview' && (
+                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs text-gray-500 font-bold uppercase mb-1">Date of Birth</p>
+                            <h4 className="text-gray-900 font-bold flex items-center gap-2">
+                                <i className="fas fa-birthday-cake text-pink-400"></i> {pig.dob}
+                            </h4>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-xs text-gray-500 font-bold uppercase mb-1">Exact Age</p>
+                            <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">
+                                {calculateAge(pig.dob)}
+                            </span>
+                        </div>
+                    </div>
+                )}
+
+                {/* 3. Overview: Notes Section */}
+                {activeTab === 'Overview' && (
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <div className="flex justify-between items-center mb-3">
+                            <h3 className="font-bold text-gray-900">General Notes</h3>
+                            {!isEditingNotes && (
+                                <button onClick={() => setIsEditingNotes(true)} className="text-ecomattGreen text-xs font-bold hover:underline">
+                                    <i className="fas fa-pencil-alt mr-1"></i> Edit
+                                </button>
+                            )}
+                        </div>
+                        {isEditingNotes ? (
+                            <div className="animate-in fade-in">
+                                <textarea
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:border-ecomattGreen outline-none mb-2"
+                                    rows={4}
+                                    placeholder="Add observations, behavioral notes, or medical history..."
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                />
+                                <div className="flex justify-end gap-2">
+                                    <button 
+                                        onClick={() => {
+                                            setNotes(pig.notes || '');
+                                            setIsEditingNotes(false);
+                                        }} 
+                                        className="text-gray-500 text-xs font-bold px-3 py-2 rounded-lg hover:bg-gray-100"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        onClick={handleSaveNotes} 
+                                        className="bg-ecomattGreen text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm hover:bg-green-600"
+                                    >
+                                        Save Notes
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
+                                    {notes || <span className="text-gray-400 italic">No notes recorded for this animal.</span>}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* 4. Shared: Timeline */}
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                     <h3 className="font-bold text-gray-900 mb-6">Timeline & History</h3>
                     <div className="border-l-2 border-gray-100 ml-3 space-y-8">
@@ -254,11 +329,12 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, onBack, onDelete, onUpdate
                         )}
                         
                     </div>
+                    
                     <button 
                         onClick={() => setShowEventModal(true)}
-                        className="w-full mt-6 bg-gray-50 text-gray-600 border border-gray-200 py-3 rounded-xl font-bold text-xs hover:bg-gray-100 transition"
+                        className="w-full mt-6 bg-green-50 text-ecomattGreen border border-green-200 py-3 rounded-xl font-bold text-xs hover:bg-green-100 transition flex items-center justify-center gap-2"
                     >
-                        + Log New Event
+                        <i className="fas fa-plus-circle"></i> Log New Event
                     </button>
                 </div>
             </div>
