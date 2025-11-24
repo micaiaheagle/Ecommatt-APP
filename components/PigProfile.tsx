@@ -33,6 +33,15 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
       color: 'green'
   });
 
+  // Feed Log Modal State
+  const [showFeedModal, setShowFeedModal] = useState(false);
+  const [feedData, setFeedData] = useState({
+      date: new Date().toISOString().split('T')[0],
+      time: new Date().toTimeString().slice(0, 5),
+      quantity: 0,
+      feedType: 'Grower Pellets'
+  });
+
   // Sync state when pig prop updates
   useEffect(() => {
       setNotes(pig.notes || '');
@@ -97,20 +106,58 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
           status: 'Pending'
       };
 
-      // Create new timeline array (putting new event at top if it's recent, or just prepending)
+      // Create new timeline array
       const updatedTimeline = [eventToAdd, ...(pig.timeline || [])];
-      
-      // Sort timeline by date descending
       updatedTimeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
       onUpdate({ ...pig, timeline: updatedTimeline });
       setShowEventModal(false);
-      // Reset form
       setNewEvent({
           title: '',
           subtitle: '',
           date: new Date().toISOString().split('T')[0],
           color: 'green'
+      });
+  };
+
+  const handleLogFeed = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (feedData.quantity <= 0) return;
+
+      // Format Last Fed string
+      // E.g. "Nov 22 08:30 AM"
+      const dateObj = new Date(`${feedData.date}T${feedData.time}`);
+      const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const formattedTime = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      const lastFedString = `${formattedDate} ${formattedTime}`;
+
+      // Create Timeline Entry
+      const feedEvent: TimelineEvent = {
+          id: `feed-${Date.now()}`,
+          date: feedData.date,
+          title: 'Feed Logged',
+          subtitle: `${feedData.quantity}kg ${feedData.feedType}`,
+          color: 'green',
+          status: 'Completed',
+          icon: 'fa-wheat'
+      };
+
+      const updatedTimeline = [feedEvent, ...(pig.timeline || [])];
+      updatedTimeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      onUpdate({ 
+          ...pig, 
+          lastFed: lastFedString,
+          timeline: updatedTimeline
+      });
+      
+      setShowFeedModal(false);
+      // Reset slightly but keep date/time current
+      setFeedData({
+          date: new Date().toISOString().split('T')[0],
+          time: new Date().toTimeString().slice(0, 5),
+          quantity: 0,
+          feedType: 'Grower Pellets'
       });
   };
 
@@ -237,14 +284,28 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                 <p className="text-[10px] text-gray-400 font-bold uppercase">Weight</p>
                 <p className="text-lg font-bold text-gray-900">{pig.weight}kg</p>
             </div>
-             <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
+             <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm relative overflow-hidden group">
                 <p className="text-[10px] text-gray-400 font-bold uppercase">Last Fed</p>
                 <p className="text-lg font-bold text-gray-900 truncate px-1">
                     {pig.lastFed ? pig.lastFed.split(' ').slice(1).join(' ') : 'N/A'}
                 </p>
-                <p className="text-[9px] text-gray-400">
+                <p className="text-[9px] text-gray-400 mb-1">
                     {pig.lastFed ? pig.lastFed.split(' ')[0] : ''}
                 </p>
+                {/* Overlay Button */}
+                <button 
+                  onClick={() => setShowFeedModal(true)}
+                  className="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center text-white font-bold text-xs"
+                >
+                  <i className="fas fa-plus mr-1"></i> Log
+                </button>
+                {/* Always visible mobile button if needed, but hover covers desktop. Let's make it clickable area or small icon */}
+                 <button 
+                  onClick={() => setShowFeedModal(true)}
+                  className="absolute top-1 right-1 w-6 h-6 bg-ecomattGreen text-white rounded-full flex items-center justify-center shadow-sm md:hidden"
+                >
+                  <i className="fas fa-plus text-[10px]"></i>
+                </button>
             </div>
         </div>
 
@@ -343,12 +404,20 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                             </div>
                         </div>
                         
-                        <button 
-                            onClick={onViewHealth}
-                            className="w-full bg-blue-50 text-blue-600 border border-blue-100 py-3 rounded-xl font-bold text-xs hover:bg-blue-100 transition flex items-center justify-center gap-2"
-                        >
-                            <i className="fas fa-file-medical-alt"></i> View Health Records
-                        </button>
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={() => setShowFeedModal(true)}
+                                className="flex-1 bg-yellow-50 text-yellow-700 border border-yellow-100 py-3 rounded-xl font-bold text-xs hover:bg-yellow-100 transition flex items-center justify-center gap-2"
+                            >
+                                <i className="fas fa-utensils"></i> Log Feed
+                            </button>
+                            <button 
+                                onClick={onViewHealth}
+                                className="flex-1 bg-blue-50 text-blue-600 border border-blue-100 py-3 rounded-xl font-bold text-xs hover:bg-blue-100 transition flex items-center justify-center gap-2"
+                            >
+                                <i className="fas fa-file-medical-alt"></i> View Health
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -667,6 +736,86 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
 
                       <button className="w-full bg-ecomattGreen text-white font-bold py-3 rounded-xl shadow-lg mt-4">
                           Add Event
+                      </button>
+                  </form>
+              </div>
+          </div>
+      )}
+
+      {/* Log Feed Modal */}
+      {showFeedModal && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:px-4 animate-in fade-in duration-200">
+              <div className="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in slide-in-from-bottom duration-300">
+                  <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-lg font-bold text-gray-900">Log Feed Consumption</h3>
+                      <button onClick={() => setShowFeedModal(false)} className="text-gray-400 hover:text-gray-600">
+                          <i className="fas fa-times text-xl"></i>
+                      </button>
+                  </div>
+                  
+                  <form onSubmit={handleLogFeed} className="space-y-4">
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs text-gray-500 font-bold uppercase ml-1">Date</label>
+                            <input 
+                                type="date" 
+                                required
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none"
+                                value={feedData.date}
+                                onChange={(e) => setFeedData({...feedData, date: e.target.value})}
+                            />
+                        </div>
+                         <div>
+                            <label className="text-xs text-gray-500 font-bold uppercase ml-1">Time</label>
+                            <input 
+                                type="time" 
+                                required
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none"
+                                value={feedData.time}
+                                onChange={(e) => setFeedData({...feedData, time: e.target.value})}
+                            />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs text-gray-500 font-bold uppercase ml-1">Quantity (Kg)</label>
+                            <input 
+                                type="number" 
+                                step="0.1"
+                                placeholder="0.0" 
+                                required
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none font-bold"
+                                value={feedData.quantity}
+                                onChange={(e) => setFeedData({...feedData, quantity: parseFloat(e.target.value)})}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs text-gray-500 font-bold uppercase ml-1">Feed Type</label>
+                            <select 
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none"
+                                value={feedData.feedType}
+                                onChange={(e) => setFeedData({...feedData, feedType: e.target.value})}
+                            >
+                                <option value="Creep Feed">Creep Feed</option>
+                                <option value="Weaner Pellets">Weaner Pellets</option>
+                                <option value="Grower Pellets">Grower Pellets</option>
+                                <option value="Finisher Meal">Finisher Meal</option>
+                                <option value="Sow & Boar">Sow & Boar</option>
+                            </select>
+                        </div>
+                      </div>
+
+                      <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 mt-2">
+                        <p className="text-xs text-yellow-800">
+                            <i className="fas fa-info-circle mr-1"></i>
+                            This will update the 'Last Fed' timestamp for this animal.
+                        </p>
+                      </div>
+
+                      <button className="w-full bg-ecomattYellow text-black font-bold py-3 rounded-xl shadow-lg mt-4 hover:bg-yellow-500 transition-colors">
+                          Confirm Feed
                       </button>
                   </form>
               </div>
