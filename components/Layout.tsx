@@ -68,7 +68,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, setView, children, onAddCl
             </div>
             <div>
                 <h1 className="text-lg font-bold tracking-tight">Ecomatt<span className="text-ecomattGreen">Farm</span></h1>
-                <p className="text-[10px] text-ecomattBlack font-bold uppercase tracking-widest bg-ecomattGreen px-2 py-0.5 rounded mt-1 inline-block">v5.6 (Stable)</p>
+                <p className="text-[10px] text-ecomattBlack font-bold uppercase tracking-widest bg-ecomattGreen px-2 py-0.5 rounded mt-1 inline-block">v5.7 (Final)</p>
             </div>
         </div>
 
@@ -115,7 +115,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, setView, children, onAddCl
               </div>
               <div>
                   <h1 className="text-lg font-bold text-gray-900 tracking-tight">Ecomatt</h1>
-                  <p className="text-[9px] text-ecomattGreen font-bold">v5.6</p>
+                  <p className="text-[9px] text-ecomattGreen font-bold">v5.7</p>
               </div>
            </div>
 
