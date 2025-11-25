@@ -3,26 +3,26 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
-// --- FORCE CACHE CLEARING FOR v4.0 UPDATE ---
-// Safer implementation wrapped in load event to prevent "Invalid State" errors
+// --- FORCE CACHE CLEARING ---
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
+  window.addEventListener('load', async () => {
     try {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for(let registration of registrations) {
-          console.log('Unregistering stuck SW:', registration);
-          registration.unregister();
-        }
-        // Force reload if we found and killed a SW to get fresh assets
-        if (registrations.length > 0 && !sessionStorage.getItem('sw_cleared')) {
-            sessionStorage.setItem('sw_cleared', 'true');
-            window.location.reload();
-        }
-      }).catch(err => {
-        console.warn('Service Worker cleanup warning:', err);
-      });
+      // Check if document is in a valid state before querying SW
+      if (document.visibilityState === 'visible' || document.readyState === 'complete') {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for(let registration of registrations) {
+            console.log('Unregistering Service Worker:', registration);
+            await registration.unregister();
+          }
+          // Force reload if we found and killed a SW to get fresh assets
+          if (registrations.length > 0 && !sessionStorage.getItem('sw_cleared')) {
+              sessionStorage.setItem('sw_cleared', 'true');
+              window.location.reload();
+          }
+      }
     } catch (e) {
-      console.warn('Service Worker not available or restricted:', e);
+      // Silently fail if SW API is restricted or document state is invalid
+      console.debug('SW Cleanup skipped:', e);
     }
   });
 }
