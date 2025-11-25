@@ -28,6 +28,7 @@ export default defineConfig({
         ]
       },
       workbox: {
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
             {
                 urlPattern: /^https:\/\/cdn\.tailwindcss\.com\/.*/i,

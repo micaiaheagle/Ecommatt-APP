@@ -62,7 +62,7 @@ export const generateSmartAlerts = async (metrics: any): Promise<any[]> => {
             Metrics: ${JSON.stringify(metrics)}
             
             Return strictly valid JSON format: { "alerts": [{ "title": "...", "severity": "High"|"Medium"|"Low", "message": "..." }] }
-            Do not include markdown formatting.`,
+            Do not include markdown formatting. Keep text brief.`,
             config: {
                 responseMimeType: "application/json"
             }
@@ -71,21 +71,25 @@ export const generateSmartAlerts = async (metrics: any): Promise<any[]> => {
         let text = response.text;
         if (!text) return [];
 
-        // Aggressive Cleanup to prevent JSON syntax errors
+        // Aggressive Cleanup
         text = text.trim();
-        // Remove markdown code blocks if present
         text = text.replace(/```json/g, "").replace(/```/g, "");
+
+        // Defensive: Find the last closing brace to handle truncated responses
+        const lastBrace = text.lastIndexOf('}');
+        if (lastBrace !== -1) {
+            text = text.substring(0, lastBrace + 1);
+        }
         
         try {
             const data = JSON.parse(text);
             return data.alerts || [];
         } catch (parseError) {
-            console.warn("JSON Parse Failed. Raw text:", text);
-            // Return a fallback alert so the app doesn't look broken, but doesn't crash
+            console.warn("JSON Parse Failed:", parseError);
             return [{
-                title: "System Notice",
+                title: "System Update",
                 severity: "Low",
-                message: "AI insights are currently refreshing. Please check back shortly."
+                message: "Insights are refreshing. Please check back."
             }];
         }
     } catch (e) {
