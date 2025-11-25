@@ -59,7 +59,7 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
             z-50 bg-white
             
             /* Mobile: Fixed Bottom Sheet */
-            fixed bottom-0 left-0 w-full h-[80vh] rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] overflow-y-auto
+            fixed bottom-0 left-0 w-full h-[85vh] rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] overflow-y-auto
             animate-in slide-in-from-bottom duration-300
             
             /* Desktop: Absolute Dropdown */
@@ -68,7 +68,7 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
         `}>
           
           {/* Mobile Handle */}
-          <div className="md:hidden sticky top-0 bg-white/95 backdrop-blur pt-3 pb-2 flex justify-center border-b border-gray-100" onClick={() => setIsOpen(false)}>
+          <div className="md:hidden sticky top-0 bg-white/95 backdrop-blur pt-3 pb-2 flex justify-center border-b border-gray-100 z-10" onClick={() => setIsOpen(false)}>
              <div className="w-12 h-1.5 bg-gray-300 rounded-full mb-2"></div>
           </div>
           
@@ -91,7 +91,7 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
                 </h4>
                 <ul className="grid grid-cols-2 md:block gap-3 space-y-0 md:space-y-3">
                   <li>
-                    <button onClick={() => handleItemClick('add_user')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left">
+                    <button onClick={() => handleItemClick('add_user')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left border border-gray-100 md:border-none shadow-sm md:shadow-none">
                       <div className="w-10 h-10 md:w-auto md:h-auto bg-white md:bg-transparent rounded-full flex items-center justify-center shadow-sm md:shadow-none mb-2 md:mb-0 text-gray-400 group-hover:text-ecomattGreen">
                         <i className="fas fa-user-plus text-lg md:text-base"></i>
                       </div>
@@ -99,7 +99,7 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
                     </button>
                   </li>
                   <li>
-                    <button onClick={() => handleItemClick('add_task')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left">
+                    <button onClick={() => handleItemClick('add_task')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left border border-gray-100 md:border-none shadow-sm md:shadow-none">
                       <div className="w-10 h-10 md:w-auto md:h-auto bg-white md:bg-transparent rounded-full flex items-center justify-center shadow-sm md:shadow-none mb-2 md:mb-0 text-gray-400 group-hover:text-ecomattGreen">
                         <i className="fas fa-check-circle text-lg md:text-base"></i>
                       </div>
@@ -116,7 +116,7 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
                 </h4>
                 <ul className="grid grid-cols-2 md:block gap-3 space-y-0 md:space-y-3">
                   <li>
-                    <button onClick={() => handleItemClick('add_pig')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left">
+                    <button onClick={() => handleItemClick('add_pig')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left border border-gray-100 md:border-none shadow-sm md:shadow-none">
                        <div className="w-10 h-10 md:w-auto md:h-auto bg-white md:bg-transparent rounded-full flex items-center justify-center shadow-sm md:shadow-none mb-2 md:mb-0 text-gray-400 group-hover:text-ecomattGreen">
                         <i className="fas fa-plus-circle text-lg md:text-base"></i>
                       </div>
@@ -124,7 +124,7 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
                     </button>
                   </li>
                   <li>
-                    <button onClick={() => handleItemClick('log_event')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left">
+                    <button onClick={() => handleItemClick('log_event')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left border border-gray-100 md:border-none shadow-sm md:shadow-none">
                        <div className="w-10 h-10 md:w-auto md:h-auto bg-white md:bg-transparent rounded-full flex items-center justify-center shadow-sm md:shadow-none mb-2 md:mb-0 text-gray-400 group-hover:text-ecomattGreen">
                         <i className="fas fa-history text-lg md:text-base"></i>
                       </div>
@@ -143,7 +143,7 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
                 </h4>
                 <ul className="grid grid-cols-2 md:block gap-3 space-y-0 md:space-y-3">
                   <li>
-                    <button onClick={() => handleItemClick('log_feed')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left">
+                    <button onClick={() => handleItemClick('log_feed')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left border border-gray-100 md:border-none shadow-sm md:shadow-none">
                        <div className="w-10 h-10 md:w-auto md:h-auto bg-white md:bg-transparent rounded-full flex items-center justify-center shadow-sm md:shadow-none mb-2 md:mb-0 text-gray-400 group-hover:text-ecomattGreen">
                         <i className="fas fa-utensils text-lg md:text-base"></i>
                       </div>
@@ -151,7 +151,7 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
                     </button>
                   </li>
                   <li>
-                    <button onClick={() => handleItemClick('log_health')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left">
+                    <button onClick={() => handleItemClick('log_health')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left border border-gray-100 md:border-none shadow-sm md:shadow-none">
                        <div className="w-10 h-10 md:w-auto md:h-auto bg-white md:bg-transparent rounded-full flex items-center justify-center shadow-sm md:shadow-none mb-2 md:mb-0 text-gray-400 group-hover:text-ecomattGreen">
                         <i className="fas fa-syringe text-lg md:text-base"></i>
                       </div>
@@ -159,7 +159,7 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
                     </button>
                   </li>
                    <li>
-                    <button onClick={() => handleItemClick('add_feed_stock')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left">
+                    <button onClick={() => handleItemClick('add_feed_stock')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left border border-gray-100 md:border-none shadow-sm md:shadow-none">
                        <div className="w-10 h-10 md:w-auto md:h-auto bg-white md:bg-transparent rounded-full flex items-center justify-center shadow-sm md:shadow-none mb-2 md:mb-0 text-gray-400 group-hover:text-ecomattGreen">
                         <i className="fas fa-truck-loading text-lg md:text-base"></i>
                       </div>
@@ -167,7 +167,7 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
                     </button>
                   </li>
                   <li>
-                    <button onClick={() => handleItemClick('cleaning_log')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left">
+                    <button onClick={() => handleItemClick('cleaning_log')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left border border-gray-100 md:border-none shadow-sm md:shadow-none">
                        <div className="w-10 h-10 md:w-auto md:h-auto bg-white md:bg-transparent rounded-full flex items-center justify-center shadow-sm md:shadow-none mb-2 md:mb-0 text-gray-400 group-hover:text-ecomattGreen">
                         <i className="fas fa-broom text-lg md:text-base"></i>
                       </div>
@@ -185,7 +185,7 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
                 </h4>
                 <ul className="grid grid-cols-2 md:block gap-3 space-y-0 md:space-y-3">
                   <li>
-                    <button onClick={() => handleItemClick('add_income')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left">
+                    <button onClick={() => handleItemClick('add_income')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left border border-gray-100 md:border-none shadow-sm md:shadow-none">
                        <div className="w-10 h-10 md:w-auto md:h-auto bg-white md:bg-transparent rounded-full flex items-center justify-center shadow-sm md:shadow-none mb-2 md:mb-0 text-gray-400 group-hover:text-ecomattGreen">
                         <i className="fas fa-arrow-down text-lg md:text-base"></i>
                       </div>
@@ -193,7 +193,7 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
                     </button>
                   </li>
                   <li>
-                    <button onClick={() => handleItemClick('add_expense')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left">
+                    <button onClick={() => handleItemClick('add_expense')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left border border-gray-100 md:border-none shadow-sm md:shadow-none">
                        <div className="w-10 h-10 md:w-auto md:h-auto bg-white md:bg-transparent rounded-full flex items-center justify-center shadow-sm md:shadow-none mb-2 md:mb-0 text-gray-400 group-hover:text-ecomattGreen">
                         <i className="fas fa-arrow-up text-lg md:text-base"></i>
                       </div>
@@ -201,7 +201,7 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
                     </button>
                   </li>
                   <li>
-                    <button onClick={() => handleItemClick('create_invoice')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left">
+                    <button onClick={() => handleItemClick('create_invoice')} className="w-full flex flex-col md:flex-row items-center md:gap-3 p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl md:rounded-none hover:bg-green-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-center md:text-left border border-gray-100 md:border-none shadow-sm md:shadow-none">
                        <div className="w-10 h-10 md:w-auto md:h-auto bg-white md:bg-transparent rounded-full flex items-center justify-center shadow-sm md:shadow-none mb-2 md:mb-0 text-gray-400 group-hover:text-ecomattGreen">
                         <i className="fas fa-file-invoice-dollar text-lg md:text-base"></i>
                       </div>

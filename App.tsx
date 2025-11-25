@@ -319,6 +319,7 @@ const App: React.FC = () => {
             onAddClick={handleFabClick}
             onQuickAction={handleQuickAction}
             currentUser={currentUser}
+            onLogout={handleLogout}
         >
             {renderContent()}
         </Layout>

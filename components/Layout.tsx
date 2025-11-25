@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ViewState, UserRole, User } from '../types';
 import QuickCreateMenu from './QuickCreateMenu';
 
@@ -10,13 +10,33 @@ interface LayoutProps {
   onAddClick: () => void; // Fallback for mobile FAB
   onQuickAction: (action: string) => void;
   currentUser: User | null;
+  onLogout: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ currentView, setView, children, onAddClick, onQuickAction, currentUser }) => {
+const Layout: React.FC<LayoutProps> = ({ currentView, setView, children, onAddClick, onQuickAction, currentUser, onLogout }) => {
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
+
   const handleNavClick = (view: ViewState) => {
     setView(view);
   };
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Define Nav Items with required Roles
   const NAV_ITEMS = [
@@ -69,20 +89,16 @@ const Layout: React.FC<LayoutProps> = ({ currentView, setView, children, onAddCl
             ))}
         </nav>
 
-        {/* User Profile Small */}
+        {/* User Profile Small (Sidebar) */}
         <div className="p-4 border-t border-gray-800 bg-gray-900/50">
-            <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-xs font-bold">
+            <div className="flex items-center gap-3 cursor-pointer hover:bg-gray-800 p-2 rounded-lg transition" onClick={() => setShowUserMenu(!showUserMenu)}>
+                <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-xs font-bold text-white">
                     {currentUser ? currentUser.name.charAt(0) : 'U'}
                 </div>
-                <div className="flex-1">
-                    <p className="text-sm font-bold truncate">{currentUser?.name}</p>
+                <div className="flex-1 overflow-hidden">
+                    <p className="text-sm font-bold truncate text-white">{currentUser?.name}</p>
                     <p className="text-[10px] text-ecomattGreen">● {currentUser?.role}</p>
                 </div>
-                <i 
-                    className="fas fa-sign-out-alt text-gray-500 hover:text-white cursor-pointer"
-                    onClick={() => setView(ViewState.Settings)} 
-                ></i>
             </div>
         </div>
       </div>
@@ -112,15 +128,87 @@ const Layout: React.FC<LayoutProps> = ({ currentView, setView, children, onAddCl
               {/* Quick Create Menu */}
               <QuickCreateMenu onAction={onQuickAction} />
 
-              <button className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:text-ecomattGreen relative">
-                  <i className="fas fa-bell"></i>
-                  <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-              </button>
-              
-              {/* Mobile User Avatar */}
-              <div className="md:hidden w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                  {currentUser ? currentUser.name.charAt(0) : 'U'}
+              {/* Notifications */}
+              <div className="relative" ref={notifRef}>
+                  <button 
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:text-ecomattGreen relative transition-colors"
+                  >
+                      <i className="fas fa-bell"></i>
+                      <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                  </button>
+
+                  {/* Notification Panel Popover */}
+                  {showNotifications && (
+                    <div className="absolute right-0 top-14 w-[320px] md:w-[400px] bg-white shadow-2xl rounded-xl border border-gray-200 z-50 animate-in fade-in slide-in-from-top-2 overflow-hidden flex flex-col">
+                        <div className="flex justify-between items-center p-4 border-b border-gray-100">
+                            <h3 className="font-bold text-lg text-gray-800">Notifications</h3>
+                            <button onClick={() => setShowNotifications(false)} className="text-gray-400 hover:text-gray-600">
+                                <i className="fas fa-times text-lg"></i>
+                            </button>
+                        </div>
+                        <div className="flex-1 flex flex-col items-center justify-center p-10 text-center min-h-[300px]">
+                             <div className="mb-6 text-gray-200">
+                                <i className="fas fa-umbrella-beach text-8xl"></i>
+                             </div>
+                             <h4 className="font-bold text-gray-700 text-lg mb-2">Nothing to see here!</h4>
+                             <p className="text-sm text-gray-400">You're all caught up with farm alerts.</p>
+                        </div>
+                         <div className="p-3 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 text-gray-500">
+                             <button className="hover:text-gray-800"><i className="fas fa-print"></i></button>
+                             <button className="hover:text-gray-800"><i className="fas fa-share-square"></i></button>
+                             <button className="hover:text-gray-800"><i className="fas fa-cog"></i></button>
+                         </div>
+                    </div>
+                  )}
               </div>
+              
+              {/* User Avatar Menu */}
+              <div className="relative" ref={userMenuRef}>
+                  <button 
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    className="w-10 h-10 bg-ecomattBlack rounded-full flex items-center justify-center text-white text-sm font-bold hover:ring-2 hover:ring-offset-2 hover:ring-ecomattGreen transition-all shadow-md"
+                  >
+                      {currentUser ? currentUser.name.charAt(0) : 'U'}
+                  </button>
+
+                  {/* User Settings Popover (Intuit style match) */}
+                  {showUserMenu && (
+                    <div className="absolute right-0 top-14 w-[320px] bg-white shadow-2xl rounded-xl border border-gray-200 z-50 flex flex-col items-center animate-in fade-in slide-in-from-top-2 overflow-hidden">
+                        
+                        {/* Profile Section */}
+                        <div className="w-full p-8 flex flex-col items-center border-b border-gray-100">
+                            <div className="w-20 h-20 bg-ecomattGreen text-white rounded-full flex items-center justify-center text-3xl font-bold mb-4 shadow-inner">
+                                {currentUser?.name.charAt(0)}
+                            </div>
+                            <p className="text-gray-900 font-bold text-xl">{currentUser?.name}</p>
+                            <p className="text-gray-500 text-sm mb-6">{currentUser?.email}</p>
+                            
+                            <button className="text-ecomattGreen font-bold text-sm mb-6 hover:underline">
+                                Manage your Ecomatt Account
+                            </button>
+
+                            <button 
+                                onClick={() => {
+                                    onLogout();
+                                    setShowUserMenu(false);
+                                }}
+                                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-full transition-colors border border-gray-200"
+                            >
+                                Sign out
+                            </button>
+                        </div>
+                        
+                        {/* Footer Links */}
+                        <div className="w-full bg-gray-50 p-4 flex justify-center gap-4 text-xs text-gray-500 font-medium">
+                            <span className="cursor-pointer hover:text-gray-800">Privacy</span>
+                            <span>•</span>
+                            <span className="cursor-pointer hover:text-gray-800">Terms</span>
+                        </div>
+                    </div>
+                  )}
+              </div>
+
            </div>
         </header>
 
@@ -145,7 +233,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, setView, children, onAddCl
             </button>
         ))}
 
-        {/* Replaced FAB with spacer since we have header button now, or keep as shortcut to main action */}
+        {/* Spacer for center alignment */}
         <div className="relative w-14 h-14 flex items-center justify-center -mb-4">
             <div className="w-1 h-1 bg-gray-200 rounded-full"></div>
         </div>
