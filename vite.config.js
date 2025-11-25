@@ -23,12 +23,12 @@ export default defineConfig({
         theme_color: '#27cd00',
         icons: [
           {
-            src: 'https://via.placeholder.com/192.png/27cd00/ffffff?text=Ecomatt',
+            src: 'https://placehold.co/192x192/27cd00/ffffff/png?text=Ecomatt',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'https://via.placeholder.com/512.png/27cd00/ffffff?text=Ecomatt',
+            src: 'https://placehold.co/512x512/27cd00/ffffff/png?text=Ecomatt',
             sizes: '512x512',
             type: 'image/png'
           }

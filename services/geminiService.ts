@@ -3,12 +3,34 @@ import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 
 // Safe initialization that won't crash if process is undefined
 const getApiKey = () => {
+  let key = '';
   try {
-    return process.env.API_KEY;
+    // Try process.env first (injected by Vite define)
+    if (typeof process !== 'undefined' && process.env) {
+        key = process.env.API_KEY || '';
+    }
   } catch (e) {
-    // Fallback for environments where process is not polyfilled
-    return (import.meta as any).env?.VITE_API_KEY || '';
+    // ignore error accessing process
   }
+
+  // Try import.meta.env fallback
+  if (!key) {
+      try {
+        // @ts-ignore
+        key = import.meta.env?.VITE_API_KEY || '';
+      } catch(e) {
+          // ignore
+      }
+  }
+
+  // CRITICAL: Return a dummy key if no key is found.
+  // Passing empty string/undefined to GoogleGenAI constructor throws an error 
+  // and crashes the entire React app (White Screen).
+  if (!key || key === 'undefined') {
+      console.warn("Gemini API Key not found. Using dummy key to prevent crash.");
+      return "DUMMY_KEY_TO_PREVENT_CRASH"; 
+  }
+  return key;
 };
 
 const ai = new GoogleGenAI({ apiKey: getApiKey() });
@@ -40,7 +62,7 @@ export const analyzePigImage = async (base64Image: string): Promise<string> => {
     return response.text || "Could not analyze image.";
   } catch (error) {
     console.error("Gemini Vision Error:", error);
-    return "Error analyzing image. Please try again.";
+    return "Error analyzing image. Please try again or check API Key.";
   }
 };
 
