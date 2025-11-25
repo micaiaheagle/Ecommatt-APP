@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, UserRole } from '../types';
+import { clearAllData } from '../services/storageService';
 
 interface SettingsProps {
   currentUser: User;
@@ -51,6 +52,14 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, allUsers, onAddUser, o
       setConfirmPassword('');
       setPasswordMsg("Password updated successfully.");
       setTimeout(() => setPasswordMsg(''), 3000);
+  };
+
+  const handleForceReset = () => {
+      if(window.confirm("This will delete ALL local data and reset the app to factory settings. Are you sure?")) {
+          // Clear service worker cache indicator
+          sessionStorage.removeItem('sw_cleared');
+          clearAllData();
+      }
   };
 
   return (
@@ -207,9 +216,17 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, allUsers, onAddUser, o
           <i className="fas fa-sign-out-alt"></i> Sign Out
         </button>
 
-        <p className="text-center text-gray-400 text-[10px] mt-6">
-            Changes to your profile are logged for security.
-        </p>
+         {/* DEBUG / RESET TOOL */}
+        <div className="mt-12 text-center border-t border-gray-200 pt-8">
+            <h4 className="text-xs font-bold text-gray-400 mb-2">Troubleshooting</h4>
+            <button 
+                onClick={handleForceReset}
+                className="text-xs bg-gray-200 text-gray-600 px-4 py-2 rounded-full font-bold hover:bg-red-500 hover:text-white transition-colors"
+            >
+                Reset App & Clear Cache
+            </button>
+            <p className="text-[9px] text-gray-400 mt-2">Use this if the app feels stuck or slow.</p>
+        </div>
     </div>
   );
 };

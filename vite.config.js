@@ -29,12 +29,14 @@ export default defineConfig({
       },
       workbox: {
         cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
             {
                 urlPattern: /^https:\/\/cdn\.tailwindcss\.com\/.*/i,
                 handler: 'CacheFirst',
                 options: {
-                  cacheName: 'tailwind-cdn',
+                  cacheName: 'tailwind-cdn-v4',
                   expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
                   cacheableResponse: { statuses: [0, 200] }
                 }
@@ -43,7 +45,7 @@ export default defineConfig({
                 urlPattern: /^https:\/\/cdnjs\.cloudflare\.com\/.*/i,
                 handler: 'CacheFirst',
                 options: {
-                  cacheName: 'font-awesome',
+                  cacheName: 'font-awesome-v4',
                   expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
                   cacheableResponse: { statuses: [0, 200] }
                 }
