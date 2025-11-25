@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -60,50 +61,32 @@ export const generateSmartAlerts = async (metrics: any): Promise<any[]> => {
             contents: `Analyze these farm metrics and generate 3 critical alerts or recommendations if needed.
             Metrics: ${JSON.stringify(metrics)}
             
-            Return JSON format: { "alerts": [{ "title": "...", "severity": "High"|"Medium"|"Low", "message": "..." }] }`,
+            Return strictly valid JSON format: { "alerts": [{ "title": "...", "severity": "High"|"Medium"|"Low", "message": "..." }] }
+            Do not include markdown formatting.`,
             config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                  type: Type.OBJECT,
-                  properties: {
-                    alerts: {
-                      type: Type.ARRAY,
-                      items: {
-                        type: Type.OBJECT,
-                        properties: {
-                          title: { type: Type.STRING },
-                          severity: { type: Type.STRING },
-                          message: { type: Type.STRING }
-                        }
-                      }
-                    }
-                  }
-                }
+                responseMimeType: "application/json"
             }
         });
         
         let text = response.text;
         if (!text) return [];
 
-        // Robust cleanup: Remove whitespace and markdown code blocks
+        // Aggressive Cleanup to prevent JSON syntax errors
         text = text.trim();
-        // Remove start code fence (handles ```json and ```)
-        text = text.replace(/^```(?:json)?\s*/i, "");
-        // Remove end code fence (handles trailing whitespace)
-        text = text.replace(/\s*```\s*$/, "");
-
-        // Guard: Check if response is HTML (often happens with 404/500 proxy errors)
-        if (text.startsWith('<')) {
-            console.warn("Gemini returned HTML instead of JSON. Ignoring.");
-            return [];
-        }
+        // Remove markdown code blocks if present
+        text = text.replace(/```json/g, "").replace(/```/g, "");
         
         try {
             const data = JSON.parse(text);
             return data.alerts || [];
         } catch (parseError) {
-            console.warn("JSON Parse Error in Smart Alerts. Response might be incomplete or malformed.");
-            return [];
+            console.warn("JSON Parse Failed. Raw text:", text);
+            // Return a fallback alert so the app doesn't look broken, but doesn't crash
+            return [{
+                title: "System Notice",
+                severity: "Low",
+                message: "AI insights are currently refreshing. Please check back shortly."
+            }];
         }
     } catch (e) {
         console.error("Smart Alert Generation Error", e);

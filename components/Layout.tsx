@@ -68,7 +68,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, setView, children, onAddCl
             </div>
             <div>
                 <h1 className="text-lg font-bold tracking-tight">Ecomatt<span className="text-ecomattGreen">Farm</span></h1>
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest">PWA Console</p>
+                <p className="text-[10px] text-gray-400 uppercase tracking-widest">v2.1 Live</p>
             </div>
         </div>
 
@@ -113,7 +113,10 @@ const Layout: React.FC<LayoutProps> = ({ currentView, setView, children, onAddCl
               <div className="w-8 h-8 bg-ecomattBlack rounded-full flex items-center justify-center border border-ecomattGreen">
                   <i className="fas fa-leaf text-ecomattGreen text-xs"></i>
               </div>
-              <h1 className="text-lg font-bold text-gray-900 tracking-tight">Ecomatt</h1>
+              <div>
+                  <h1 className="text-lg font-bold text-gray-900 tracking-tight">Ecomatt</h1>
+                  <p className="text-[9px] text-ecomattGreen font-bold">v2.1 Live</p>
+              </div>
            </div>
 
            {/* Desktop Breadcrumb */}
