@@ -20,6 +20,13 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
   const [notes, setNotes] = useState(pig.notes || '');
   const [isEditingNotes, setIsEditingNotes] = useState(false);
 
+  // Quick Edit States
+  const [isEditingTag, setIsEditingTag] = useState(false);
+  const [editedTag, setEditedTag] = useState(pig.tagId);
+
+  const [isEditingWeight, setIsEditingWeight] = useState(false);
+  const [editedWeight, setEditedWeight] = useState(pig.weight?.toString() || '0');
+
   // Pedigree Edit State
   const [isEditingLineage, setIsEditingLineage] = useState(false);
   const [lineageData, setLineageData] = useState({ sireId: pig.sireId || '', damId: pig.damId || '' });
@@ -46,6 +53,8 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
   useEffect(() => {
       setNotes(pig.notes || '');
       setLineageData({ sireId: pig.sireId || '', damId: pig.damId || '' });
+      setEditedTag(pig.tagId);
+      setEditedWeight(pig.weight?.toString() || '0');
   }, [pig]);
 
   // Helper to calculate age from DOB
@@ -78,6 +87,25 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
   const handleSaveNotes = () => {
       onUpdate({ ...pig, notes });
       setIsEditingNotes(false);
+  };
+
+  const handleSaveTag = () => {
+      if (editedTag.trim() !== "") {
+          onUpdate({ ...pig, tagId: editedTag });
+      } else {
+          setEditedTag(pig.tagId); // Revert if empty
+      }
+      setIsEditingTag(false);
+  };
+
+  const handleSaveWeight = () => {
+      const w = parseFloat(editedWeight);
+      if (!isNaN(w)) {
+          onUpdate({ ...pig, weight: w });
+      } else {
+          setEditedWeight(pig.weight?.toString() || '0');
+      }
+      setIsEditingWeight(false);
   };
 
   const handleToggleEventStatus = (idx: number) => {
@@ -170,6 +198,13 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
       { label: 'Mature', endDay: 9999, icon: 'fa-medal' },
   ];
 
+  // Helper to get active stage index
+  const getCurrentStageIndex = () => {
+      const days = getDaysOld(pig.dob);
+      const index = LIFE_STAGES.findIndex((s, i) => days <= s.endDay && (i === 0 || days > LIFE_STAGES[i-1].endDay));
+      return index === -1 ? LIFE_STAGES.length - 1 : index;
+  };
+
   // --- Pedigree Helper Functions ---
   
   const getPigDetails = (id?: string) => {
@@ -248,29 +283,92 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
             </button>
           </div>
 
-          <div className="absolute bottom-6 left-6 text-white">
-            <h1 className="text-4xl font-bold tracking-tight">{pig.tagId}</h1>
+          <div className="absolute bottom-6 left-6 text-white w-full pr-12">
+            {isEditingTag ? (
+                <input 
+                    type="text"
+                    className="text-4xl font-bold tracking-tight bg-transparent border-b border-white/50 text-white w-full max-w-[250px] outline-none"
+                    value={editedTag}
+                    onChange={(e) => setEditedTag(e.target.value)}
+                    onBlur={handleSaveTag}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveTag()}
+                    autoFocus
+                />
+            ) : (
+                <h1 
+                    className="text-4xl font-bold tracking-tight flex items-center gap-2 cursor-pointer group"
+                    onClick={() => setIsEditingTag(true)}
+                >
+                    {pig.tagId}
+                    <i className="fas fa-pencil-alt text-base opacity-50 group-hover:opacity-100 transition-opacity"></i>
+                </h1>
+            )}
             <p className="text-ecomattYellow font-medium text-sm mt-1">{pig.breed} • {pig.stage}</p>
           </div>
       </div>
 
       <div className="p-5 -mt-6 bg-grayBg rounded-t-3xl relative z-10">
           
-        {/* Quick Stats Grid - 2 Columns */}
+        {/* Quick Stats Grid - Expanded */}
         <div className="grid grid-cols-2 gap-3 mb-6">
+            {/* Age */}
             <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
                 <p className="text-[10px] text-gray-400 font-bold uppercase">Age</p>
                 <p className="text-lg font-bold text-gray-900">{calculateAge(pig.dob)}</p>
             </div>
+            
+            {/* Gender - NEW */}
+            <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
+                <p className="text-[10px] text-gray-400 font-bold uppercase">Gender</p>
+                <p className="text-lg font-bold text-gray-900">{pig.gender}</p>
+            </div>
+
+            {/* Breed - NEW */}
+            <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
+                <p className="text-[10px] text-gray-400 font-bold uppercase">Breed</p>
+                <p className="text-lg font-bold text-gray-900 truncate">{pig.breed}</p>
+            </div>
+
+            {/* Location - NEW */}
+            <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
+                <p className="text-[10px] text-gray-400 font-bold uppercase">Location</p>
+                <p className="text-lg font-bold text-gray-900">{pig.penLocation}</p>
+            </div>
+
+            {/* Status */}
             <div className="bg-green-50 p-3 rounded-2xl text-center border border-green-100 shadow-sm">
                 <p className="text-[10px] text-green-600 font-bold uppercase">Status</p>
                 <p className="text-lg font-bold text-green-700">{pig.status}</p>
             </div>
-            <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
+            
+            {/* Weight - Editable */}
+            <div 
+                className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm relative group cursor-pointer"
+                onClick={() => setIsEditingWeight(true)}
+            >
                 <p className="text-[10px] text-gray-400 font-bold uppercase">Weight</p>
-                <p className="text-lg font-bold text-gray-900">{pig.weight}kg</p>
+                {isEditingWeight ? (
+                    <div className="flex justify-center items-center gap-1" onClick={e => e.stopPropagation()}>
+                        <input 
+                            type="number" 
+                            className="w-16 text-lg font-bold text-gray-900 text-center border-b border-ecomattGreen outline-none bg-transparent p-0"
+                            value={editedWeight}
+                            onChange={(e) => setEditedWeight(e.target.value)}
+                            onBlur={handleSaveWeight}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSaveWeight()}
+                            autoFocus
+                        />
+                        <span className="text-sm text-gray-500">kg</span>
+                    </div>
+                ) : (
+                    <p className="text-lg font-bold text-gray-900 flex items-center justify-center gap-1">
+                        {pig.weight}kg <i className="fas fa-pencil-alt text-[10px] text-gray-300"></i>
+                    </p>
+                )}
             </div>
-             <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm relative overflow-hidden group">
+
+            {/* Last Fed */}
+             <div className="col-span-2 bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm relative overflow-hidden group">
                 <p className="text-[10px] text-gray-400 font-bold uppercase">Last Fed</p>
                 <p className="text-lg font-bold text-gray-900 truncate px-1">
                     {pig.lastFed ? pig.lastFed.split(' ').slice(1).join(' ') : 'N/A'}
@@ -325,8 +423,14 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                         </h3>
                         
                         <div className="relative">
-                            {/* Connector Line */}
+                            {/* Track Line */}
                             <div className="absolute top-4 left-0 w-full h-1 bg-gray-200 rounded-full z-0"></div>
+                            
+                            {/* Progress Fill Line */}
+                            <div 
+                                className="absolute top-4 left-0 h-1 bg-ecomattGreen rounded-full z-0 transition-all duration-1000 ease-out"
+                                style={{ width: `${(getCurrentStageIndex() / (LIFE_STAGES.length - 1)) * 100}%` }}
+                            ></div>
                             
                             {/* Stages */}
                             <div className="flex justify-between relative z-10">

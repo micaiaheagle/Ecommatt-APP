@@ -4,7 +4,8 @@ export enum PigStatus {
   Sick = 'Sick',
   Quarantine = 'Quarantine',
   Sold = 'Sold',
-  Deceased = 'Deceased'
+  Deceased = 'Deceased',
+  Pregnant = 'Pregnant'
 }
 
 export enum PigStage {

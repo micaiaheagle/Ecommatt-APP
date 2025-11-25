@@ -23,7 +23,7 @@ const SEED_PIGS: Pig[] = [
       dob: '2023-01-15', 
       gender: 'Female', 
       stage: PigStage.Sow, 
-      status: PigStatus.Active, 
+      status: PigStatus.Pregnant, 
       penLocation: 'Pen 3B', 
       weight: 210, 
       imageUrl: '',
@@ -39,6 +39,8 @@ const SEED_PIGS: Pig[] = [
   { id: '2', tagId: 'EF-9001', breed: 'Duroc', dob: '2023-02-20', gender: 'Male', stage: PigStage.Boar, status: PigStatus.Active, penLocation: 'Pen 1A', weight: 210, sireId: 'D-100', damId: 'D-055', lastFed: 'Today 07:45 AM' },
   { id: '3', tagId: 'EF-003', breed: 'Landrace', dob: '2023-06-10', gender: 'Female', stage: PigStage.Grower, status: PigStatus.Sick, penLocation: 'Isolation', weight: 65, notes: 'Coughing', lastFed: 'Today 09:00 AM' },
   { id: '4', tagId: 'EF-004', breed: 'Large White', dob: '2023-07-01', gender: 'Male', stage: PigStage.Weaner, status: PigStatus.Active, penLocation: 'Pen C2', weight: 25, lastFed: 'Yesterday 04:00 PM' },
+  { id: '5', tagId: 'EF-005', breed: 'Large White', dob: '2023-10-01', gender: 'Female', stage: PigStage.Piglet, status: PigStatus.Active, penLocation: 'Pen F1', weight: 12, lastFed: 'Today 10:00 AM' },
+  { id: '6', tagId: 'EF-006', breed: 'Duroc', dob: '2023-10-01', gender: 'Male', stage: PigStage.Piglet, status: PigStatus.Active, penLocation: 'Pen F1', weight: 13, lastFed: 'Today 10:00 AM' },
 ];
 
 const SEED_TASKS: Task[] = [
@@ -61,6 +63,7 @@ const SEED_HEALTH: HealthRecord[] = [
 const SEED_FINANCE: FinanceRecord[] = [
   { id: 'fin1', date: 'Nov 15', type: 'Income', category: 'Sales', amount: 1200, description: 'Pork Sales Batch #21' },
   { id: 'fin2', date: 'Nov 10', type: 'Expense', category: 'Supplies', amount: 150, description: 'Vet Supplies' },
+  { id: 'fin3', date: 'Nov 05', type: 'Expense', category: 'Feed', amount: 450, description: 'Sow Meal Bulk' },
 ];
 
 // Initial Users
@@ -119,8 +122,6 @@ const App: React.FC = () => {
         setCurrentUser(user);
         setIsAuthenticated(true);
         setLoginError('');
-        // Show onboarding only if first time? For now, logic handled by state
-        // In real app, check user.hasOnboarded
         setShowOnboarding(true); 
     } else {
         setLoginError('Invalid email or password.');
@@ -187,15 +188,54 @@ const App: React.FC = () => {
       setCurrentUser({ ...currentUser, password: newPassword });
   };
 
-  // FAB Click from Layout
-  const handleFabClick = () => {
-      if (currentView === ViewState.Pigs) {
-          setIsAddingPig(true);
-      } else {
-          // Default action for other screens? Or perhaps navigate to Pigs and open add
-          setCurrentView(ViewState.Pigs);
-          setIsAddingPig(true);
+  // GLOBAL QUICK ACTIONS HANDLER
+  const handleQuickAction = (action: string) => {
+      console.log("Quick Action Triggered:", action);
+      switch(action) {
+          case 'add_pig':
+              setCurrentView(ViewState.Pigs);
+              setIsAddingPig(true);
+              setSelectedPig(null);
+              break;
+          
+          case 'log_feed':
+              setCurrentView(ViewState.Operations);
+              setOperationsInitialTab('Feed');
+              break;
+          
+          case 'log_health':
+              setCurrentView(ViewState.Operations);
+              setOperationsInitialTab('Health');
+              break;
+
+          case 'add_task':
+              setCurrentView(ViewState.Operations);
+              setOperationsInitialTab('Tasks');
+              // TODO: Open Add Task Modal (Need to implement Add Task state in Operations)
+              break;
+
+          case 'add_income':
+          case 'add_expense':
+          case 'create_invoice':
+              setCurrentView(ViewState.Finance);
+              break;
+
+          case 'add_user':
+              setCurrentView(ViewState.Settings);
+              // Note: Settings component handles UI state internally, might need prop to auto-open
+              break;
+
+          default:
+              alert(`Action '${action}' is coming soon in the next update!`);
       }
+  };
+
+  const handleFabClick = () => {
+      // Legacy FAB now opens Quick Action for adding pig by default if on mobile
+      // or we could open the quick menu programmatically if we moved state up.
+      // For now, keeping it as 'Add Pig' shortcut.
+      setCurrentView(ViewState.Pigs);
+      setIsAddingPig(true);
   };
 
   const renderContent = () => {
@@ -208,7 +248,13 @@ const App: React.FC = () => {
 
     switch (currentView) {
       case ViewState.Dashboard:
-        return <Dashboard pigs={pigs} tasks={tasks} onViewChange={handleNavClick} />;
+        return <Dashboard 
+                  pigs={pigs} 
+                  tasks={tasks} 
+                  financeRecords={financeRecords} 
+                  feeds={feeds}
+                  onViewChange={handleNavClick} 
+               />;
       
       case ViewState.Pigs:
         if (isAddingPig) {
@@ -259,7 +305,7 @@ const App: React.FC = () => {
                 onLogout={handleLogout} 
                />;
       default:
-        return <Dashboard pigs={pigs} tasks={tasks} onViewChange={handleNavClick} />;
+        return <Dashboard pigs={pigs} tasks={tasks} financeRecords={financeRecords} feeds={feeds} onViewChange={handleNavClick} />;
     }
   };
 
@@ -271,6 +317,7 @@ const App: React.FC = () => {
             currentView={currentView} 
             setView={handleNavClick} 
             onAddClick={handleFabClick}
+            onQuickAction={handleQuickAction}
             currentUser={currentUser}
         >
             {renderContent()}
