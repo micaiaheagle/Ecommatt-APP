@@ -1,7 +1,17 @@
 
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Safe initialization that won't crash if process is undefined
+const getApiKey = () => {
+  try {
+    return process.env.API_KEY;
+  } catch (e) {
+    // Fallback for environments where process is not polyfilled
+    return (import.meta as any).env?.VITE_API_KEY || '';
+  }
+};
+
+const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 export const analyzePigImage = async (base64Image: string): Promise<string> => {
   try {
