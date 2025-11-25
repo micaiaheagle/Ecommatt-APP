@@ -503,12 +503,20 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                         
                     </div>
                     
-                    <button 
-                        onClick={() => setShowEventModal(true)}
-                        className="w-full mt-6 bg-green-50 text-ecomattGreen border border-green-200 py-3 rounded-xl font-bold text-xs hover:bg-green-100 transition flex items-center justify-center gap-2"
-                    >
-                        <i className="fas fa-plus-circle"></i> Log New Event
-                    </button>
+                    <div className="flex gap-2 mt-6">
+                        <button 
+                            onClick={() => setShowFeedModal(true)}
+                            className="flex-1 bg-yellow-50 text-yellow-700 border border-yellow-200 py-3 rounded-xl font-bold text-xs hover:bg-yellow-100 transition flex items-center justify-center gap-2"
+                        >
+                            <i className="fas fa-utensils"></i> Log Feed
+                        </button>
+                        <button 
+                            onClick={() => setShowEventModal(true)}
+                            className="flex-1 bg-green-50 text-ecomattGreen border border-green-200 py-3 rounded-xl font-bold text-xs hover:bg-green-100 transition flex items-center justify-center gap-2"
+                        >
+                            <i className="fas fa-plus-circle"></i> Log Event
+                        </button>
+                    </div>
                 </div>
             </div>
         )}
