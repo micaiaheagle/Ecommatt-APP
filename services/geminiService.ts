@@ -85,21 +85,28 @@ export const generateSmartAlerts = async (metrics: any): Promise<any[]> => {
         let text = response.text;
         if (!text) return [];
 
-        // Cleanup: Remove markdown code blocks if the model adds them despite MIME type
-        if (text.trim().startsWith('```')) {
-            text = text.replace(/^```json\s*/, '').replace(/^```\s*/, '').replace(/```$/, '');
-        }
+        // Robust cleanup: Remove whitespace and markdown code blocks
+        text = text.trim();
+        // Remove start code fence (handles ```json and ```)
+        text = text.replace(/^```(?:json)?\s*/i, "");
+        // Remove end code fence (handles trailing whitespace)
+        text = text.replace(/\s*```\s*$/, "");
 
         // Guard: Check if response is HTML (often happens with 404/500 proxy errors)
-        if (text.trim().startsWith('<')) {
-            console.warn("Gemini returned HTML instead of JSON. ignoring.");
+        if (text.startsWith('<')) {
+            console.warn("Gemini returned HTML instead of JSON. Ignoring.");
             return [];
         }
         
-        const data = JSON.parse(text);
-        return data.alerts || [];
+        try {
+            const data = JSON.parse(text);
+            return data.alerts || [];
+        } catch (parseError) {
+            console.warn("JSON Parse Error in Smart Alerts. Response might be incomplete or malformed.");
+            return [];
+        }
     } catch (e) {
-        console.error("Smart Alert Error", e);
+        console.error("Smart Alert Generation Error", e);
         return [];
     }
 }
