@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   define: {
-    // Correctly inject the API Key from Netlify/Node environment into the browser
+    // Correctly inject the API Key from Cloudflare/Netlify environment into the browser
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY),
     // Polyfill the rest of process.env to prevent crashes
     'process.env': {}
@@ -63,6 +63,7 @@ export default defineConfig({
   ],
   build: {
     outDir: 'dist',
-    sourcemap: true
+    sourcemap: true,
+    emptyOutDir: true
   }
 });

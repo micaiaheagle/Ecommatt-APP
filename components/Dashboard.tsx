@@ -84,21 +84,21 @@ const Dashboard: React.FC<DashboardProps> = ({ pigs, tasks, financeRecords, feed
   const Card = ({ label, value, icon, onClick, subBadge, subBadgeColor }: any) => (
     <div 
         onClick={onClick}
-        className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 cursor-pointer hover:border-ecomattGreen transition-colors group relative overflow-hidden"
+        className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 cursor-pointer hover:border-ecomattGreen transition-colors group relative overflow-hidden"
     >
-        <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-700 text-2xl group-hover:bg-ecomattGreen group-hover:text-white transition-colors z-10 relative">
+        <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-700 text-lg md:text-2xl group-hover:bg-ecomattGreen group-hover:text-white transition-colors z-10 relative">
             <i className={`fas ${icon}`}></i>
         </div>
-        <div className="z-10 relative">
-            <div className="flex items-center gap-2">
-                <p className="text-sm font-bold text-gray-600">{label}</p>
+        <div className="z-10 relative w-full">
+            <div className="flex items-center justify-between md:justify-start gap-2">
+                <p className="text-xs md:text-sm font-bold text-gray-500 md:text-gray-600 truncate">{label}</p>
                 {subBadge && (
                     <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold text-white ${subBadgeColor || 'bg-blue-500'}`}>
                         {subBadge}
                     </span>
                 )}
             </div>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
+            <p className="text-xl md:text-2xl font-bold text-gray-900">{value}</p>
         </div>
         <div className="absolute right-0 bottom-0 opacity-5 transform translate-x-2 translate-y-2 z-0">
              <i className={`fas ${icon} text-6xl`}></i>
@@ -109,52 +109,52 @@ const Dashboard: React.FC<DashboardProps> = ({ pigs, tasks, financeRecords, feed
   return (
     <div className="animate-in fade-in duration-500 pb-20">
         {/* Header Section */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-4 md:mb-6">
             <div>
-                <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900">Dashboard</h2>
                 <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Farm Overview</p>
             </div>
             {/* Weather Widget Small */}
-            <div className="hidden md:flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100">
-                <i className="fas fa-cloud-sun text-ecomattYellow text-xl"></i>
+            <div className="flex items-center gap-3 bg-white px-3 py-2 rounded-xl shadow-sm border border-gray-100">
+                <i className="fas fa-cloud-sun text-ecomattYellow text-lg md:text-xl"></i>
                 <div className="text-right">
-                    <p className="text-sm font-bold text-gray-900">24°C</p>
-                    <p className="text-[10px] text-gray-500">Kwekwe</p>
+                    <p className="text-xs md:text-sm font-bold text-gray-900">24°C</p>
+                    <p className="text-[9px] md:text-[10px] text-gray-500 hidden md:block">Kwekwe</p>
                 </div>
             </div>
         </div>
 
-        {/* Critical Attention Section */}
+        {/* Critical Attention Section (Horizontal Scroll) */}
         {(sickPigs > 0 || urgentTasks > 0 || lowStockFeeds > 0) && (
-            <div className="mb-8">
+            <div className="mb-6 md:mb-8">
                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                     <i className="fas fa-exclamation-triangle text-red-500"></i> Critical Areas
                  </h3>
-                 <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+                 <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 snap-x">
                      {sickPigs > 0 && (
-                        <div onClick={() => onViewChange(ViewState.Operations)} className="bg-red-50 border border-red-200 p-4 rounded-xl min-w-[200px] cursor-pointer hover:bg-red-100 transition flex items-center gap-3">
-                             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-red-500 text-xl shadow-sm"><i className="fas fa-notes-medical"></i></div>
+                        <div onClick={() => onViewChange(ViewState.Operations)} className="bg-red-50 border border-red-200 p-3 rounded-xl min-w-[160px] md:min-w-[200px] cursor-pointer hover:bg-red-100 transition flex items-center gap-3 snap-center">
+                             <div className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center text-red-500 text-lg shadow-sm"><i className="fas fa-notes-medical"></i></div>
                              <div>
-                                <p className="text-2xl font-bold text-red-700">{sickPigs}</p>
-                                <span className="text-xs text-red-600 font-bold">Sick Animals</span>
+                                <p className="text-xl md:text-2xl font-bold text-red-700">{sickPigs}</p>
+                                <span className="text-[10px] md:text-xs text-red-600 font-bold">Sick Animals</span>
                              </div>
                         </div>
                      )}
                      {urgentTasks > 0 && (
-                        <div onClick={() => onViewChange(ViewState.Operations)} className="bg-orange-50 border border-orange-200 p-4 rounded-xl min-w-[200px] cursor-pointer hover:bg-orange-100 transition flex items-center gap-3">
-                             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-500 text-xl shadow-sm"><i className="fas fa-clipboard-check"></i></div>
+                        <div onClick={() => onViewChange(ViewState.Operations)} className="bg-orange-50 border border-orange-200 p-3 rounded-xl min-w-[160px] md:min-w-[200px] cursor-pointer hover:bg-orange-100 transition flex items-center gap-3 snap-center">
+                             <div className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center text-orange-500 text-lg shadow-sm"><i className="fas fa-clipboard-check"></i></div>
                              <div>
-                                <p className="text-2xl font-bold text-orange-700">{urgentTasks}</p>
-                                <span className="text-xs text-orange-600 font-bold">Urgent Tasks</span>
+                                <p className="text-xl md:text-2xl font-bold text-orange-700">{urgentTasks}</p>
+                                <span className="text-[10px] md:text-xs text-orange-600 font-bold">Urgent Tasks</span>
                              </div>
                         </div>
                      )}
                      {lowStockFeeds > 0 && (
-                        <div onClick={() => onViewChange(ViewState.Operations)} className="bg-yellow-50 border border-yellow-200 p-4 rounded-xl min-w-[200px] cursor-pointer hover:bg-yellow-100 transition flex items-center gap-3">
-                             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-yellow-500 text-xl shadow-sm"><i className="fas fa-cubes"></i></div>
+                        <div onClick={() => onViewChange(ViewState.Operations)} className="bg-yellow-50 border border-yellow-200 p-3 rounded-xl min-w-[160px] md:min-w-[200px] cursor-pointer hover:bg-yellow-100 transition flex items-center gap-3 snap-center">
+                             <div className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center text-yellow-500 text-lg shadow-sm"><i className="fas fa-cubes"></i></div>
                              <div>
-                                <p className="text-2xl font-bold text-yellow-700">{lowStockFeeds}</p>
-                                <span className="text-xs text-yellow-600 font-bold">Low Feed Stock</span>
+                                <p className="text-xl md:text-2xl font-bold text-yellow-700">{lowStockFeeds}</p>
+                                <span className="text-[10px] md:text-xs text-yellow-600 font-bold">Low Feed</span>
                              </div>
                         </div>
                      )}
@@ -162,15 +162,15 @@ const Dashboard: React.FC<DashboardProps> = ({ pigs, tasks, financeRecords, feed
             </div>
         )}
 
-        {/* Metrics Grid (12 Cards as requested) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+        {/* Metrics Grid (Optimized: 2 Cols on Mobile, 4 on Desktop) */}
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4 mb-8">
             <Card label="Total Pigs" value={totalPigs} icon="fa-piggy-bank" onClick={() => onViewChange(ViewState.Pigs)} />
             <Card label="Piglets" value={piglets} icon="fa-paw" onClick={() => onViewChange(ViewState.Pigs)} />
             <Card label="Weaners" value={weaners} icon="fa-bacon" onClick={() => onViewChange(ViewState.Pigs)} />
             <Card label="Growers" value={growers} icon="fa-arrow-up" onClick={() => onViewChange(ViewState.Pigs)} />
-            <Card label="Finisher" value={finishers} icon="fa-weight-hanging" onClick={() => onViewChange(ViewState.Pigs)} />
-            <Card label="Gilts/Sows" value={sows} icon="fa-venus" onClick={() => onViewChange(ViewState.Pigs)} />
-            <Card label="Boar" value={boars} icon="fa-mars" onClick={() => onViewChange(ViewState.Pigs)} />
+            <Card label="Finishers" value={finishers} icon="fa-weight-hanging" onClick={() => onViewChange(ViewState.Pigs)} />
+            <Card label="Sows/Gilts" value={sows} icon="fa-venus" onClick={() => onViewChange(ViewState.Pigs)} />
+            <Card label="Boars" value={boars} icon="fa-mars" onClick={() => onViewChange(ViewState.Pigs)} />
             <Card label="Pregnant" value={pregnant} icon="fa-baby-carriage" onClick={() => onViewChange(ViewState.Pigs)} />
 
             <Card label="Sales" value={`$${sales.toLocaleString()}`} icon="fa-chart-line" subBadge={currentYear} subBadgeColor="bg-blue-500" onClick={() => onViewChange(ViewState.Finance)} />
@@ -183,12 +183,12 @@ const Dashboard: React.FC<DashboardProps> = ({ pigs, tasks, financeRecords, feed
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             
             {/* Herd Composition Chart */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-gray-900">Herd Composition</h3>
+                    <h3 className="font-bold text-gray-900 text-sm md:text-base">Herd Composition</h3>
                     <button className="text-gray-400 hover:text-gray-600"><i className="fas fa-ellipsis-h"></i></button>
                 </div>
-                <div className="h-64 w-full">
+                <div className="h-56 md:h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
@@ -208,32 +208,32 @@ const Dashboard: React.FC<DashboardProps> = ({ pigs, tasks, financeRecords, feed
                                 contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
                                 itemStyle={{ color: '#374151', fontSize: '12px', fontWeight: 'bold' }}
                             />
-                            <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                            <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '10px' }} />
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
             </div>
 
             {/* Financial Performance Chart */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-gray-900">Financial Overview</h3>
+                    <h3 className="font-bold text-gray-900 text-sm md:text-base">Financial Overview</h3>
                     <select className="bg-gray-50 border-none text-xs font-bold text-gray-500 rounded-lg py-1">
                         <option>This Year</option>
                         <option>Last Year</option>
                     </select>
                 </div>
-                <div className="h-64 w-full">
+                <div className="h-56 md:h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={financeData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                        <BarChart data={financeData} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
-                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} prefix="$" />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(value) => `$${value}`} />
                             <Tooltip 
                                 cursor={{ fill: '#f9fafb' }}
                                 contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
                             />
-                            <Bar dataKey="amount" radius={[4, 4, 0, 0]} barSize={40} />
+                            <Bar dataKey="amount" radius={[4, 4, 0, 0]} barSize={30} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
@@ -274,3 +274,4 @@ const Dashboard: React.FC<DashboardProps> = ({ pigs, tasks, financeRecords, feed
 };
 
 export default Dashboard;
+    
