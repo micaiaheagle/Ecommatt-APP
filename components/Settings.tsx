@@ -9,9 +9,10 @@ interface SettingsProps {
   onAddUser: (user: User) => void;
   onUpdatePassword: (password: string) => void;
   onLogout: () => void;
+  onOpenEmailSetup: () => void; // New Prop
 }
 
-const Settings: React.FC<SettingsProps> = ({ currentUser, allUsers, onAddUser, onUpdatePassword, onLogout }) => {
+const Settings: React.FC<SettingsProps> = ({ currentUser, allUsers, onAddUser, onUpdatePassword, onLogout, onOpenEmailSetup }) => {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   
   // New User State
@@ -75,6 +76,30 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, allUsers, onAddUser, o
                 <h3 className="font-bold text-gray-900 text-lg">{currentUser.name}</h3>
                 <p className="text-sm text-ecomattGreen font-medium">{currentUser.role}</p>
                 <p className="text-xs text-gray-400">{currentUser.email}</p>
+            </div>
+        </div>
+
+        {/* Notifications & Communications (New Section) */}
+        <div className="mb-6">
+            <h3 className="text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Notifications</h3>
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden p-4">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-yellow-50 text-yellow-600 flex items-center justify-center">
+                            <i className="fas fa-bell"></i>
+                        </div>
+                        <div>
+                            <span className="block text-sm font-bold text-gray-700">Email Alerts</span>
+                            <span className="block text-[10px] text-gray-400">Configure team recipients & triggers</span>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={onOpenEmailSetup}
+                        className="text-xs bg-gray-50 border border-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold hover:bg-gray-100"
+                    >
+                        Setup
+                    </button>
+                </div>
             </div>
         </div>
 

@@ -86,6 +86,28 @@ export interface FinanceRecord {
   category: string;
   amount: number;
   description: string;
+  batchId?: string; // Added for Batch Profitability
+  status?: 'Paid' | 'Scheduled' | 'Projected'; // Added for Cash Flow Forecasting
+}
+
+export interface BudgetRecord {
+  id: string;
+  category: string;
+  amount: number;
+  period: string; // e.g. 'Monthly'
+}
+
+export interface LoanRecord {
+  id: string;
+  lender: string;
+  principal: number; // Original amount borrowed
+  interestRate: number; // Annual Percentage Rate (APR)
+  startDate: string;
+  termMonths: number;
+  balance: number; // Current remaining balance
+  monthlyPayment: number;
+  nextPaymentDate: string;
+  status: 'Active' | 'Paid' | 'Defaulted';
 }
 
 export interface HealthRecord {
@@ -96,6 +118,17 @@ export interface HealthRecord {
   description: string;
   medication?: string;
   administeredBy: string;
+}
+
+// Notification Settings
+export interface NotificationConfig {
+  emails: string[];
+  alerts: {
+    mortality: boolean;
+    feed: boolean;
+    tasks: boolean;
+    finance: boolean;
+  };
 }
 
 // Live Ops

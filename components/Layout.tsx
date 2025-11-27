@@ -68,7 +68,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, setView, children, onAddCl
             </div>
             <div>
                 <h1 className="text-lg font-bold tracking-tight">Ecomatt<span className="text-ecomattGreen">Farm</span></h1>
-                <p className="text-[10px] text-white font-bold uppercase tracking-widest bg-blue-600 px-2 py-0.5 rounded mt-1 inline-block">v9.7 Live</p>
+                <p className="text-[10px] text-white font-bold uppercase tracking-widest bg-blue-600 px-2 py-0.5 rounded mt-1 inline-block">v11.8 Live</p>
             </div>
         </div>
 
@@ -115,7 +115,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, setView, children, onAddCl
               </div>
               <div>
                   <h1 className="text-lg font-bold text-gray-900 tracking-tight">Ecomatt</h1>
-                  <p className="text-[9px] text-blue-600 font-bold">v9.7</p>
+                  <p className="text-[9px] text-blue-600 font-bold">v11.8</p>
               </div>
            </div>
 
@@ -164,95 +164,49 @@ const Layout: React.FC<LayoutProps> = ({ currentView, setView, children, onAddCl
                          </div>
                     </div>
                   )}
-              </div>
-              
-              {/* User Avatar Menu */}
-              <div className="relative" ref={userMenuRef}>
-                  <button 
-                    onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="w-10 h-10 bg-ecomattBlack rounded-full flex items-center justify-center text-white text-sm font-bold hover:ring-2 hover:ring-offset-2 hover:ring-ecomattGreen transition-all shadow-md"
-                  >
-                      {currentUser ? currentUser.name.charAt(0) : 'U'}
-                  </button>
 
-                  {/* User Settings Popover (Intuit style match) */}
+                  {/* User Settings Dropdown */}
                   {showUserMenu && (
-                    <div className="absolute right-0 top-14 w-[320px] bg-white shadow-2xl rounded-xl border border-gray-200 z-50 flex flex-col items-center animate-in fade-in slide-in-from-top-2 overflow-hidden">
-                        
-                        {/* Profile Section */}
-                        <div className="w-full p-8 flex flex-col items-center border-b border-gray-100">
-                            <div className="w-20 h-20 bg-ecomattGreen text-white rounded-full flex items-center justify-center text-3xl font-bold mb-4 shadow-inner">
-                                {currentUser?.name.charAt(0)}
+                    <div className="absolute right-0 top-14 w-[320px] bg-white shadow-2xl rounded-xl border border-gray-200 z-50 animate-in fade-in slide-in-from-top-2 overflow-hidden" ref={userMenuRef}>
+                        <div className="p-6 bg-gray-900 text-white text-center relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-ecomattGreen opacity-10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                            <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3 border-4 border-gray-700 shadow-xl relative z-10 text-2xl font-bold">
+                                {currentUser ? currentUser.name.charAt(0) : 'U'}
                             </div>
-                            <p className="text-gray-900 font-bold text-xl">{currentUser?.name}</p>
-                            <p className="text-gray-500 text-sm mb-6">{currentUser?.email}</p>
-                            
-                            <button className="text-ecomattGreen font-bold text-sm mb-6 hover:underline">
-                                Manage your Ecomatt Account
+                            <h3 className="font-bold text-lg relative z-10">{currentUser?.name}</h3>
+                            <p className="text-xs text-gray-400 relative z-10">{currentUser?.email}</p>
+                            <span className="inline-block bg-ecomattGreen text-black text-[10px] font-bold px-2 py-0.5 rounded mt-2 relative z-10">{currentUser?.role}</span>
+                        </div>
+                        
+                        <div className="p-2">
+                            <button onClick={() => setView(ViewState.Settings)} className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg text-gray-700 transition-colors">
+                                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500"><i className="fas fa-user-cog"></i></div>
+                                <div className="text-left">
+                                    <span className="block text-sm font-bold">Account Settings</span>
+                                    <span className="block text-[10px] text-gray-400">Manage password & preferences</span>
+                                </div>
                             </button>
-
-                            <button 
-                                onClick={() => {
-                                    onLogout();
-                                    setShowUserMenu(false);
-                                }}
-                                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-full transition-colors border border-gray-200"
-                            >
-                                Sign out
+                            <button onClick={onLogout} className="w-full flex items-center gap-3 p-3 hover:bg-red-50 rounded-lg text-red-600 transition-colors mt-1">
+                                <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-500"><i className="fas fa-sign-out-alt"></i></div>
+                                <span className="text-sm font-bold">Sign Out</span>
                             </button>
                         </div>
                         
-                        {/* Footer Links */}
-                        <div className="w-full bg-gray-50 p-4 flex justify-center gap-4 text-xs text-gray-500 font-medium">
-                            <span className="cursor-pointer hover:text-gray-800">Privacy</span>
-                            <span>•</span>
-                            <span className="cursor-pointer hover:text-gray-800">Terms</span>
+                        <div className="bg-gray-50 p-3 text-center border-t border-gray-100">
+                            <p className="text-[10px] text-gray-400">Ecomatt Farm Manager v11.8</p>
                         </div>
                     </div>
                   )}
               </div>
-
            </div>
         </header>
 
-        {/* Scrollable Content Area */}
-        <main className="flex-1 overflow-y-auto relative bg-grayBg">
-          <div className="h-full w-full pt-8 px-4 pb-24 md:pb-8 md:px-8 max-w-7xl mx-auto">
-              {children}
-          </div>
+        {/* Content Area */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 relative">
+            {children}
         </main>
-      </div>
-
-      {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 width-full w-full bg-white border-t border-gray-200 p-3 pb-6 px-6 flex justify-between items-end z-40 shadow-[0_-5px_10px_rgba(0,0,0,0.02)]">
-        
-        {visibleNavItems.slice(0, 2).map(item => (
-             <button 
-                key={item.id}
-                onClick={() => handleNavClick(item.id)}
-                className={`flex flex-col items-center gap-1 w-16 ${currentView === item.id ? 'text-ecomattGreen' : 'text-gray-400'}`}
-            >
-                <i className={`fas ${item.icon} text-xl`}></i>
-            </button>
-        ))}
-
-        {/* Spacer for center alignment */}
-        <div className="relative w-14 h-14 flex items-center justify-center -mb-4">
-            <div className="w-1 h-1 bg-gray-200 rounded-full"></div>
-        </div>
-
-        {visibleNavItems.slice(2, 4).map(item => (
-             <button 
-                key={item.id}
-                onClick={() => handleNavClick(item.id)}
-                className={`flex flex-col items-center gap-1 w-16 ${currentView === item.id ? 'text-ecomattGreen' : 'text-gray-400'}`}
-            >
-                <i className={`fas ${item.icon} text-xl`}></i>
-            </button>
-        ))}
 
       </div>
-
     </div>
   );
 };

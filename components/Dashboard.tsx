@@ -73,7 +73,7 @@ const Dashboard: React.FC<DashboardProps> = ({ pigs, tasks, financeRecords, feed
   const StatCard = ({ title, value, subtitle, icon, color, onClick, highlight }: any) => (
     <div 
         onClick={onClick}
-        className={`p-6 rounded-3xl shadow-sm border flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all ${highlight ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-100 text-gray-900'}`}
+        className={`p-6 rounded-3xl shadow-sm border flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all w-full ${highlight ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-100 text-gray-900'}`}
     >
         <div>
             <p className={`text-xs font-bold uppercase tracking-wider mb-2 ${highlight ? 'text-gray-400' : 'text-gray-500'}`}>{title}</p>
@@ -113,7 +113,7 @@ const Dashboard: React.FC<DashboardProps> = ({ pigs, tasks, financeRecords, feed
         <div className="flex justify-between items-end px-1 pb-2">
             <div>
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Today's Overview</p>
-                <h2 className="text-3xl font-bold text-gray-900">Dashboard</h2>
+                <h2 className="text-3xl font-bold text-gray-900">Dashboard <span className="text-[10px] bg-ecomattGreen text-white px-2 py-0.5 rounded ml-1 align-middle">Beta v9.0</span></h2>
             </div>
             <div className="bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200 flex items-center gap-2">
                 <i className="fas fa-cloud-sun text-ecomattYellow text-lg"></i>
@@ -121,7 +121,7 @@ const Dashboard: React.FC<DashboardProps> = ({ pigs, tasks, financeRecords, feed
             </div>
         </div>
 
-        {/* 1. Hero Section: Big Cards */}
+        {/* 1. Hero Section: Vertically Stacked on Mobile for Clarity */}
         <div className="flex flex-col gap-4 md:grid md:grid-cols-2">
             <StatCard 
                 title="Total Herd Size" 
@@ -145,19 +145,19 @@ const Dashboard: React.FC<DashboardProps> = ({ pigs, tasks, financeRecords, feed
         {/* 2. Quick Actions: 2-Col Grid on Mobile for larger targets */}
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Quick Actions</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <button onClick={() => onViewChange(ViewState.Pigs)} className="flex flex-col items-center justify-center gap-3 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition hover:border-ecomattGreen group">
+            <button onClick={() => onViewChange(ViewState.Pigs)} className="flex flex-col items-center justify-center gap-3 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition hover:border-ecomattGreen group h-32">
                 <div className="w-12 h-12 rounded-full bg-green-50 text-ecomattGreen flex items-center justify-center group-hover:bg-ecomattGreen group-hover:text-white transition-colors"><i className="fas fa-plus text-lg"></i></div>
                 <span className="text-xs font-bold text-gray-700">Add Pig</span>
             </button>
-            <button onClick={() => onViewChange(ViewState.Operations)} className="flex flex-col items-center justify-center gap-3 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition hover:border-yellow-400 group">
+            <button onClick={() => onViewChange(ViewState.Operations)} className="flex flex-col items-center justify-center gap-3 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition hover:border-yellow-400 group h-32">
                 <div className="w-12 h-12 rounded-full bg-yellow-50 text-yellow-600 flex items-center justify-center group-hover:bg-yellow-500 group-hover:text-white transition-colors"><i className="fas fa-utensils text-lg"></i></div>
                 <span className="text-xs font-bold text-gray-700">Log Feed</span>
             </button>
-            <button onClick={() => onViewChange(ViewState.Operations)} className="flex flex-col items-center justify-center gap-3 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition hover:border-blue-400 group">
+            <button onClick={() => onViewChange(ViewState.Operations)} className="flex flex-col items-center justify-center gap-3 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition hover:border-blue-400 group h-32">
                 <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-colors"><i className="fas fa-syringe text-lg"></i></div>
                 <span className="text-xs font-bold text-gray-700">Health</span>
             </button>
-            <button onClick={() => onViewChange(ViewState.Finance)} className="flex flex-col items-center justify-center gap-3 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition hover:border-gray-400 group">
+            <button onClick={() => onViewChange(ViewState.Finance)} className="flex flex-col items-center justify-center gap-3 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition hover:border-gray-400 group h-32">
                 <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center group-hover:bg-gray-800 group-hover:text-white transition-colors"><i className="fas fa-dollar-sign text-lg"></i></div>
                 <span className="text-xs font-bold text-gray-700">Finance</span>
             </button>
@@ -222,7 +222,7 @@ const Dashboard: React.FC<DashboardProps> = ({ pigs, tasks, financeRecords, feed
             </div>
         </div>
 
-        {/* 5. Breeding Stock - Stacked Cards for Mobile */}
+        {/* 5. Breeding Stock - Vertical Stack for Mobile */}
         <div>
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 ml-1">Breeding Stock</h3>
             <div className="flex flex-col gap-3 md:grid md:grid-cols-3">

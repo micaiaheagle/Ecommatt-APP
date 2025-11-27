@@ -129,23 +129,29 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
       onUpdate({ ...pig, timeline: newTimeline });
   };
 
+  // --- ENHANCED DELETE EVENT (Recalculates Last Fed) ---
   const handleDeleteEvent = (eventId?: string) => {
       if (!eventId || !pig.timeline) return;
       if(window.confirm("Are you sure you want to delete this log?")) {
           const updatedTimeline = pig.timeline.filter(e => e.id !== eventId);
           
-          // If we deleted a feed log, we should ideally recalculate 'lastFed', 
-          // but for now we just remove the log. 
+          // Check if we deleted a feed log and need to update the 'lastFed' stats
           let newLastFed = pig.lastFed;
           const deletedEvent = pig.timeline.find(e => e.id === eventId);
+          
           if (deletedEvent?.title === 'Feed Logged') {
+             // Find the remaining feed logs
              const remainingFeedLogs = updatedTimeline.filter(e => e.title === 'Feed Logged');
+             
              if (remainingFeedLogs.length > 0) {
-                 // Sort by date descending
+                 // Sort descending by date to find the new latest
                  remainingFeedLogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
                  const latest = remainingFeedLogs[0];
-                 newLastFed = `${new Date(latest.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`; 
+                 const dateObj = new Date(latest.date);
+                 // Since standard events don't store precise time, we fallback to date only
+                 newLastFed = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); 
              } else {
+                 // No feed logs left
                  newLastFed = undefined;
              }
           }
@@ -162,7 +168,7 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
           
           setFeedData({
               date: event.date,
-              time: '12:00',
+              time: '12:00', // Default or would be parsed if stored separately
               quantity: isNaN(qty) ? 0 : qty,
               feedType: type || 'Grower Pellets'
           });
@@ -222,26 +228,36 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
       });
   };
 
+  // --- ENHANCED LOG FEED (Updates Stats Correctly) ---
   const handleLogFeed = (e: React.FormEvent) => {
       e.preventDefault();
       if (feedData.quantity <= 0) return;
 
+      // Create display string for the Stat Card (includes time)
       const dateObj = new Date(`${feedData.date}T${feedData.time}`);
       const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       const formattedTime = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-      const lastFedString = `${formattedDate} ${formattedTime}`;
+      const lastFedDisplayString = `${formattedDate} ${formattedTime}`;
 
       let updatedTimeline = [...(pig.timeline || [])];
+      let eventIdToCheck = editingEventId;
 
       if (editingEventId) {
+          // Edit existing
           updatedTimeline = updatedTimeline.map(ev => 
               ev.id === editingEventId
-              ? { ...ev, date: feedData.date, subtitle: `${feedData.quantity}kg ${feedData.feedType}` }
+              ? { 
+                  ...ev, 
+                  date: feedData.date, 
+                  subtitle: `${feedData.quantity}kg ${feedData.feedType}` 
+                }
               : ev
           );
       } else {
+          // Create new
+          eventIdToCheck = `feed-${Date.now()}`;
           const feedEvent: TimelineEvent = {
-              id: `feed-${Date.now()}`,
+              id: eventIdToCheck,
               date: feedData.date,
               title: 'Feed Logged',
               subtitle: `${feedData.quantity}kg ${feedData.feedType}`,
@@ -252,11 +268,29 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
           updatedTimeline = [feedEvent, ...updatedTimeline];
       }
 
+      // IMPORTANT: Sort timeline by date descending to find the true latest event
       updatedTimeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      // Determine if we should update the main 'lastFed' statistic
+      // We only update it if the event we just saved is the most recent feed event in history.
+      const mostRecentFeedEvent = updatedTimeline.find(e => e.title === 'Feed Logged');
+      let newLastFedValue = pig.lastFed;
+
+      if (mostRecentFeedEvent) {
+          if (mostRecentFeedEvent.id === eventIdToCheck) {
+              // The one we just edited/added IS the latest -> use the detailed time string
+              newLastFedValue = lastFedDisplayString;
+          } else {
+              // The latest is some other event (meaning we backdated this entry)
+              // Keep existing or update to match that event's date (time precision might be lost if not stored)
+              const d = new Date(mostRecentFeedEvent.date);
+              newLastFedValue = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          }
+      }
 
       onUpdate({ 
           ...pig, 
-          lastFed: lastFedString,
+          lastFed: newLastFedValue,
           timeline: updatedTimeline
       });
       
@@ -270,21 +304,49 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
       });
   };
 
-  // Lifecycle Stages Config
+  // Lifecycle Stages Config (Includes Piglet)
   const LIFE_STAGES = [
-      { label: 'Piglet', endDay: 30, icon: 'fa-paw' },
+      { label: 'Piglet', endDay: 30, icon: 'fa-baby-carriage' }, 
       { label: 'Weaner', endDay: 70, icon: 'fa-cube' },
       { label: 'Grower', endDay: 110, icon: 'fa-arrow-up' },
       { label: 'Finisher', endDay: 180, icon: 'fa-weight-hanging' },
       { label: 'Mature', endDay: 9999, icon: 'fa-medal' },
   ];
 
-  // Helper to get active stage index
-  const getCurrentStageIndex = () => {
+  // Calculate smooth progress percentage based on VISUAL STAGES not linear time
+  const getSmoothProgress = () => {
       const days = getDaysOld(pig.dob);
-      const index = LIFE_STAGES.findIndex((s, i) => days <= s.endDay && (i === 0 || days > LIFE_STAGES[i-1].endDay));
-      return index === -1 ? LIFE_STAGES.length - 1 : index;
-  };
+      
+      if (LIFE_STAGES.length <= 1) return 100;
+
+      let currentStageIdx = -1;
+      for (let i = 0; i < LIFE_STAGES.length; i++) {
+          const prevEnd = i === 0 ? 0 : LIFE_STAGES[i-1].endDay;
+          if (days <= LIFE_STAGES[i].endDay || i === LIFE_STAGES.length - 1) {
+              currentStageIdx = i;
+              break;
+          }
+      }
+
+      if (currentStageIdx === -1) return 100;
+
+      // Dynamic segment calculation
+      const segmentSize = 100 / (LIFE_STAGES.length - 1); 
+      const startPercent = currentStageIdx * segmentSize;
+      
+      const currentStage = LIFE_STAGES[currentStageIdx];
+      const prevEndDay = currentStageIdx === 0 ? 0 : LIFE_STAGES[currentStageIdx-1].endDay;
+      
+      // Handle mature/open-ended stage gracefully
+      const stageDuration = currentStage.endDay === 9999 ? 365 : currentStage.endDay - prevEndDay;
+      const daysInStage = days - prevEndDay;
+      
+      // Calculate progress within this specific stage (0 to 1)
+      const progressInStage = Math.min(1, Math.max(0, daysInStage / stageDuration));
+      
+      // Total visual progress, clamped to 100%
+      return Math.min(100, startPercent + (progressInStage * segmentSize));
+  }
 
   // --- Pedigree Helper Functions ---
   const getPigDetails = (id?: string) => {
@@ -320,21 +382,29 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
 
       return (
           <div className="relative w-full">
-              <input 
-                  className="w-full text-xs p-1.5 border rounded bg-white focus:ring-2 focus:ring-ecomattGreen focus:ring-offset-1 outline-none transition-all"
-                  value={value}
-                  onChange={(e) => { onChange(e.target.value); setIsOpen(true); }}
-                  onFocus={() => setIsOpen(true)}
-                  onBlur={() => setTimeout(() => setIsOpen(false), 200)}
-                  placeholder={placeholder}
-              />
+              <div className="relative">
+                  <input 
+                      className="w-full text-xs p-1.5 pr-6 border rounded bg-white focus:ring-2 focus:ring-ecomattGreen focus:ring-offset-1 outline-none transition-all"
+                      value={value}
+                      onChange={(e) => { onChange(e.target.value); setIsOpen(true); }}
+                      onFocus={() => setIsOpen(true)}
+                      onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+                      placeholder={placeholder}
+                  />
+                  <i className="fas fa-search absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] pointer-events-none"></i>
+              </div>
+              
               {isOpen && candidates.length > 0 && (
                   <div className="absolute top-full left-0 w-48 bg-white shadow-xl rounded-lg border border-gray-100 mt-1 z-[60] max-h-40 overflow-y-auto text-left">
                       {candidates.map(candidate => (
                           <div 
                               key={candidate.id}
                               className="p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0 flex flex-col"
-                              onClick={() => { onChange(candidate.tagId); setIsOpen(false); }}
+                              onMouseDown={(e) => {
+                                  e.preventDefault(); // Prevent input blur
+                                  onChange(candidate.tagId);
+                                  setIsOpen(false);
+                              }}
                           >
                               <span className="font-bold text-xs text-gray-800">{candidate.tagId}</span>
                               <span className="text-[9px] text-gray-500">{candidate.breed} • {candidate.penLocation}</span>
@@ -542,19 +612,19 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                 
                 {/* 1. Lifecycle: Visual Stage Tracker */}
                 {activeTab === 'Lifecycle' && (
-                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 mb-4">
+                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 mb-4 overflow-x-auto">
                         <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                             <i className="fas fa-chart-line text-ecomattGreen"></i> Growth Progression
                         </h3>
                         
-                        <div className="relative">
+                        <div className="relative min-w-[340px]">
                             {/* Track Line */}
                             <div className="absolute top-4 left-0 w-full h-1 bg-gray-200 rounded-full z-0"></div>
                             
-                            {/* Progress Fill Line */}
+                            {/* Smooth Progress Fill Line */}
                             <div 
                                 className="absolute top-4 left-0 h-1 bg-ecomattGreen rounded-full z-0 transition-all duration-1000 ease-out"
-                                style={{ width: `${(getCurrentStageIndex() / (LIFE_STAGES.length - 1)) * 100}%` }}
+                                style={{ width: `${getSmoothProgress()}%` }}
                             ></div>
                             
                             {/* Stages */}
@@ -569,13 +639,21 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                                     const stageStartDate = new Date(pig.dob);
                                     stageStartDate.setDate(stageStartDate.getDate() + startDay);
                                     const stageEndDate = new Date(pig.dob);
-                                    stageEndDate.setDate(stageEndDate.getDate() + (stage.endDay === 9999 ? 3650 : stage.endDay));
+                                    if (stage.endDay === 9999) {
+                                        stageEndDate.setFullYear(stageEndDate.getFullYear() + 10); // Effectively open-ended
+                                    } else {
+                                        stageEndDate.setDate(new Date(pig.dob).getDate() + stage.endDay);
+                                    }
                                     
                                     const dateOptions: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-                                    const dateRange = `${stageStartDate.toLocaleDateString('en-US', dateOptions)} - ${stage.endDay === 9999 ? '...' : stageEndDate.toLocaleDateString('en-US', dateOptions)}`;
+                                    const startDateStr = stageStartDate.toLocaleDateString('en-US', dateOptions);
+                                    const endDateStr = stage.endDay === 9999 ? '...' : stageEndDate.toLocaleDateString('en-US', dateOptions);
+                                    const dateRange = `${startDateStr} - ${endDateStr}`;
+                                    
+                                    const duration = stage.endDay === 9999 ? 'Ongoing' : `${stage.endDay - startDay} Days`;
 
                                     return (
-                                        <div key={idx} className="flex flex-col items-center gap-2 w-14">
+                                        <div key={idx} className="flex flex-col items-center gap-2 w-16">
                                             <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs border-4 transition-all duration-500
                                                 ${isCompleted ? 'bg-ecomattGreen border-ecomattGreen text-white' : 
                                                   isCurrent ? 'bg-white border-ecomattGreen text-ecomattGreen shadow-lg scale-110' : 
@@ -587,9 +665,15 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                                                 <span className={`text-[9px] font-bold text-center block ${isCurrent ? 'text-ecomattGreen' : 'text-gray-400'}`}>
                                                     {stage.label}
                                                 </span>
-                                                <span className="text-[7px] text-gray-400 font-mono block leading-tight">
-                                                    {startDay}-{stage.endDay === 9999 ? '+' : stage.endDay}d
+                                                
+                                                {/* Duration and Date Range */}
+                                                <span className="text-[8px] text-gray-500 font-bold block leading-tight mt-0.5">
+                                                    {duration}
                                                 </span>
+                                                <span className="text-[7px] text-gray-400 block leading-tight mt-0.5">
+                                                    {dateRange}
+                                                </span>
+
                                                 {isCurrent && (
                                                     <div className="mt-1">
                                                         <span className="text-[8px] text-ecomattGreen font-bold font-mono block bg-green-50 px-1 rounded border border-green-100">
@@ -600,7 +684,6 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                                                         </span>
                                                     </div>
                                                 )}
-                                                {/* Show date range only for current or active interactions if needed, mostly simplified for mobile */}
                                             </div>
                                         </div>
                                     );
@@ -608,16 +691,17 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                             </div>
 
                             {/* Info Banner */}
-                            <div className="mt-6 bg-blue-50 p-3 rounded-xl border border-blue-100 flex items-start gap-3">
-                                <i className="fas fa-info-circle text-blue-500 mt-1"></i>
+                            <div className={`mt-6 p-3 rounded-xl border flex items-start gap-3 ${getDaysOld(pig.dob) <= 30 ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-100'}`}>
+                                <i className={`fas ${getDaysOld(pig.dob) <= 30 ? 'fa-exclamation-triangle text-red-500' : 'fa-info-circle text-blue-500'} mt-1`}></i>
                                 <div>
-                                    <p className="text-xs text-blue-800 font-bold">Current Phase: {
-                                        LIFE_STAGES.find((s, i) => getDaysOld(pig.dob) <= s.endDay && (i === 0 || getDaysOld(pig.dob) > LIFE_STAGES[i-1].endDay))?.label || 'Mature'
-                                    }</p>
-                                    <p className="text-[10px] text-blue-600 leading-tight mt-1">
+                                    <p className={`text-xs font-bold ${getDaysOld(pig.dob) <= 30 ? 'text-red-800' : 'text-blue-800'}`}>
+                                        Current Phase: { LIFE_STAGES.find((s, i) => getDaysOld(pig.dob) <= s.endDay && (i === 0 || getDaysOld(pig.dob) > LIFE_STAGES[i-1].endDay))?.label || 'Mature' }
+                                        {getDaysOld(pig.dob) <= 30 && <span className="ml-2 bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded-full">CRITICAL CARE</span>}
+                                    </p>
+                                    <p className={`text-[10px] leading-tight mt-1 ${getDaysOld(pig.dob) <= 30 ? 'text-red-700' : 'text-blue-600'}`}>
                                         {getDaysOld(pig.dob) <= 30 ? 
-                                            "Critical colostrum and warmth management period. Target weight: 7-10kg." : 
-                                            "Monitor feed conversion ratio closely during this stage. Ensure ad-libitum water access."}
+                                            "Piglet Phase (0-30 Days): High mortality risk. Ensure creep feed is available, maintain temperature, and monitor for scouring daily." : 
+                                            "Monitor feed conversion ratio closely. Ensure water availability and clean bedding."}
                                     </p>
                                 </div>
                             </div>
@@ -660,7 +744,38 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                     </div>
                 )}
 
-                {/* 3. Overview: Notes Section */}
+                {/* 3. Overview: Recent Feed History (New) */}
+                {activeTab === 'Overview' && (
+                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                        <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2 text-sm">
+                            <i className="fas fa-history text-yellow-500"></i> Recent Feeding
+                        </h3>
+                        {pig.timeline?.filter(e => e.title === 'Feed Logged').length === 0 ? (
+                            <p className="text-xs text-gray-400 italic">No feeding history recorded.</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {pig.timeline?.filter(e => e.title === 'Feed Logged')
+                                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                    .slice(0, 3) // Show last 3
+                                    .map(event => (
+                                        <div key={event.id} className="flex justify-between items-center bg-yellow-50/30 p-2.5 rounded-lg border border-yellow-100/50">
+                                            <div>
+                                                <p className="text-xs font-bold text-gray-800">{event.date}</p>
+                                                <p className="text-[10px] text-gray-600">{event.subtitle}</p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button onClick={() => openEditEventModal(event)} className="w-7 h-7 bg-white rounded-full flex items-center justify-center text-blue-500 shadow-sm border border-blue-100 hover:bg-blue-50"><i className="fas fa-pencil-alt text-[10px]"></i></button>
+                                                <button onClick={() => handleDeleteEvent(event.id)} className="w-7 h-7 bg-white rounded-full flex items-center justify-center text-red-500 shadow-sm border border-red-100 hover:bg-red-50"><i className="fas fa-trash text-[10px]"></i></button>
+                                            </div>
+                                        </div>
+                                    ))
+                                }
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* 4. Overview: Notes Section */}
                 {activeTab === 'Overview' && (
                     <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                         <div className="flex justify-between items-center mb-3">
@@ -708,7 +823,7 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                     </div>
                 )}
 
-                {/* 4. Shared: Timeline */}
+                {/* 5. Shared: Timeline */}
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                     <h3 className="font-bold text-gray-900 mb-6">Timeline & History</h3>
                     <div className="border-l-2 border-gray-100 ml-3 space-y-8">

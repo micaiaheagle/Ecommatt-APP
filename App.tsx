@@ -6,12 +6,27 @@ import PigManager from './components/PigManager';
 import PigForm from './components/PigForm';
 import PigProfile from './components/PigProfile';
 import Operations from './components/Operations';
+import FeedLogger from './components/FeedLogger';
+import FeedFormulator from './components/FeedFormulator';
 import Finance from './components/Finance';
+import FinanceLogger from './components/FinanceLogger';
+import BatchProfitability from './components/BatchProfitability';
+import ProfitCalculator from './components/ProfitCalculator';
+import CashFlowForecast from './components/CashFlowForecast';
+import BudgetAnalysis from './components/BudgetAnalysis';
+import LoanManagement from './components/LoanManagement';
+import CostAnalysis from './components/CostAnalysis'; 
+import FinancialRatios from './components/FinancialRatios';
+import IntelligentCore from './components/IntelligentCore'; 
+import BreedingAI from './components/BreedingAI'; 
+import SlaughterOptimizer from './components/SlaughterOptimizer'; 
+import CriticalWatch from './components/CriticalWatch'; 
 import SmartAssistant from './components/SmartAssistant';
 import Login from './components/Login';
 import Settings from './components/Settings';
+import EmailAlertsSetup from './components/EmailAlertsSetup'; // New
 import Onboarding from './components/Onboarding';
-import { Pig, Task, PigStatus, PigStage, FeedInventory, HealthRecord, FinanceRecord, ViewState, User, UserRole, TimelineEvent } from './types';
+import { Pig, Task, PigStatus, PigStage, FeedInventory, HealthRecord, FinanceRecord, BudgetRecord, LoanRecord, ViewState, User, UserRole, TimelineEvent, NotificationConfig } from './types';
 import { loadData, saveData, STORAGE_KEYS } from './services/storageService';
 
 // Mock Data (Used as initial seed only)
@@ -45,6 +60,8 @@ const SEED_PIGS: Pig[] = [
   { id: '4', tagId: 'EF-004', breed: 'Large White', dob: '2023-07-01', gender: 'Male', stage: PigStage.Weaner, status: PigStatus.Active, penLocation: 'Pen C2', weight: 25, lastFed: 'Yesterday 04:00 PM' },
   { id: '5', tagId: 'EF-005', breed: 'Large White', dob: '2023-10-01', gender: 'Female', stage: PigStage.Piglet, status: PigStatus.Active, penLocation: 'Pen F1', weight: 12, lastFed: 'Today 10:00 AM' },
   { id: '6', tagId: 'EF-006', breed: 'Duroc', dob: '2023-10-01', gender: 'Male', stage: PigStage.Piglet, status: PigStatus.Active, penLocation: 'Pen F1', weight: 13, lastFed: 'Today 10:00 AM' },
+  { id: '7', tagId: 'EF-007', breed: 'Large White', dob: '2025-05-20', gender: 'Female', stage: PigStage.Finisher, status: PigStatus.Active, penLocation: 'Pen F2', weight: 85, lastFed: 'Today 10:00 AM' },
+  { id: '8', tagId: 'EF-008', breed: 'Large White', dob: '2025-05-20', gender: 'Male', stage: PigStage.Finisher, status: PigStatus.Active, penLocation: 'Pen F2', weight: 88, lastFed: 'Today 10:00 AM' },
 ];
 
 const SEED_TASKS: Task[] = [
@@ -67,9 +84,34 @@ const SEED_HEALTH: HealthRecord[] = [
 ];
 
 const SEED_FINANCE: FinanceRecord[] = [
-  { id: 'fin1', date: 'Nov 15', type: 'Income', category: 'Sales', amount: 1200, description: 'Pork Sales Batch #21' },
-  { id: 'fin2', date: 'Nov 10', type: 'Expense', category: 'Supplies', amount: 150, description: 'Vet Supplies' },
-  { id: 'fin3', date: 'Nov 05', type: 'Expense', category: 'Feed', amount: 450, description: 'Sow Meal Bulk' },
+  { id: 'fin1', date: '2025-11-15', type: 'Income', category: 'Sales', amount: 1200, description: 'Pork Sales Batch #21', batchId: 'Batch #21', status: 'Paid' },
+  { id: 'fin2', date: '2025-11-10', type: 'Expense', category: 'Supplies', amount: 150, description: 'Vet Supplies', status: 'Paid' },
+  { id: 'fin3', date: '2025-11-05', type: 'Expense', category: 'Feed', amount: 450, description: 'Sow Meal Bulk', status: 'Paid' },
+  // Scheduled Transactions for Forecasting
+  { id: 'sched1', date: new Date(Date.now() + (10 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0], type: 'Expense', category: 'Feed', amount: 800, description: 'Bulk Feed Order', status: 'Scheduled' },
+  { id: 'sched2', date: new Date(Date.now() + (25 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0], type: 'Expense', category: 'Labor', amount: 1200, description: 'Monthly Wages', status: 'Scheduled' },
+];
+
+const SEED_BUDGETS: BudgetRecord[] = [
+    { id: 'b1', category: 'Feed', amount: 1000, period: 'Monthly' },
+    { id: 'b2', category: 'Labor', amount: 1500, period: 'Monthly' },
+    { id: 'b3', category: 'Supplies', amount: 300, period: 'Monthly' },
+    { id: 'b4', category: 'Maintenance', amount: 200, period: 'Monthly' },
+];
+
+const SEED_LOANS: LoanRecord[] = [
+    { 
+        id: 'l1', 
+        lender: 'AgriBank', 
+        principal: 5000, 
+        interestRate: 12, 
+        startDate: '2025-01-01', 
+        termMonths: 12, 
+        balance: 4200, 
+        monthlyPayment: 450, 
+        nextPaymentDate: '2025-12-01', 
+        status: 'Active' 
+    }
 ];
 
 // Initial Users
@@ -98,7 +140,10 @@ const App: React.FC = () => {
   const [feeds, setFeeds] = useState<FeedInventory[]>(() => loadData(STORAGE_KEYS.FEEDS, SEED_FEEDS));
   const [healthRecords, setHealthRecords] = useState<HealthRecord[]>(() => loadData(STORAGE_KEYS.HEALTH, SEED_HEALTH));
   const [financeRecords, setFinanceRecords] = useState<FinanceRecord[]>(() => loadData(STORAGE_KEYS.FINANCE, SEED_FINANCE));
+  const [budgets, setBudgets] = useState<BudgetRecord[]>(() => loadData('ECOMATT_BUDGET_DB', SEED_BUDGETS));
+  const [loans, setLoans] = useState<LoanRecord[]>(() => loadData('ECOMATT_LOANS_DB', SEED_LOANS));
   const [users, setUsers] = useState<User[]>(() => loadData(STORAGE_KEYS.USERS, INITIAL_USERS));
+  const [notificationConfig, setNotificationConfig] = useState<NotificationConfig>(() => loadData(STORAGE_KEYS.NOTIFICATIONS, { emails: [], alerts: { mortality: true, feed: true, tasks: false, finance: false } }));
 
   // Persistence Effects - Auto Save when state changes
   useEffect(() => saveData(STORAGE_KEYS.PIGS, pigs), [pigs]);
@@ -106,7 +151,10 @@ const App: React.FC = () => {
   useEffect(() => saveData(STORAGE_KEYS.FEEDS, feeds), [feeds]);
   useEffect(() => saveData(STORAGE_KEYS.HEALTH, healthRecords), [healthRecords]);
   useEffect(() => saveData(STORAGE_KEYS.FINANCE, financeRecords), [financeRecords]);
+  useEffect(() => saveData('ECOMATT_BUDGET_DB', budgets), [budgets]);
+  useEffect(() => saveData('ECOMATT_LOANS_DB', loans), [loans]);
   useEffect(() => saveData(STORAGE_KEYS.USERS, users), [users]);
+  useEffect(() => saveData(STORAGE_KEYS.NOTIFICATIONS, notificationConfig), [notificationConfig]);
   
   // Navigation State for Pig Module
   const [selectedPig, setSelectedPig] = useState<Pig | null>(null);
@@ -116,6 +164,16 @@ const App: React.FC = () => {
   // Operations Navigation State
   const [operationsInitialTab, setOperationsInitialTab] = useState<'Tasks' | 'Feed' | 'Health' | undefined>(undefined);
   const [operationsPigFilter, setOperationsPigFilter] = useState<string | undefined>(undefined);
+  const [operationsSubView, setOperationsSubView] = useState<'None' | 'FeedLogger' | 'FeedFormulator'>('None');
+
+  // Finance Navigation State
+  const [financeSubView, setFinanceSubView] = useState<'None' | 'Logger' | 'Batch' | 'Calculator' | 'Forecast' | 'Budget' | 'Loans' | 'CostAnalysis' | 'Ratios'>('None');
+
+  // Intelligent Core Navigation State
+  const [intelligentSubView, setIntelligentSubView] = useState<'None' | 'Breeding' | 'Optimizer' | 'Critical' | 'Chat'>('None');
+
+  // Settings Navigation State
+  const [settingsSubView, setSettingsSubView] = useState<'None' | 'EmailSetup'>('None');
 
   // Auth & User State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -161,10 +219,19 @@ const App: React.FC = () => {
           setIsAddingPig(false);
           setIsEditingPig(false);
       }
-      // Reset operations tab and filter if navigating away
       if(view !== ViewState.Operations) {
           setOperationsInitialTab(undefined);
           setOperationsPigFilter(undefined);
+          setOperationsSubView('None');
+      }
+      if(view !== ViewState.Finance) {
+          setFinanceSubView('None');
+      }
+      if(view !== ViewState.AI_Tools) {
+          setIntelligentSubView('None');
+      }
+      if(view !== ViewState.Settings) {
+          setSettingsSubView('None');
       }
   };
 
@@ -194,9 +261,39 @@ const App: React.FC = () => {
       setCurrentUser({ ...currentUser, password: newPassword });
   };
 
+  const handleSaveNotificationConfig = (config: NotificationConfig) => {
+      setNotificationConfig(config);
+      setSettingsSubView('None');
+      alert("Email & Alert preferences updated.");
+  };
+
+  // Feed Handlers
+  const handleLogDailyFeed = (data: { feedId: string; quantity: number; pen: string; batch?: string }) => {
+      // 1. Deduct stock
+      const updatedFeeds = feeds.map(f => {
+          if (f.id === data.feedId) {
+              return { ...f, quantityKg: Math.max(0, f.quantityKg - data.quantity) };
+          }
+          return f;
+      });
+      setFeeds(updatedFeeds);
+      setOperationsSubView('None');
+      alert(`Feed Logged: ${data.quantity}kg for ${data.pen}`);
+  };
+
+  // Finance Handlers
+  const handleSaveTransaction = (recordData: Omit<FinanceRecord, 'id'>) => {
+      const newRecord: FinanceRecord = {
+          id: `fin-${Date.now()}`,
+          ...recordData,
+          status: 'Paid' // Default to Paid for new logs
+      };
+      setFinanceRecords([...financeRecords, newRecord]);
+      setFinanceSubView('None');
+  };
+
   // GLOBAL QUICK ACTIONS HANDLER
   const handleQuickAction = (action: string) => {
-      console.log("Quick Action Triggered:", action);
       switch(action) {
           case 'add_pig':
               setCurrentView(ViewState.Pigs);
@@ -207,6 +304,7 @@ const App: React.FC = () => {
           case 'log_feed':
               setCurrentView(ViewState.Operations);
               setOperationsInitialTab('Feed');
+              setOperationsSubView('FeedLogger');
               break;
           
           case 'log_health':
@@ -217,29 +315,25 @@ const App: React.FC = () => {
           case 'add_task':
               setCurrentView(ViewState.Operations);
               setOperationsInitialTab('Tasks');
-              // TODO: Open Add Task Modal (Need to implement Add Task state in Operations)
               break;
 
           case 'add_income':
           case 'add_expense':
-          case 'create_invoice':
               setCurrentView(ViewState.Finance);
+              setFinanceSubView('Logger');
               break;
 
           case 'add_user':
               setCurrentView(ViewState.Settings);
-              // Note: Settings component handles UI state internally, might need prop to auto-open
               break;
 
           default:
-              alert(`Action '${action}' is coming soon in the next update!`);
+              // Fallback
+              break;
       }
   };
 
   const handleFabClick = () => {
-      // Legacy FAB now opens Quick Action for adding pig by default if on mobile
-      // or we could open the quick menu programmatically if we moved state up.
-      // For now, keeping it as 'Add Pig' shortcut.
       setCurrentView(ViewState.Pigs);
       setIsAddingPig(true);
   };
@@ -276,7 +370,7 @@ const App: React.FC = () => {
         if (selectedPig) {
             return <PigProfile 
                     pig={selectedPig} 
-                    allPigs={pigs} // Pass all pigs for pedigree lookup
+                    allPigs={pigs} 
                     onBack={() => setSelectedPig(null)} 
                     onDelete={handleDeletePig}
                     onUpdate={handleUpdatePig}
@@ -291,24 +385,90 @@ const App: React.FC = () => {
                />;
       
       case ViewState.Operations:
+        if (operationsSubView === 'FeedLogger') {
+            return <FeedLogger feeds={feeds} onSave={handleLogDailyFeed} onCancel={() => setOperationsSubView('None')} />;
+        }
+        if (operationsSubView === 'FeedFormulator') {
+            return <FeedFormulator onCancel={() => setOperationsSubView('None')} />;
+        }
         return <Operations 
             feeds={feeds} 
             healthRecords={healthRecords} 
             tasks={tasks} 
             initialTab={operationsInitialTab}
             pigFilter={operationsPigFilter}
+            onOpenFeedLogger={() => setOperationsSubView('FeedLogger')}
+            onOpenFeedFormulator={() => setOperationsSubView('FeedFormulator')}
         />;
+      
       case ViewState.Finance:
-        return <Finance records={financeRecords} />;
+        if (financeSubView === 'Logger') {
+            return <FinanceLogger onSave={handleSaveTransaction} onCancel={() => setFinanceSubView('None')} />;
+        }
+        if (financeSubView === 'Batch') {
+            return <BatchProfitability records={financeRecords} onCancel={() => setFinanceSubView('None')} />;
+        }
+        if (financeSubView === 'Calculator') {
+            return <ProfitCalculator onCancel={() => setFinanceSubView('None')} />;
+        }
+        if (financeSubView === 'Forecast') {
+            return <CashFlowForecast records={financeRecords} pigs={pigs} onCancel={() => setFinanceSubView('None')} />;
+        }
+        if (financeSubView === 'Budget') {
+            return <BudgetAnalysis records={financeRecords} budgets={budgets} onCancel={() => setFinanceSubView('None')} />;
+        }
+        if (financeSubView === 'Loans') {
+            return <LoanManagement loans={loans} onCancel={() => setFinanceSubView('None')} />;
+        }
+        if (financeSubView === 'CostAnalysis') {
+            return <CostAnalysis onCancel={() => setFinanceSubView('None')} />;
+        }
+        if (financeSubView === 'Ratios') {
+            return <FinancialRatios financeRecords={financeRecords} pigs={pigs} feeds={feeds} loans={loans} onCancel={() => setFinanceSubView('None')} />;
+        }
+        return <Finance 
+            records={financeRecords} 
+            onOpenLogger={() => setFinanceSubView('Logger')}
+            onOpenBatch={() => setFinanceSubView('Batch')}
+            onOpenCalculator={() => setFinanceSubView('Calculator')}
+            onOpenForecast={() => setFinanceSubView('Forecast')}
+            onOpenBudget={() => setFinanceSubView('Budget')}
+            onOpenLoans={() => setFinanceSubView('Loans')}
+            onOpenCostAnalysis={() => setFinanceSubView('CostAnalysis')}
+            onOpenRatios={() => setFinanceSubView('Ratios')}
+        />;
+
       case ViewState.AI_Tools:
-        return <SmartAssistant />;
+        if (intelligentSubView === 'Chat') {
+            return <SmartAssistant />;
+        }
+        if (intelligentSubView === 'Critical') {
+            return <CriticalWatch pigs={pigs} tasks={tasks} feeds={feeds} onCancel={() => setIntelligentSubView('None')} onNavigateToPig={(pig) => { setSelectedPig(pig); setCurrentView(ViewState.Pigs); }} />;
+        }
+        if (intelligentSubView === 'Optimizer') {
+            return <SlaughterOptimizer pigs={pigs} onCancel={() => setIntelligentSubView('None')} onNavigateToPig={(pig) => { setSelectedPig(pig); setCurrentView(ViewState.Pigs); }} />;
+        }
+        if (intelligentSubView === 'Breeding') {
+            return <BreedingAI pigs={pigs} onCancel={() => setIntelligentSubView('None')} onNavigateToPig={(pig) => { setSelectedPig(pig); setCurrentView(ViewState.Pigs); }} />;
+        }
+        return <IntelligentCore 
+            onOpenBreeding={() => setIntelligentSubView('Breeding')}
+            onOpenOptimizer={() => setIntelligentSubView('Optimizer')}
+            onOpenCritical={() => setIntelligentSubView('Critical')}
+            onOpenChat={() => setIntelligentSubView('Chat')}
+        />;
+
       case ViewState.Settings:
+        if (settingsSubView === 'EmailSetup') {
+            return <EmailAlertsSetup config={notificationConfig} onSave={handleSaveNotificationConfig} onCancel={() => setSettingsSubView('None')} />;
+        }
         return <Settings 
                 currentUser={currentUser} 
                 allUsers={users}
                 onAddUser={handleAddUser}
                 onUpdatePassword={handleUpdatePassword}
-                onLogout={handleLogout} 
+                onLogout={handleLogout}
+                onOpenEmailSetup={() => setSettingsSubView('EmailSetup')}
                />;
       default:
         return <Dashboard pigs={pigs} tasks={tasks} financeRecords={financeRecords} feeds={feeds} onViewChange={handleNavClick} />;

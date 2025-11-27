@@ -8,9 +8,19 @@ interface OperationsProps {
   tasks: Task[];
   initialTab?: 'Tasks' | 'Feed' | 'Health';
   pigFilter?: string;
+  onOpenFeedLogger: () => void;
+  onOpenFeedFormulator: () => void;
 }
 
-const Operations: React.FC<OperationsProps> = ({ feeds, healthRecords, tasks, initialTab, pigFilter }) => {
+const Operations: React.FC<OperationsProps> = ({ 
+    feeds, 
+    healthRecords, 
+    tasks, 
+    initialTab, 
+    pigFilter,
+    onOpenFeedLogger,
+    onOpenFeedFormulator
+}) => {
   const [activeTab, setActiveTab] = useState<'Tasks' | 'Feed' | 'Health'>('Tasks');
   const [sortBy, setSortBy] = useState<'dueDate' | 'priority'>('dueDate');
 
@@ -159,9 +169,20 @@ const Operations: React.FC<OperationsProps> = ({ feeds, healthRecords, tasks, in
                 ))}
             </div>
             
-            <button className="w-full mt-6 bg-gray-900 text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2">
-                 <i className="fas fa-plus"></i> Log Feed Consumption
-            </button>
+            <div className="flex gap-3 mt-6">
+                <button 
+                    onClick={onOpenFeedLogger}
+                    className="flex-1 bg-gray-900 text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 hover:bg-gray-800 transition"
+                >
+                    <i className="fas fa-pen"></i> Log Daily Feed
+                </button>
+                <button 
+                    onClick={onOpenFeedFormulator}
+                    className="flex-1 bg-white border border-gray-200 text-gray-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-50 transition"
+                >
+                    <i className="fas fa-flask"></i> Formulator
+                </button>
+            </div>
         </>
       )}
 

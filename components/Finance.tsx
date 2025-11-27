@@ -1,14 +1,43 @@
+
 import React from 'react';
 import { FinanceRecord } from '../types';
 
 interface FinanceProps {
   records: FinanceRecord[];
+  onOpenLogger: () => void;
+  onOpenBatch: () => void;
+  onOpenCalculator: () => void;
+  onOpenForecast: () => void;
+  onOpenBudget: () => void;
+  onOpenLoans: () => void;
+  onOpenCostAnalysis: () => void;
+  onOpenRatios: () => void; // New prop
 }
 
-const Finance: React.FC<FinanceProps> = ({ records }) => {
-  const totalIncome = records.filter(r => r.type === 'Income').reduce((acc, curr) => acc + curr.amount, 0);
-  const totalExpense = records.filter(r => r.type === 'Expense').reduce((acc, curr) => acc + curr.amount, 0);
+const Finance: React.FC<FinanceProps> = ({ 
+    records, 
+    onOpenLogger, 
+    onOpenBatch, 
+    onOpenCalculator, 
+    onOpenForecast, 
+    onOpenBudget, 
+    onOpenLoans,
+    onOpenCostAnalysis,
+    onOpenRatios
+}) => {
+  // Metrics: Only include 'Paid' (Actual) transactions for the header stats
+  const totalIncome = records.filter(r => r.type === 'Income' && (r.status === 'Paid' || !r.status)).reduce((acc, curr) => acc + curr.amount, 0);
+  const totalExpense = records.filter(r => r.type === 'Expense' && (r.status === 'Paid' || !r.status)).reduce((acc, curr) => acc + curr.amount, 0);
   const netProfit = totalIncome - totalExpense;
+
+  const getStatusColor = (status?: string) => {
+      switch(status) {
+          case 'Scheduled': return 'bg-blue-50 text-blue-600 border-blue-100';
+          case 'Projected': return 'bg-purple-50 text-purple-600 border-purple-100';
+          case 'Paid': return 'bg-gray-100 text-gray-600 border-gray-200';
+          default: return 'bg-gray-100 text-gray-600 border-gray-200';
+      }
+  };
 
   return (
     <div className="animate-in fade-in duration-500">
@@ -20,8 +49,8 @@ const Finance: React.FC<FinanceProps> = ({ records }) => {
       </div>
 
       {/* Main Stats Card */}
-      <div className="bg-white rounded-2xl p-5 mb-6 shadow-md border border-gray-100 text-center relative overflow-hidden">
-          <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Net Profit (Est)</p>
+      <div className="bg-white rounded-3xl p-6 mb-6 shadow-sm border border-gray-100 text-center relative overflow-hidden">
+          <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Net Profit (Actual)</p>
           <h1 className={`text-4xl font-bold mt-2 mb-4 ${netProfit >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
             ${netProfit.toLocaleString()}
           </h1>
@@ -38,31 +67,74 @@ const Finance: React.FC<FinanceProps> = ({ records }) => {
           </div>
       </div>
 
-      {/* Transactions */}
-      <h3 className="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">Recent Transactions</h3>
-      <div className="space-y-2">
-        {records.map(rec => (
-            <div key={rec.id} className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${rec.type === 'Income' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-500'}`}>
-                        <i className={`fas ${rec.type === 'Income' ? 'fa-arrow-down' : 'fa-arrow-up'}`}></i>
-                    </div>
-                    <div>
-                        <p className="text-sm font-bold text-gray-900">{rec.description}</p>
-                        <p className="text-[10px] text-gray-500">{rec.category} • {rec.date}</p>
-                    </div>
-                </div>
-                <span className={`font-bold text-sm ${rec.type === 'Income' ? 'text-green-600' : 'text-gray-900'}`}>
-                    {rec.type === 'Income' ? '+' : '-'}${rec.amount.toLocaleString()}
-                </span>
-            </div>
-        ))}
+      {/* Tools Grid */}
+      <div className="grid grid-cols-4 md:grid-cols-8 gap-2 mb-6">
+          <button onClick={onOpenLogger} className="col-span-1 flex flex-col items-center justify-center bg-gray-900 text-white p-3 rounded-2xl shadow-lg active:scale-95 transition">
+              <i className="fas fa-plus mb-1 text-lg"></i>
+              <span className="text-[9px] font-bold text-center leading-tight">Log</span>
+          </button>
+          <button onClick={onOpenBatch} className="col-span-1 flex flex-col items-center justify-center bg-white border border-gray-200 text-gray-700 p-3 rounded-2xl hover:border-ecomattGreen transition">
+              <i className="fas fa-layer-group mb-1 text-lg text-blue-500"></i>
+              <span className="text-[9px] font-bold text-center leading-tight">Batch P&L</span>
+          </button>
+          <button onClick={onOpenCalculator} className="col-span-1 flex flex-col items-center justify-center bg-white border border-gray-200 text-gray-700 p-3 rounded-2xl hover:border-ecomattGreen transition">
+              <i className="fas fa-calculator mb-1 text-lg text-ecomattYellow"></i>
+              <span className="text-[9px] font-bold text-center leading-tight">Project</span>
+          </button>
+          <button onClick={onOpenForecast} className="col-span-1 flex flex-col items-center justify-center bg-white border border-gray-200 text-gray-700 p-3 rounded-2xl hover:border-ecomattGreen transition">
+              <i className="fas fa-chart-line mb-1 text-lg text-purple-500"></i>
+              <span className="text-[9px] font-bold text-center leading-tight">Forecast</span>
+          </button>
+          <button onClick={onOpenBudget} className="col-span-1 flex flex-col items-center justify-center bg-white border border-gray-200 text-gray-700 p-3 rounded-2xl hover:border-ecomattGreen transition">
+              <i className="fas fa-bullseye mb-1 text-lg text-red-500"></i>
+              <span className="text-[9px] font-bold text-center leading-tight">Budget</span>
+          </button>
+          <button onClick={onOpenLoans} className="col-span-1 flex flex-col items-center justify-center bg-white border border-gray-200 text-gray-700 p-3 rounded-2xl hover:border-ecomattGreen transition">
+              <i className="fas fa-university mb-1 text-lg text-gray-600"></i>
+              <span className="text-[9px] font-bold text-center leading-tight">Loans</span>
+          </button>
+          <button onClick={onOpenCostAnalysis} className="col-span-1 flex flex-col items-center justify-center bg-white border border-gray-200 text-gray-700 p-3 rounded-2xl hover:border-ecomattGreen transition">
+              <i className="fas fa-tags mb-1 text-lg text-orange-500"></i>
+              <span className="text-[9px] font-bold text-center leading-tight">Cost/Pig</span>
+          </button>
+          <button onClick={onOpenRatios} className="col-span-1 flex flex-col items-center justify-center bg-white border border-gray-200 text-gray-700 p-3 rounded-2xl hover:border-ecomattGreen transition">
+              <i className="fas fa-balance-scale mb-1 text-lg text-teal-500"></i>
+              <span className="text-[9px] font-bold text-center leading-tight">Ratios</span>
+          </button>
       </div>
 
-      {/* Action Button */}
-      <button className="w-full mt-6 bg-ecomattGreen text-white py-3 rounded-xl font-bold shadow-lg shadow-green-200 flex items-center justify-center gap-2">
-         <i className="fas fa-plus"></i> New Transaction
-      </button>
+      {/* Transactions */}
+      <h3 className="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">All Transactions</h3>
+      <div className="space-y-2 pb-6">
+        {records.length === 0 ? (
+            <p className="text-center text-gray-400 text-sm py-4">No transactions recorded yet.</p>
+        ) : (
+            records
+            .slice()
+            .reverse() // Show newest first
+            .map(rec => (
+                <div key={rec.id} className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex justify-between items-center group">
+                    <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${rec.type === 'Income' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
+                            <i className={`fas ${rec.type === 'Income' ? 'fa-arrow-down' : 'fa-arrow-up'}`}></i>
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-sm font-bold text-gray-900 truncate">{rec.description}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${getStatusColor(rec.status)}`}>
+                                    {rec.status || 'Paid'}
+                                </span>
+                                <span className="text-[10px] text-gray-400 truncate">{rec.category} • {rec.date}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <span className={`font-bold text-sm whitespace-nowrap ml-2 ${rec.type === 'Income' ? 'text-green-600' : 'text-gray-900'}`}>
+                        {rec.type === 'Income' ? '+' : '-'}${rec.amount.toLocaleString()}
+                    </span>
+                </div>
+            ))
+        )}
+      </div>
 
     </div>
   );
