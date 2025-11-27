@@ -3,8 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Pig, PigStatus, PigStage, Task, FinanceRecord, ViewState, FeedInventory } from '../types';
 import { generateSmartAlerts } from '../services/geminiService';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 
 interface DashboardProps {
@@ -34,7 +33,6 @@ const Dashboard: React.FC<DashboardProps> = ({ pigs, tasks, financeRecords, feed
   const lowStockFeeds = feeds.filter(f => f.quantityKg < f.reorderLevel).length;
 
   // Finance Metrics
-  const currentYear = new Date().getFullYear();
   const sales = financeRecords
     .filter(r => r.type === 'Income')
     .reduce((acc, curr) => acc + curr.amount, 0);
@@ -43,35 +41,25 @@ const Dashboard: React.FC<DashboardProps> = ({ pigs, tasks, financeRecords, feed
     .filter(r => r.type === 'Expense')
     .reduce((acc, curr) => acc + curr.amount, 0);
 
+  const netProfit = sales - expenses;
   const feedCost = financeRecords
     .filter(r => r.type === 'Expense' && r.category.toLowerCase().includes('feed'))
     .reduce((acc, curr) => acc + curr.amount, 0);
 
-  // Pens count (unique locations)
+  // Pens count
   const pens = new Set(pigs.map(p => p.penLocation).filter(l => l && l !== 'Unassigned')).size;
 
-  // Calculate mortality rate
+  // Mortality rate
   const deceased = pigs.filter(p => p.status === PigStatus.Deceased).length;
   const mortalityRate = totalPigs > 0 ? ((deceased / (totalPigs + deceased)) * 100).toFixed(1) : '0.0';
 
-  // Chart Data Preparation
-  const herdData = [
-    { name: 'Piglets', value: piglets, color: '#f1b103' },
-    { name: 'Weaners', value: weaners, color: '#3b82f6' },
-    { name: 'Growers', value: growers, color: '#27cd00' },
-    { name: 'Finishers', value: finishers, color: '#a855f7' },
-    { name: 'Sows', value: sows, color: '#ec4899' },
-    { name: 'Boars', value: boars, color: '#1f2937' },
-  ].filter(d => d.value > 0);
-
   const financeData = [
-    { name: 'Revenue', amount: sales, fill: '#27cd00' },
-    { name: 'Expense', amount: expenses, fill: '#ef4444' },
+    { name: 'Rev', amount: sales, fill: '#27cd00' },
+    { name: 'Exp', amount: expenses, fill: '#ef4444' },
     { name: 'Feed', amount: feedCost, fill: '#f1b103' },
   ];
 
   useEffect(() => {
-    // Generate AI alerts
     const fetchAlerts = async () => {
         const metrics = { totalPigs, piglets, sows, mortalityRate, sickPigs };
         const alerts = await generateSmartAlerts(metrics);
@@ -81,197 +69,232 @@ const Dashboard: React.FC<DashboardProps> = ({ pigs, tasks, financeRecords, feed
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const Card = ({ label, value, icon, onClick, subBadge, subBadgeColor }: any) => (
+  // Helper Components
+  const StatCard = ({ title, value, subtitle, icon, color, onClick, highlight }: any) => (
     <div 
         onClick={onClick}
-        className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 cursor-pointer hover:border-ecomattGreen transition-colors group relative overflow-hidden"
+        className={`p-6 rounded-3xl shadow-sm border flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all ${highlight ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-100 text-gray-900'}`}
     >
-        <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-700 text-lg md:text-2xl group-hover:bg-ecomattGreen group-hover:text-white transition-colors z-10 relative">
+        <div>
+            <p className={`text-xs font-bold uppercase tracking-wider mb-2 ${highlight ? 'text-gray-400' : 'text-gray-500'}`}>{title}</p>
+            <h3 className="text-4xl font-bold tracking-tight">{value}</h3>
+            {subtitle && <p className={`text-sm font-bold mt-2 flex items-center gap-1 ${highlight ? 'text-ecomattGreen' : 'text-gray-400'}`}>{subtitle}</p>}
+        </div>
+        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl ${highlight ? 'bg-gray-800' : 'bg-gray-50'} ${color}`}>
             <i className={`fas ${icon}`}></i>
-        </div>
-        <div className="z-10 relative w-full">
-            <div className="flex items-center justify-between md:justify-start gap-2">
-                <p className="text-xs md:text-sm font-bold text-gray-500 md:text-gray-600 truncate">{label}</p>
-                {subBadge && (
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold text-white ${subBadgeColor || 'bg-blue-500'}`}>
-                        {subBadge}
-                    </span>
-                )}
-            </div>
-            <p className="text-xl md:text-2xl font-bold text-gray-900">{value}</p>
-        </div>
-        <div className="absolute right-0 bottom-0 opacity-5 transform translate-x-2 translate-y-2 z-0">
-             <i className={`fas ${icon} text-6xl`}></i>
         </div>
     </div>
   );
 
+  const PipelineItem = ({ label, count, total, color, icon }: any) => (
+      <div className="flex items-center gap-4 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors px-2 rounded-lg">
+          <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-xl shrink-0" style={{ color: color }}>
+              <i className={`fas ${icon}`}></i>
+          </div>
+          <div className="flex-1">
+              <div className="flex justify-between mb-2">
+                  <span className="text-base font-bold text-gray-700">{label}</span>
+                  <span className="text-base font-bold text-gray-900">{count}</span>
+              </div>
+              <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full rounded-full transition-all duration-1000" 
+                    style={{ width: `${total > 0 ? (count / total) * 100 : 0}%`, backgroundColor: color }}
+                  ></div>
+              </div>
+          </div>
+      </div>
+  );
+
   return (
-    <div className="animate-in fade-in duration-500 pb-20">
-        {/* Header Section */}
-        <div className="flex justify-between items-center mb-4 md:mb-6">
+    <div className="animate-in fade-in duration-500 pb-24 space-y-6">
+        
+        {/* Header */}
+        <div className="flex justify-between items-end px-1 pb-2">
             <div>
-                <h2 className="text-xl md:text-2xl font-bold text-gray-900">Dashboard</h2>
-                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Farm Overview</p>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Today's Overview</p>
+                <h2 className="text-3xl font-bold text-gray-900">Dashboard</h2>
             </div>
-            {/* Weather Widget Small */}
-            <div className="flex items-center gap-3 bg-white px-3 py-2 rounded-xl shadow-sm border border-gray-100">
-                <i className="fas fa-cloud-sun text-ecomattYellow text-lg md:text-xl"></i>
-                <div className="text-right">
-                    <p className="text-xs md:text-sm font-bold text-gray-900">24°C</p>
-                    <p className="text-[9px] md:text-[10px] text-gray-500 hidden md:block">Kwekwe</p>
-                </div>
+            <div className="bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200 flex items-center gap-2">
+                <i className="fas fa-cloud-sun text-ecomattYellow text-lg"></i>
+                <span className="text-sm font-bold text-gray-700">24°C</span>
             </div>
         </div>
 
-        {/* Critical Attention Section (Horizontal Scroll) */}
+        {/* 1. Hero Section: Big Cards */}
+        <div className="flex flex-col gap-4 md:grid md:grid-cols-2">
+            <StatCard 
+                title="Total Herd Size" 
+                value={totalPigs} 
+                subtitle={<span><i className="fas fa-layer-group"></i> {pens} Active Pens</span>}
+                icon="fa-piggy-bank" 
+                color="text-ecomattGreen"
+                onClick={() => onViewChange(ViewState.Pigs)}
+                highlight={true}
+            />
+            <StatCard 
+                title="Net Profit (YTD)" 
+                value={`$${netProfit.toLocaleString()}`} 
+                subtitle={<span><i className="fas fa-chart-line"></i> {netProfit >= 0 ? 'Healthy Margin' : 'Review Costs'}</span>}
+                icon="fa-wallet" 
+                color={netProfit >= 0 ? 'text-ecomattGreen' : 'text-red-500'}
+                onClick={() => onViewChange(ViewState.Finance)}
+            />
+        </div>
+
+        {/* 2. Quick Actions: 2-Col Grid on Mobile for larger targets */}
+        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Quick Actions</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <button onClick={() => onViewChange(ViewState.Pigs)} className="flex flex-col items-center justify-center gap-3 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition hover:border-ecomattGreen group">
+                <div className="w-12 h-12 rounded-full bg-green-50 text-ecomattGreen flex items-center justify-center group-hover:bg-ecomattGreen group-hover:text-white transition-colors"><i className="fas fa-plus text-lg"></i></div>
+                <span className="text-xs font-bold text-gray-700">Add Pig</span>
+            </button>
+            <button onClick={() => onViewChange(ViewState.Operations)} className="flex flex-col items-center justify-center gap-3 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition hover:border-yellow-400 group">
+                <div className="w-12 h-12 rounded-full bg-yellow-50 text-yellow-600 flex items-center justify-center group-hover:bg-yellow-500 group-hover:text-white transition-colors"><i className="fas fa-utensils text-lg"></i></div>
+                <span className="text-xs font-bold text-gray-700">Log Feed</span>
+            </button>
+            <button onClick={() => onViewChange(ViewState.Operations)} className="flex flex-col items-center justify-center gap-3 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition hover:border-blue-400 group">
+                <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-colors"><i className="fas fa-syringe text-lg"></i></div>
+                <span className="text-xs font-bold text-gray-700">Health</span>
+            </button>
+            <button onClick={() => onViewChange(ViewState.Finance)} className="flex flex-col items-center justify-center gap-3 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition hover:border-gray-400 group">
+                <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center group-hover:bg-gray-800 group-hover:text-white transition-colors"><i className="fas fa-dollar-sign text-lg"></i></div>
+                <span className="text-xs font-bold text-gray-700">Finance</span>
+            </button>
+        </div>
+
+        {/* 3. Critical Alerts (Horizontal Scroll) */}
         {(sickPigs > 0 || urgentTasks > 0 || lowStockFeeds > 0) && (
-            <div className="mb-6 md:mb-8">
-                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <i className="fas fa-exclamation-triangle text-red-500"></i> Critical Areas
-                 </h3>
-                 <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 snap-x">
+            <div className="animate-in slide-in-from-right">
+                 <div className="flex items-center gap-2 mb-3 ml-1">
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Requires Attention</h3>
+                 </div>
+                 
+                 <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 snap-x">
                      {sickPigs > 0 && (
-                        <div onClick={() => onViewChange(ViewState.Operations)} className="bg-red-50 border border-red-200 p-3 rounded-xl min-w-[160px] md:min-w-[200px] cursor-pointer hover:bg-red-100 transition flex items-center gap-3 snap-center">
-                             <div className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center text-red-500 text-lg shadow-sm"><i className="fas fa-notes-medical"></i></div>
-                             <div>
-                                <p className="text-xl md:text-2xl font-bold text-red-700">{sickPigs}</p>
-                                <span className="text-[10px] md:text-xs text-red-600 font-bold">Sick Animals</span>
+                        <div onClick={() => onViewChange(ViewState.Operations)} className="bg-white border-l-4 border-red-500 p-5 rounded-2xl min-w-[240px] shadow-sm cursor-pointer snap-center active:bg-gray-50 flex-shrink-0">
+                             <div className="flex justify-between items-start mb-2">
+                                <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-1 rounded uppercase tracking-wide">Health Alert</span>
+                                <i className="fas fa-chevron-right text-gray-300 text-xs"></i>
                              </div>
-                        </div>
-                     )}
-                     {urgentTasks > 0 && (
-                        <div onClick={() => onViewChange(ViewState.Operations)} className="bg-orange-50 border border-orange-200 p-3 rounded-xl min-w-[160px] md:min-w-[200px] cursor-pointer hover:bg-orange-100 transition flex items-center gap-3 snap-center">
-                             <div className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center text-orange-500 text-lg shadow-sm"><i className="fas fa-clipboard-check"></i></div>
-                             <div>
-                                <p className="text-xl md:text-2xl font-bold text-orange-700">{urgentTasks}</p>
-                                <span className="text-[10px] md:text-xs text-orange-600 font-bold">Urgent Tasks</span>
-                             </div>
+                             <p className="text-3xl font-bold text-gray-900 mb-1">{sickPigs}</p>
+                             <p className="text-xs text-gray-500 font-medium">Sick animals reported</p>
                         </div>
                      )}
                      {lowStockFeeds > 0 && (
-                        <div onClick={() => onViewChange(ViewState.Operations)} className="bg-yellow-50 border border-yellow-200 p-3 rounded-xl min-w-[160px] md:min-w-[200px] cursor-pointer hover:bg-yellow-100 transition flex items-center gap-3 snap-center">
-                             <div className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center text-yellow-500 text-lg shadow-sm"><i className="fas fa-cubes"></i></div>
-                             <div>
-                                <p className="text-xl md:text-2xl font-bold text-yellow-700">{lowStockFeeds}</p>
-                                <span className="text-[10px] md:text-xs text-yellow-600 font-bold">Low Feed</span>
+                        <div onClick={() => onViewChange(ViewState.Operations)} className="bg-white border-l-4 border-yellow-500 p-5 rounded-2xl min-w-[240px] shadow-sm cursor-pointer snap-center active:bg-gray-50 flex-shrink-0">
+                             <div className="flex justify-between items-start mb-2">
+                                <span className="text-[10px] font-bold text-yellow-600 bg-yellow-50 px-2 py-1 rounded uppercase tracking-wide">Low Stock</span>
+                                <i className="fas fa-chevron-right text-gray-300 text-xs"></i>
                              </div>
+                             <p className="text-3xl font-bold text-gray-900 mb-1">{lowStockFeeds}</p>
+                             <p className="text-xs text-gray-500 font-medium">Feed types below reorder</p>
+                        </div>
+                     )}
+                     {urgentTasks > 0 && (
+                        <div onClick={() => onViewChange(ViewState.Operations)} className="bg-white border-l-4 border-orange-500 p-5 rounded-2xl min-w-[240px] shadow-sm cursor-pointer snap-center active:bg-gray-50 flex-shrink-0">
+                             <div className="flex justify-between items-start mb-2">
+                                <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded uppercase tracking-wide">Urgent Tasks</span>
+                                <i className="fas fa-chevron-right text-gray-300 text-xs"></i>
+                             </div>
+                             <p className="text-3xl font-bold text-gray-900 mb-1">{urgentTasks}</p>
+                             <p className="text-xs text-gray-500 font-medium">Pending high priority</p>
                         </div>
                      )}
                  </div>
             </div>
         )}
 
-        {/* Metrics Grid (Optimized: 2 Cols on Mobile, 4 on Desktop) */}
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4 mb-8">
-            <Card label="Total Pigs" value={totalPigs} icon="fa-piggy-bank" onClick={() => onViewChange(ViewState.Pigs)} />
-            <Card label="Piglets" value={piglets} icon="fa-paw" onClick={() => onViewChange(ViewState.Pigs)} />
-            <Card label="Weaners" value={weaners} icon="fa-bacon" onClick={() => onViewChange(ViewState.Pigs)} />
-            <Card label="Growers" value={growers} icon="fa-arrow-up" onClick={() => onViewChange(ViewState.Pigs)} />
-            <Card label="Finishers" value={finishers} icon="fa-weight-hanging" onClick={() => onViewChange(ViewState.Pigs)} />
-            <Card label="Sows/Gilts" value={sows} icon="fa-venus" onClick={() => onViewChange(ViewState.Pigs)} />
-            <Card label="Boars" value={boars} icon="fa-mars" onClick={() => onViewChange(ViewState.Pigs)} />
-            <Card label="Pregnant" value={pregnant} icon="fa-baby-carriage" onClick={() => onViewChange(ViewState.Pigs)} />
-
-            <Card label="Sales" value={`$${sales.toLocaleString()}`} icon="fa-chart-line" subBadge={currentYear} subBadgeColor="bg-blue-500" onClick={() => onViewChange(ViewState.Finance)} />
-            <Card label="Expenses" value={`$${expenses.toLocaleString()}`} icon="fa-file-invoice-dollar" subBadge={currentYear} subBadgeColor="bg-red-500" onClick={() => onViewChange(ViewState.Finance)} />
-            <Card label="Feed Cost" value={`$${feedCost.toLocaleString()}`} icon="fa-wheat" subBadge={currentYear} subBadgeColor="bg-yellow-500" onClick={() => onViewChange(ViewState.Finance)} />
-            <Card label="Pens" value={pens} icon="fa-th" onClick={() => onViewChange(ViewState.Pigs)} />
-        </div>
-
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            
-            {/* Herd Composition Chart */}
-            <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-gray-900 text-sm md:text-base">Herd Composition</h3>
-                    <button className="text-gray-400 hover:text-gray-600"><i className="fas fa-ellipsis-h"></i></button>
-                </div>
-                <div className="h-56 md:h-64 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <Pie
-                                data={herdData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={60}
-                                outerRadius={80}
-                                paddingAngle={5}
-                                dataKey="value"
-                            >
-                                {herdData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                            </Pie>
-                            <Tooltip 
-                                contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                                itemStyle={{ color: '#374151', fontSize: '12px', fontWeight: 'bold' }}
-                            />
-                            <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '10px' }} />
-                        </PieChart>
-                    </ResponsiveContainer>
+        {/* 4. Production Pipeline */}
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100" onClick={() => onViewChange(ViewState.Pigs)}>
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-gray-900 text-xl">Production Pipeline</h3>
+                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
+                    <i className="fas fa-arrow-right"></i>
                 </div>
             </div>
+            <div className="space-y-2">
+                <PipelineItem label="Piglets" count={piglets} total={totalPigs} color="#f1b103" icon="fa-paw" />
+                <PipelineItem label="Weaners" count={weaners} total={totalPigs} color="#3b82f6" icon="fa-cube" />
+                <PipelineItem label="Growers" count={growers} total={totalPigs} color="#27cd00" icon="fa-arrow-up" />
+                <PipelineItem label="Finishers" count={finishers} total={totalPigs} color="#a855f7" icon="fa-weight-hanging" />
+            </div>
+        </div>
 
-            {/* Financial Performance Chart */}
-            <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-gray-900 text-sm md:text-base">Financial Overview</h3>
-                    <select className="bg-gray-50 border-none text-xs font-bold text-gray-500 rounded-lg py-1">
-                        <option>This Year</option>
-                        <option>Last Year</option>
-                    </select>
+        {/* 5. Breeding Stock - Stacked Cards for Mobile */}
+        <div>
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 ml-1">Breeding Stock</h3>
+            <div className="flex flex-col gap-3 md:grid md:grid-cols-3">
+                <div onClick={() => onViewChange(ViewState.Pigs)} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer active:bg-gray-50">
+                    <div>
+                        <p className="text-xs font-bold text-pink-500 uppercase mb-1">Sows & Gilts</p>
+                        <p className="text-4xl font-bold text-gray-900">{sows}</p>
+                    </div>
+                    <div className="w-14 h-14 bg-pink-50 text-pink-500 rounded-2xl flex items-center justify-center text-2xl"><i className="fas fa-venus"></i></div>
                 </div>
-                <div className="h-56 md:h-64 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={financeData} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} />
-                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(value) => `$${value}`} />
-                            <Tooltip 
-                                cursor={{ fill: '#f9fafb' }}
-                                contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                            />
-                            <Bar dataKey="amount" radius={[4, 4, 0, 0]} barSize={30} />
-                        </BarChart>
-                    </ResponsiveContainer>
+                
+                <div onClick={() => onViewChange(ViewState.Pigs)} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer active:bg-gray-50">
+                    <div>
+                        <p className="text-xs font-bold text-gray-600 uppercase mb-1">Boars</p>
+                        <p className="text-4xl font-bold text-gray-900">{boars}</p>
+                    </div>
+                    <div className="w-14 h-14 bg-gray-100 text-gray-600 rounded-2xl flex items-center justify-center text-2xl"><i className="fas fa-mars"></i></div>
+                </div>
+
+                <div onClick={() => onViewChange(ViewState.Pigs)} className="bg-green-50 p-6 rounded-3xl shadow-sm border border-green-100 flex justify-between items-center cursor-pointer active:scale-[0.98] transition">
+                    <div>
+                        <p className="text-xs font-bold text-green-700 uppercase mb-1">Pregnant</p>
+                        <p className="text-4xl font-bold text-green-800">{pregnant}</p>
+                    </div>
+                    <div className="w-14 h-14 bg-white text-green-600 rounded-2xl flex items-center justify-center text-2xl shadow-sm"><i className="fas fa-baby-carriage"></i></div>
                 </div>
             </div>
         </div>
 
-        {/* Smart Alerts (Dynamic) */}
-        <div className="mb-6">
-             <div className="flex justify-between items-center mb-3">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">AI Insights</h3>
-                <span className="bg-ecomattBlack text-white text-[10px] px-2 py-1 rounded font-bold">Gemini Powered</span>
-             </div>
-             
-             {smartAlerts.length > 0 ? (
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                     {smartAlerts.map((alert, idx) => (
-                         <div key={idx} className={`bg-white p-4 rounded-xl shadow-sm border-l-4 ${alert.severity === 'High' ? 'border-red-500' : 'border-ecomattYellow'} flex flex-col justify-between`}>
-                             <div>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <i className={`fas ${alert.severity === 'High' ? 'fa-exclamation-circle text-red-500' : 'fa-lightbulb text-ecomattYellow'}`}></i>
-                                    <h4 className="text-sm font-bold text-gray-900">{alert.title}</h4>
-                                </div>
-                                <p className="text-xs text-gray-500">{alert.message}</p>
-                             </div>
-                             <button className="text-[10px] font-bold text-gray-400 self-end mt-2 hover:text-ecomattGreen">Dismiss</button>
-                         </div>
-                     ))}
-                 </div>
-             ) : (
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 border-dashed text-center">
-                    <i className="fas fa-robot text-gray-300 text-2xl mb-2"></i>
-                    <p className="text-xs text-gray-500">System analyzing... No critical alerts at this moment.</p>
-                </div>
-             )}
+        {/* 6. Charts & Finance */}
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+            <h3 className="font-bold text-gray-900 mb-6 text-lg">Financial Performance</h3>
+            <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={financeData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 'bold', fill: '#9ca3af' }} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#9ca3af' }} tickFormatter={(v) => `$${v}`} />
+                        <Tooltip 
+                            cursor={{fill: '#f9fafb'}} 
+                            contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)', padding: '12px'}}
+                            formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
+                        />
+                        <Bar dataKey="amount" radius={[6, 6, 0, 0]} barSize={48} />
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
         </div>
+
+        {/* 7. AI Alerts */}
+        {smartAlerts.length > 0 && (
+            <div className="space-y-3 pb-12">
+                <div className="flex items-center gap-2 mb-2 ml-1">
+                    <i className="fas fa-robot text-ecomattGreen"></i>
+                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">AI Insights</h3>
+                </div>
+                {smartAlerts.map((alert, idx) => (
+                    <div key={idx} className="bg-gray-900 p-5 rounded-2xl shadow-md text-white flex gap-4 items-start">
+                        <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-ecomattGreen shrink-0 mt-1">
+                            <i className="fas fa-lightbulb"></i>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-sm mb-1 text-ecomattGreen">{alert.title}</h4>
+                            <p className="text-xs text-gray-300 leading-relaxed">{alert.message}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        )}
+
     </div>
   );
 };
 
 export default Dashboard;
-    

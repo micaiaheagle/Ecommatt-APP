@@ -12,12 +12,36 @@ interface OperationsProps {
 
 const Operations: React.FC<OperationsProps> = ({ feeds, healthRecords, tasks, initialTab, pigFilter }) => {
   const [activeTab, setActiveTab] = useState<'Tasks' | 'Feed' | 'Health'>('Tasks');
+  const [sortBy, setSortBy] = useState<'dueDate' | 'priority'>('dueDate');
 
   useEffect(() => {
     if (initialTab) {
         setActiveTab(initialTab);
     }
   }, [initialTab]);
+
+  // Sorting Logic
+  const sortedTasks = [...tasks].sort((a, b) => {
+      if (sortBy === 'dueDate') {
+          // Sort by date string (YYYY-MM-DD)
+          return a.dueDate.localeCompare(b.dueDate);
+      } else {
+          // Sort by Priority (High > Medium > Low)
+          const priorityMap = { 'High': 3, 'Medium': 2, 'Low': 1 };
+          const pA = priorityMap[a.priority] || 0;
+          const pB = priorityMap[b.priority] || 0;
+          return pB - pA;
+      }
+  });
+
+  // Date Formatter
+  const formatDueDate = (dateStr: string) => {
+      const today = new Date().toISOString().split('T')[0];
+      if (dateStr === today) return "Today";
+      
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
 
   return (
     <div className="animate-in fade-in duration-500">
@@ -47,41 +71,51 @@ const Operations: React.FC<OperationsProps> = ({ feeds, healthRecords, tasks, in
       {/* Tasks View (Screen 04) */}
       {activeTab === 'Tasks' && (
         <>
-            <div className="bg-white p-4 rounded-2xl shadow-sm mb-6 flex justify-between items-center border border-gray-100">
-                <div className="text-center">
-                    <span className="text-[10px] text-gray-400 block font-bold">MON</span>
-                    <span className="font-bold text-gray-900">20</span>
-                </div>
-                <div className="text-center bg-ecomattGreen text-white px-4 py-2 rounded-xl shadow-lg transform scale-110">
-                    <span className="text-[10px] block opacity-80 font-bold">TUE</span>
-                    <span className="font-bold text-lg">21</span>
-                </div>
-                <div className="text-center">
-                    <span className="text-[10px] text-gray-400 block font-bold">WED</span>
-                    <span className="font-bold text-gray-900">22</span>
-                </div>
-                <div className="text-center">
-                    <span className="text-[10px] text-gray-400 block font-bold">THU</span>
-                    <span className="font-bold text-gray-900">23</span>
+            <div className="flex justify-between items-center mb-3">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Task List</h3>
+                <div className="flex items-center gap-2">
+                    <label className="text-xs text-gray-500 font-bold">Sort By:</label>
+                    <select 
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value as any)}
+                        className="bg-white border border-gray-200 text-xs font-bold text-gray-700 rounded-lg px-2 py-1 focus:outline-none focus:border-ecomattGreen"
+                    >
+                        <option value="dueDate">Due Date</option>
+                        <option value="priority">Priority</option>
+                    </select>
                 </div>
             </div>
 
             <div className="space-y-3">
-                {tasks.map(task => (
-                    <div key={task.id} className={`bg-white rounded-xl p-4 shadow-sm border-l-4 flex gap-3 ${task.priority === 'High' ? 'border-red-500' : 'border-blue-500'} ${task.status === 'Completed' ? 'opacity-60' : ''}`}>
+                {sortedTasks.length > 0 ? sortedTasks.map(task => (
+                    <div key={task.id} className={`bg-white rounded-xl p-4 shadow-sm border-l-4 flex gap-3 ${task.priority === 'High' ? 'border-red-500' : task.priority === 'Medium' ? 'border-yellow-500' : 'border-blue-500'} ${task.status === 'Completed' ? 'opacity-60' : ''}`}>
                         <div className="mt-1">
                             <i className={`far ${task.status === 'Completed' ? 'fa-check-square text-blue-500' : 'fa-square text-gray-300'} text-lg`}></i>
                         </div>
-                        <div>
-                            <h4 className={`text-sm font-bold text-gray-900 ${task.status === 'Completed' ? 'line-through' : ''}`}>{task.title}</h4>
-                            <p className="text-xs text-gray-500">{task.type} • Due {task.dueDate}</p>
+                        <div className="flex-1">
+                            <div className="flex justify-between items-start">
+                                <h4 className={`text-sm font-bold text-gray-900 ${task.status === 'Completed' ? 'line-through' : ''}`}>{task.title}</h4>
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${task.dueDate === new Date().toISOString().split('T')[0] ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-600'}`}>
+                                    {formatDueDate(task.dueDate)}
+                                </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-0.5">{task.type}</p>
+                            
                             {task.priority === 'High' && task.status !== 'Completed' && (
-                                <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded mt-1 inline-block font-bold">High Priority</span>
+                                <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded mt-2 inline-block font-bold">High Priority</span>
                             )}
                         </div>
                     </div>
-                ))}
+                )) : (
+                    <div className="text-center py-8 text-gray-400 text-sm">
+                        No tasks available.
+                    </div>
+                )}
             </div>
+            
+            <button className="w-full mt-6 bg-white border-2 border-dashed border-gray-300 text-gray-400 font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:border-ecomattGreen hover:text-ecomattGreen transition">
+                <i className="fas fa-plus"></i> Add New Task
+            </button>
         </>
       )}
 

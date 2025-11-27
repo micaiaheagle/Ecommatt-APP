@@ -15,6 +15,10 @@ import { Pig, Task, PigStatus, PigStage, FeedInventory, HealthRecord, FinanceRec
 import { loadData, saveData, STORAGE_KEYS } from './services/storageService';
 
 // Mock Data (Used as initial seed only)
+const today = new Date().toISOString().split('T')[0];
+const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
 const SEED_PIGS: Pig[] = [
   { 
       id: '1', 
@@ -44,9 +48,11 @@ const SEED_PIGS: Pig[] = [
 ];
 
 const SEED_TASKS: Task[] = [
-  { id: 't1', title: 'Administer Iron', dueDate: 'Today', priority: 'High', status: 'Pending', type: 'Medical' },
-  { id: 't2', title: 'Pregnancy Scan', dueDate: 'Today', priority: 'Low', status: 'Completed', type: 'Repro' },
-  { id: 't3', title: 'Order Grower Pellets', dueDate: 'Tomorrow', priority: 'Medium', status: 'Pending', type: 'Procurement' },
+  { id: 't1', title: 'Administer Iron', dueDate: today, priority: 'High', status: 'Pending', type: 'Medical' },
+  { id: 't2', title: 'Pregnancy Scan', dueDate: yesterday, priority: 'Low', status: 'Completed', type: 'Repro' },
+  { id: 't3', title: 'Order Grower Pellets', dueDate: tomorrow, priority: 'Medium', status: 'Pending', type: 'Procurement' },
+  { id: 't4', title: 'Pen Cleaning Routine', dueDate: today, priority: 'Medium', status: 'Pending', type: 'Hygiene' },
+  { id: 't5', title: 'Market Weight Check', dueDate: tomorrow, priority: 'High', status: 'Pending', type: 'Sales' },
 ];
 
 const SEED_FEEDS: FeedInventory[] = [

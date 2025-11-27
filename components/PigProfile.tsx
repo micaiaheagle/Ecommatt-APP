@@ -33,6 +33,7 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
 
   // Timeline Event Modal State
   const [showEventModal, setShowEventModal] = useState(false);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [newEvent, setNewEvent] = useState<{title: string, subtitle: string, date: string, color: 'green' | 'yellow' | 'blue' | 'red'}>({
       title: '',
       subtitle: '',
@@ -79,6 +80,18 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
       return Math.ceil(Math.abs(now.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24));
   };
 
+  // --- FCR CALCULATION HELPER ---
+  const calculateFCR = () => {
+      // Simplified formula: Total Feed / Total Weight Gain
+      const weightGain = Math.max(1, pig.weight - 1.5);
+      const days = getDaysOld(pig.dob);
+      // Simulation: Piglets eat little, Growers eat ~2kg/day. Avg across life approx 1.8kg/day for this calc
+      const estTotalFeed = days * 1.8; 
+      
+      if (weightGain <= 0) return "0.0";
+      return (estTotalFeed / weightGain).toFixed(2);
+  };
+
   const confirmDelete = () => {
       onDelete(pig.id);
       setShowDeleteConfirm(false);
@@ -116,6 +129,57 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
       onUpdate({ ...pig, timeline: newTimeline });
   };
 
+  const handleDeleteEvent = (eventId?: string) => {
+      if (!eventId || !pig.timeline) return;
+      if(window.confirm("Are you sure you want to delete this log?")) {
+          const updatedTimeline = pig.timeline.filter(e => e.id !== eventId);
+          
+          // If we deleted a feed log, we should ideally recalculate 'lastFed', 
+          // but for now we just remove the log. 
+          let newLastFed = pig.lastFed;
+          const deletedEvent = pig.timeline.find(e => e.id === eventId);
+          if (deletedEvent?.title === 'Feed Logged') {
+             const remainingFeedLogs = updatedTimeline.filter(e => e.title === 'Feed Logged');
+             if (remainingFeedLogs.length > 0) {
+                 // Sort by date descending
+                 remainingFeedLogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                 const latest = remainingFeedLogs[0];
+                 newLastFed = `${new Date(latest.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`; 
+             } else {
+                 newLastFed = undefined;
+             }
+          }
+
+          onUpdate({ ...pig, timeline: updatedTimeline, lastFed: newLastFed });
+      }
+  };
+
+  const openEditEventModal = (event: TimelineEvent) => {
+      if (event.title === 'Feed Logged') {
+          const parts = event.subtitle.split(' ');
+          const qty = parseFloat(parts[0].replace('kg', ''));
+          const type = parts.slice(1).join(' ');
+          
+          setFeedData({
+              date: event.date,
+              time: '12:00',
+              quantity: isNaN(qty) ? 0 : qty,
+              feedType: type || 'Grower Pellets'
+          });
+          setEditingEventId(event.id || null);
+          setShowFeedModal(true);
+      } else {
+          setNewEvent({
+              title: event.title,
+              subtitle: event.subtitle,
+              date: event.date,
+              color: event.color
+          });
+          setEditingEventId(event.id || null);
+          setShowEventModal(true);
+      }
+  };
+
   const handleSaveLineage = () => {
       onUpdate({ ...pig, sireId: lineageData.sireId, damId: lineageData.damId });
       setIsEditingLineage(false);
@@ -125,21 +189,31 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
       e.preventDefault();
       if (!newEvent.title || !newEvent.date) return;
 
-      const eventToAdd: TimelineEvent = {
-          id: `evt-${Date.now()}`,
-          title: newEvent.title,
-          subtitle: newEvent.subtitle,
-          date: newEvent.date,
-          color: newEvent.color,
-          status: 'Pending'
-      };
+      let updatedTimeline = [...(pig.timeline || [])];
 
-      // Create new timeline array
-      const updatedTimeline = [eventToAdd, ...(pig.timeline || [])];
+      if (editingEventId) {
+          updatedTimeline = updatedTimeline.map(ev => 
+              ev.id === editingEventId 
+              ? { ...ev, title: newEvent.title, subtitle: newEvent.subtitle, date: newEvent.date, color: newEvent.color }
+              : ev
+          );
+      } else {
+          const eventToAdd: TimelineEvent = {
+              id: `evt-${Date.now()}`,
+              title: newEvent.title,
+              subtitle: newEvent.subtitle,
+              date: newEvent.date,
+              color: newEvent.color,
+              status: 'Pending'
+          };
+          updatedTimeline.push(eventToAdd);
+      }
+
       updatedTimeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
       onUpdate({ ...pig, timeline: updatedTimeline });
       setShowEventModal(false);
+      setEditingEventId(null);
       setNewEvent({
           title: '',
           subtitle: '',
@@ -152,25 +226,32 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
       e.preventDefault();
       if (feedData.quantity <= 0) return;
 
-      // Format Last Fed string
-      // E.g. "Nov 22 08:30 AM"
       const dateObj = new Date(`${feedData.date}T${feedData.time}`);
       const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       const formattedTime = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
       const lastFedString = `${formattedDate} ${formattedTime}`;
 
-      // Create Timeline Entry
-      const feedEvent: TimelineEvent = {
-          id: `feed-${Date.now()}`,
-          date: feedData.date,
-          title: 'Feed Logged',
-          subtitle: `${feedData.quantity}kg ${feedData.feedType}`,
-          color: 'green',
-          status: 'Completed',
-          icon: 'fa-wheat'
-      };
+      let updatedTimeline = [...(pig.timeline || [])];
 
-      const updatedTimeline = [feedEvent, ...(pig.timeline || [])];
+      if (editingEventId) {
+          updatedTimeline = updatedTimeline.map(ev => 
+              ev.id === editingEventId
+              ? { ...ev, date: feedData.date, subtitle: `${feedData.quantity}kg ${feedData.feedType}` }
+              : ev
+          );
+      } else {
+          const feedEvent: TimelineEvent = {
+              id: `feed-${Date.now()}`,
+              date: feedData.date,
+              title: 'Feed Logged',
+              subtitle: `${feedData.quantity}kg ${feedData.feedType}`,
+              color: 'green',
+              status: 'Completed',
+              icon: 'fa-wheat'
+          };
+          updatedTimeline = [feedEvent, ...updatedTimeline];
+      }
+
       updatedTimeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
       onUpdate({ 
@@ -180,7 +261,7 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
       });
       
       setShowFeedModal(false);
-      // Reset slightly but keep date/time current
+      setEditingEventId(null);
       setFeedData({
           date: new Date().toISOString().split('T')[0],
           time: new Date().toTimeString().slice(0, 5),
@@ -206,7 +287,6 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
   };
 
   // --- Pedigree Helper Functions ---
-  
   const getPigDetails = (id?: string) => {
       if (!id) return null;
       return allPigs.find(p => p.tagId === id) || { 
@@ -216,6 +296,54 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
           sireId: undefined,
           damId: undefined
       };
+  };
+
+  // Helper Component for Autocomplete Search
+  const PigSearchSelect = ({ 
+      value, 
+      onChange, 
+      gender, 
+      placeholder 
+  }: { 
+      value: string, 
+      onChange: (val: string) => void, 
+      gender: 'Male' | 'Female', 
+      placeholder: string 
+  }) => {
+      const [isOpen, setIsOpen] = useState(false);
+      const candidates = allPigs.filter(p => 
+          p.id !== pig.id && 
+          p.gender === gender &&
+          (p.tagId.toLowerCase().includes(value.toLowerCase()) || 
+           p.breed.toLowerCase().includes(value.toLowerCase()))
+      ).slice(0, 5);
+
+      return (
+          <div className="relative w-full">
+              <input 
+                  className="w-full text-xs p-1.5 border rounded bg-white focus:ring-2 focus:ring-ecomattGreen focus:ring-offset-1 outline-none transition-all"
+                  value={value}
+                  onChange={(e) => { onChange(e.target.value); setIsOpen(true); }}
+                  onFocus={() => setIsOpen(true)}
+                  onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+                  placeholder={placeholder}
+              />
+              {isOpen && candidates.length > 0 && (
+                  <div className="absolute top-full left-0 w-48 bg-white shadow-xl rounded-lg border border-gray-100 mt-1 z-[60] max-h-40 overflow-y-auto text-left">
+                      {candidates.map(candidate => (
+                          <div 
+                              key={candidate.id}
+                              className="p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0 flex flex-col"
+                              onClick={() => { onChange(candidate.tagId); setIsOpen(false); }}
+                          >
+                              <span className="font-bold text-xs text-gray-800">{candidate.tagId}</span>
+                              <span className="text-[9px] text-gray-500">{candidate.breed} • {candidate.penLocation}</span>
+                          </div>
+                      ))}
+                  </div>
+              )}
+          </div>
+      );
   };
 
   const TreeNode = ({ role, id, type, isGrandparent = false }: { role: string, id?: string, type: 'sire' | 'dam' | 'subject', isGrandparent?: boolean }) => {
@@ -309,7 +437,7 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
 
       <div className="p-5 -mt-6 bg-grayBg rounded-t-3xl relative z-10">
           
-        {/* Quick Stats Grid - Expanded */}
+        {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 gap-3 mb-6">
             {/* Age */}
             <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
@@ -317,19 +445,19 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                 <p className="text-lg font-bold text-gray-900">{calculateAge(pig.dob)}</p>
             </div>
             
-            {/* Gender - NEW */}
+            {/* Gender */}
             <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
                 <p className="text-[10px] text-gray-400 font-bold uppercase">Gender</p>
                 <p className="text-lg font-bold text-gray-900">{pig.gender}</p>
             </div>
 
-            {/* Breed - NEW */}
+            {/* Breed */}
             <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
                 <p className="text-[10px] text-gray-400 font-bold uppercase">Breed</p>
                 <p className="text-lg font-bold text-gray-900 truncate">{pig.breed}</p>
             </div>
 
-            {/* Location - NEW */}
+            {/* Location */}
             <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
                 <p className="text-[10px] text-gray-400 font-bold uppercase">Location</p>
                 <p className="text-lg font-bold text-gray-900">{pig.penLocation}</p>
@@ -367,46 +495,43 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                 )}
             </div>
 
+            {/* FCR (Calculated) */}
+            <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
+                <p className="text-[10px] text-gray-400 font-bold uppercase">Est. FCR</p>
+                <p className="text-lg font-bold text-ecomattYellow">{calculateFCR()}</p>
+            </div>
+
             {/* Last Fed */}
-             <div className="col-span-2 bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm relative overflow-hidden group">
-                <p className="text-[10px] text-gray-400 font-bold uppercase">Last Fed</p>
+             <div className="col-span-1 bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm relative overflow-hidden group">
+                <div className="flex justify-center items-center gap-1 mb-1">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase">Last Fed</p>
+                    <button onClick={() => setShowFeedModal(true)} className="text-ecomattGreen hover:bg-green-50 rounded-full w-4 h-4 flex items-center justify-center">
+                        <i className="fas fa-plus-circle text-xs"></i>
+                    </button>
+                </div>
                 <p className="text-lg font-bold text-gray-900 truncate px-1">
                     {pig.lastFed ? pig.lastFed.split(' ').slice(1).join(' ') : 'N/A'}
                 </p>
-                <p className="text-[9px] text-gray-400 mb-1">
-                    {pig.lastFed ? pig.lastFed.split(' ')[0] : ''}
-                </p>
-                {/* Overlay Button */}
-                <button 
-                  onClick={() => setShowFeedModal(true)}
-                  className="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center text-white font-bold text-xs"
-                >
-                  <i className="fas fa-plus mr-1"></i> Log
-                </button>
-                 <button 
-                  onClick={() => setShowFeedModal(true)}
-                  className="absolute top-1 right-1 w-6 h-6 bg-ecomattGreen text-white rounded-full flex items-center justify-center shadow-sm md:hidden"
-                >
-                  <i className="fas fa-plus text-[10px]"></i>
-                </button>
             </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex overflow-x-auto gap-2 mb-6 no-scrollbar pb-2">
-            {['Overview', 'Lifecycle', 'Pedigree', 'Gallery'].map(tab => (
-                <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab as any)}
-                    className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
-                        activeTab === tab 
-                        ? 'bg-gray-900 text-white shadow-lg' 
-                        : 'bg-white border border-gray-200 text-gray-600'
-                    }`}
-                >
-                    {tab}
-                </button>
-            ))}
+        {/* Enhanced Tab Navigation - Sticky & Brand Colored */}
+        <div className="sticky top-0 bg-grayBg z-10 pb-2 pt-1">
+            <div className="flex overflow-x-auto gap-2 no-scrollbar">
+                {['Overview', 'Lifecycle', 'Pedigree', 'Gallery'].map(tab => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab as any)}
+                        className={`px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-200 shadow-sm ${
+                            activeTab === tab 
+                            ? 'bg-ecomattGreen text-white shadow-md transform scale-105' 
+                            : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                        }`}
+                    >
+                        {tab}
+                    </button>
+                ))}
+            </div>
         </div>
 
         {/* --- TAB CONTENT --- */}
@@ -438,7 +563,17 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                                     const daysOld = getDaysOld(pig.dob);
                                     const isCompleted = daysOld > stage.endDay;
                                     const isCurrent = daysOld <= stage.endDay && (idx === 0 || daysOld > LIFE_STAGES[idx - 1].endDay);
+                                    const startDay = idx === 0 ? 0 : LIFE_STAGES[idx - 1].endDay;
                                     
+                                    // Calculate approximate date range for this stage based on DOB
+                                    const stageStartDate = new Date(pig.dob);
+                                    stageStartDate.setDate(stageStartDate.getDate() + startDay);
+                                    const stageEndDate = new Date(pig.dob);
+                                    stageEndDate.setDate(stageEndDate.getDate() + (stage.endDay === 9999 ? 3650 : stage.endDay));
+                                    
+                                    const dateOptions: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+                                    const dateRange = `${stageStartDate.toLocaleDateString('en-US', dateOptions)} - ${stage.endDay === 9999 ? '...' : stageEndDate.toLocaleDateString('en-US', dateOptions)}`;
+
                                     return (
                                         <div key={idx} className="flex flex-col items-center gap-2 w-14">
                                             <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs border-4 transition-all duration-500
@@ -448,12 +583,25 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                                             `}>
                                                 <i className={`fas ${stage.icon}`}></i>
                                             </div>
-                                            <span className={`text-[9px] font-bold text-center ${isCurrent ? 'text-ecomattGreen' : 'text-gray-400'}`}>
-                                                {stage.label}
-                                            </span>
-                                            {isCurrent && (
-                                                <span className="text-[9px] text-gray-400 font-mono -mt-1">{daysOld}d</span>
-                                            )}
+                                            <div className="text-center">
+                                                <span className={`text-[9px] font-bold text-center block ${isCurrent ? 'text-ecomattGreen' : 'text-gray-400'}`}>
+                                                    {stage.label}
+                                                </span>
+                                                <span className="text-[7px] text-gray-400 font-mono block leading-tight">
+                                                    {startDay}-{stage.endDay === 9999 ? '+' : stage.endDay}d
+                                                </span>
+                                                {isCurrent && (
+                                                    <div className="mt-1">
+                                                        <span className="text-[8px] text-ecomattGreen font-bold font-mono block bg-green-50 px-1 rounded border border-green-100">
+                                                            Day {daysOld}
+                                                        </span>
+                                                        <span className="text-[7px] text-green-600 font-bold block mt-0.5">
+                                                            {stage.endDay !== 9999 ? `${Math.max(0, stage.endDay - daysOld)}d left` : 'Ongoing'}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {/* Show date range only for current or active interactions if needed, mostly simplified for mobile */}
+                                            </div>
                                         </div>
                                     );
                                 })}
@@ -467,7 +615,9 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                                         LIFE_STAGES.find((s, i) => getDaysOld(pig.dob) <= s.endDay && (i === 0 || getDaysOld(pig.dob) > LIFE_STAGES[i-1].endDay))?.label || 'Mature'
                                     }</p>
                                     <p className="text-[10px] text-blue-600 leading-tight mt-1">
-                                        Monitor feed conversion ratio closely during this stage. Ensure ad-libitum water access.
+                                        {getDaysOld(pig.dob) <= 30 ? 
+                                            "Critical colostrum and warmth management period. Target weight: 7-10kg." : 
+                                            "Monitor feed conversion ratio closely during this stage. Ensure ad-libitum water access."}
                                     </p>
                                 </div>
                             </div>
@@ -572,25 +722,47 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                                       event.color === 'yellow' ? 'bg-yellow-500' :
                                       event.color === 'blue' ? 'bg-blue-500' : 'bg-red-500'}
                                 `} onClick={() => handleToggleEventStatus(idx)}>
-                                    {event.status === 'Completed' && <i className="fas fa-check text-[8px] text-white"></i>}
+                                    {event.icon ? (
+                                        <i className={`fas ${event.icon} text-[8px] text-white`}></i>
+                                    ) : (
+                                        event.status === 'Completed' && <i className="fas fa-check text-[8px] text-white"></i>
+                                    )}
                                 </div>
                                 
-                                <div className="flex justify-between items-start group">
-                                    <div>
-                                        <p className="text-xs text-gray-400 mb-1 font-mono">{event.date}</p>
-                                        <h4 className={`font-bold text-sm text-gray-900 ${event.status === 'Completed' ? 'line-through text-gray-500' : ''}`}>{event.title}</h4>
-                                        <p className="text-xs text-gray-500">{event.subtitle}</p>
+                                <div className="flex flex-col gap-2 group">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="text-xs text-gray-400 mb-1 font-mono">{event.date}</p>
+                                            <h4 className={`font-bold text-sm text-gray-900 ${event.status === 'Completed' ? 'line-through text-gray-500' : ''}`}>{event.title}</h4>
+                                            <p className="text-xs text-gray-500">{event.subtitle}</p>
+                                        </div>
+                                        <button 
+                                            onClick={() => handleToggleEventStatus(idx)}
+                                            className={`text-[10px] px-2 py-1 rounded font-bold border transition-colors
+                                                ${event.status === 'Completed' 
+                                                    ? 'bg-gray-100 text-gray-500 border-gray-200' 
+                                                    : 'bg-white text-ecomattGreen border-green-200 hover:bg-green-50'}
+                                            `}
+                                        >
+                                            {event.status === 'Completed' ? 'Done' : 'Mark Done'}
+                                        </button>
                                     </div>
-                                    <button 
-                                        onClick={() => handleToggleEventStatus(idx)}
-                                        className={`text-[10px] px-2 py-1 rounded font-bold border transition-colors
-                                            ${event.status === 'Completed' 
-                                                ? 'bg-gray-100 text-gray-500 border-gray-200' 
-                                                : 'bg-white text-ecomattGreen border-green-200 hover:bg-green-50'}
-                                        `}
-                                    >
-                                        {event.status === 'Completed' ? 'Done' : 'Mark Done'}
-                                    </button>
+                                    
+                                    {/* Actions */}
+                                    <div className="flex gap-3 border-t border-gray-50 pt-2 mt-1">
+                                        <button 
+                                            onClick={() => openEditEventModal(event)}
+                                            className="text-[10px] font-bold text-blue-500 flex items-center gap-1 hover:text-blue-700"
+                                        >
+                                            <i className="fas fa-pencil-alt"></i> Edit
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDeleteEvent(event.id)}
+                                            className="text-[10px] font-bold text-red-400 flex items-center gap-1 hover:text-red-600"
+                                        >
+                                            <i className="fas fa-trash"></i> Delete
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -669,13 +841,13 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                             {/* Sire Node */}
                             <div className="flex flex-col items-center">
                                 {isEditingLineage ? (
-                                    <div className="bg-blue-50 border border-blue-200 p-3 rounded-xl w-32">
+                                    <div className="bg-blue-50 border border-blue-200 p-3 rounded-xl w-32 min-h-[100px] flex flex-col justify-center relative z-50">
                                         <label className="text-[9px] font-bold text-blue-800 uppercase block mb-1">Sire ID</label>
-                                        <input 
-                                            className="w-full text-xs p-1 border rounded"
+                                        <PigSearchSelect 
                                             value={lineageData.sireId}
-                                            onChange={(e) => setLineageData({...lineageData, sireId: e.target.value})}
-                                            placeholder="Enter ID"
+                                            onChange={(val: string) => setLineageData(prev => ({...prev, sireId: val}))}
+                                            gender="Male"
+                                            placeholder="Search Boar"
                                         />
                                     </div>
                                 ) : (
@@ -690,13 +862,13 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                             {/* Dam Node */}
                             <div className="flex flex-col items-center">
                                 {isEditingLineage ? (
-                                     <div className="bg-pink-50 border border-pink-200 p-3 rounded-xl w-32">
+                                     <div className="bg-pink-50 border border-pink-200 p-3 rounded-xl w-32 min-h-[100px] flex flex-col justify-center relative z-50">
                                         <label className="text-[9px] font-bold text-pink-800 uppercase block mb-1">Dam ID</label>
-                                        <input 
-                                            className="w-full text-xs p-1 border rounded"
+                                        <PigSearchSelect 
                                             value={lineageData.damId}
-                                            onChange={(e) => setLineageData({...lineageData, damId: e.target.value})}
-                                            placeholder="Enter ID"
+                                            onChange={(val: string) => setLineageData(prev => ({...prev, damId: val}))}
+                                            gender="Female"
+                                            placeholder="Search Sow"
                                         />
                                     </div>
                                 ) : (
@@ -809,33 +981,33 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 text-center mb-2">Delete Record?</h3>
                 <p className="text-sm text-gray-500 text-center mb-6">
-                    Are you sure you want to permanently delete <span className="font-bold text-gray-900">{pig.tagId}</span>? This action cannot be undone.
+                    Are you sure you want to delete this pig?
                 </p>
                 <div className="flex gap-3">
                     <button 
                         onClick={() => setShowDeleteConfirm(false)}
                         className="flex-1 bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200 transition"
                     >
-                        Cancel
+                        No
                     </button>
                     <button 
                         onClick={confirmDelete}
                         className="flex-1 bg-red-500 text-white font-bold py-3 rounded-xl hover:bg-red-600 shadow-lg shadow-red-200 transition"
                     >
-                        Delete
+                        Yes
                     </button>
                 </div>
             </div>
         </div>
       )}
 
-      {/* Log Event Modal */}
+      {/* Log Event Modal (Also serves as Edit Event Modal) */}
       {showEventModal && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:px-4 animate-in fade-in duration-200">
               <div className="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in slide-in-from-bottom duration-300">
                   <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-lg font-bold text-gray-900">Log Timeline Event</h3>
-                      <button onClick={() => setShowEventModal(false)} className="text-gray-400 hover:text-gray-600">
+                      <h3 className="text-lg font-bold text-gray-900">{editingEventId ? 'Edit Event' : 'Log Timeline Event'}</h3>
+                      <button onClick={() => { setShowEventModal(false); setEditingEventId(null); }} className="text-gray-400 hover:text-gray-600">
                           <i className="fas fa-times text-xl"></i>
                       </button>
                   </div>
@@ -891,7 +1063,7 @@ const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete,
                       </div>
 
                       <button className="w-full bg-ecomattGreen text-white font-bold py-3 rounded-xl shadow-lg mt-4">
-                          Add Event
+                          {editingEventId ? 'Save Changes' : 'Add Event'}
                       </button>
                   </form>
               </div>
