@@ -1,64 +1,94 @@
-import { EmailNotification, User } from '../types';
 
-const STORAGE_KEY = 'ECOMATT_EMAIL_QUEUE';
-export const emailQueue: EmailNotification[] = [];
+// Email Service for Ecommatt Farm App
+// Uses EmailJS for client-side email sending (requires configuration)
 
-export const sendEmail = async (to: string, subject: string, body: string, type: 'signup' | 'verification' | 'alert' | 'reminder'): Promise<EmailNotification> => {
-  const notification: EmailNotification = {
-    id: `email_${Date.now()}`,
-    to,
-    subject,
-    body,
-    type,
-    status: 'pending'
-  };
-  emailQueue.push(notification);
-  saveEmailQueue(emailQueue);
-  setTimeout(async () => {
-    notification.status = 'sent';
-    notification.sentAt = new Date().toISOString();
-    updateEmailStatus(notification);
-    console.log(`[EMAIL SENT] ${subject} to ${to}`);
-  }, 500);
-  return notification;
+// TODO: Replace these with your actual EmailJS credentials
+const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID';
+const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';
+const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY';
+
+interface EmailData {
+    to_email: string;
+    to_name?: string;
+    subject: string;
+    message: string;
+    [key: string]: any;
+}
+
+export const sendEmail = async (data: EmailData): Promise<boolean> => {
+    console.log(`[EmailService] Attempting to send email to ${data.to_email}...`);
+    
+    // Check if EmailJS is configured (Basic check)
+    if (EMAILJS_SERVICE_ID === 'YOUR_SERVICE_ID') {
+        console.warn('[EmailService] EmailJS not configured. Simulating success.');
+        console.log('[EmailService] Payload:', data);
+        return new Promise(resolve => setTimeout(() => resolve(true), 1000));
+    }
+
+    try {
+        // Dynamic import to avoid build errors if package is missing, 
+        // though typically you'd install 'emailjs-com' or '@emailjs/browser'
+        // For this implementation, we will use a fetch implementation to the EmailJS API 
+        // to avoid dependency issues if the package isn't installed.
+        
+        const payload = {
+            service_id: EMAILJS_SERVICE_ID,
+            template_id: EMAILJS_TEMPLATE_ID,
+            user_id: EMAILJS_PUBLIC_KEY,
+            template_params: data
+        };
+
+        const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (response.ok) {
+            console.log('[EmailService] Email sent successfully!');
+            return true;
+        } else {
+            const errorText = await response.text();
+            console.error('[EmailService] Failed to send email:', errorText);
+            return false;
+        }
+    } catch (error) {
+        console.error('[EmailService] Error sending email:', error);
+        return false;
+    }
 };
 
-export const sendVerificationEmail = async (user: User, code: string): Promise<EmailNotification> => {
-  const subject = 'Verify Your Ecomatt Account';
-  const body = `<h2>Welcome to Ecomatt Farm Management!</h2><p>Hi ${user.name},</p><p>Your verification code is: <strong>${code}</strong></p><p>This code expires in 24 hours.</p><p>If you didn't request this, please ignore this email.</p><p>Best regards,<br/>Ecomatt Team</p>`;
-  return sendEmail(user.email, subject, body, 'verification');
+export const sendWelcomeEmail = async (email: string, name: string) => {
+    return sendEmail({
+        to_email: email,
+        to_name: name,
+        subject: 'Welcome to Ecommatt Farm Manager',
+        message: `Hi ${name},\n\nWelcome to Ecommatt Farm Manager! We are excited to have you on board.\n\nBest Regards,\nThe Ecommatt Team`
+    });
 };
 
-export const sendWelcomeEmail = async (user: User): Promise<EmailNotification> => {
-  const subject = 'Welcome to Ecomatt Farm Management';
-  const body = `<h2>Account Verified!</h2><p>Hi ${user.name},</p><p>Your account has been successfully verified. You can now access all features of Ecomatt Farm Management.</p><p>Get started by completing your farm profile in the onboarding section.</p><p>Best regards,<br/>Ecomatt Team</p>`;
-  return sendEmail(user.email, subject, body, 'signup');
+export const sendVerificationEmail = async (email: string, code: string) => {
+    return sendEmail({
+        to_email: email,
+        subject: 'Verify your Ecommatt Account',
+        message: `Your verification code is: ${code}`
+    });
 };
 
-export const sendAlertEmail = async (to: string, title: string, message: string): Promise<EmailNotification> => {
-  const subject = `Ecomatt Alert: ${title}`;
-  const body = `<h2>${title}</h2><p>${message}</p><p>Log in to your Ecomatt Farm Management account to take action.</p><p>Best regards,<br/>Ecomatt Team</p>`;
-  return sendEmail(to, subject, body, 'alert');
-};
+export const sendAlertEmail = async (emails: string[], subject: string, message: string) => {
+    // EmailJS usually sends to one recipient at a time unless using a specific feature.
+    // We will loop for now or just send to the first one for the prototype.
+    console.log(`[EmailService] Sending alert to ${emails.length} recipients.`);
+    
+    const results = await Promise.all(emails.map(email => 
+        sendEmail({
+            to_email: email,
+            subject: `[ALERT] ${subject}`,
+            message: message
+        })
+    ));
 
-export const saveEmailQueue = (queue: EmailNotification[]): void => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
-};
-
-export const loadEmailQueue = (): EmailNotification[] => {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  return stored ? JSON.parse(stored) : [];
-};
-
-export const updateEmailStatus = (notification: EmailNotification): void => {
-  const queue = loadEmailQueue();
-  const index = queue.findIndex(e => e.id === notification.id);
-  if (index !== -1) {
-    queue[index] = notification;
-    saveEmailQueue(queue);
-  }
-};
-
-export const getEmailHistory = (): EmailNotification[] => {
-  return loadEmailQueue();
+    return results.every(r => r === true);
 };
