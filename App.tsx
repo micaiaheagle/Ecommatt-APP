@@ -24,8 +24,11 @@ import CriticalWatch from './components/CriticalWatch';
 import SmartAssistant from './components/SmartAssistant';
 import Login from './components/Login';
 import Settings from './components/Settings';
-import EmailAlertsSetup from './components/EmailAlertsSetup'; // New
+import EmailAlertsSetup from './components/EmailAlertsSetup';
 import Onboarding from './components/Onboarding';
+import Signup from './components/Signup';
+import Verification from './components/Verification';
+import { sendVerificationEmail, sendWelcomeEmail } from './services/emailService';
 import { Pig, Task, PigStatus, PigStage, FeedInventory, HealthRecord, FinanceRecord, BudgetRecord, LoanRecord, ViewState, User, UserRole, TimelineEvent, NotificationConfig } from './types';
 import { loadData, saveData, STORAGE_KEYS } from './services/storageService';
 
@@ -116,10 +119,10 @@ const SEED_LOANS: LoanRecord[] = [
 
 // Initial Users
 const INITIAL_USERS: User[] = [
-    { id: 'u1', name: 'Admin User', email: 'manager@ecomatt.co.zw', role: 'Farm Manager', password: '123456' },
-    { id: 'u2', name: 'Mike Herdsman', email: 'herdsman@ecomatt.co.zw', role: 'Herdsman', password: '123456' },
-    { id: 'u3', name: 'John Doe', email: 'worker@ecomatt.co.zw', role: 'General Worker', password: '123456' },
-    { id: 'u4', name: 'Sarah Vet', email: 'vet@ecomatt.co.zw', role: 'Veterinarian', password: '123456' },
+    { id: 'u1', name: 'Admin User', email: 'manager@ecomatt.co.zw', role: 'Farm Manager', password: '123456', hasCompletedOnboarding: true },
+    { id: 'u2', name: 'Mike Herdsman', email: 'herdsman@ecomatt.co.zw', role: 'Herdsman', password: '123456', hasCompletedOnboarding: true },
+    { id: 'u3', name: 'John Doe', email: 'worker@ecomatt.co.zw', role: 'General Worker', password: '123456', hasCompletedOnboarding: true },
+    { id: 'u4', name: 'Sarah Vet', email: 'vet@ecomatt.co.zw', role: 'Veterinarian', password: '123456', hasCompletedOnboarding: true },
 ];
 
 const ROLE_PERMISSIONS: Record<UserRole, ViewState[]> = {
@@ -133,6 +136,12 @@ const App: React.FC = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [currentView, setCurrentView] = useState<ViewState>(ViewState.Dashboard);
+
+    // Auth Flow State
+    const [isSigningUp, setIsSigningUp] = useState(false);
+    const [isVerifying, setIsVerifying] = useState(false);
+    const [pendingUser, setPendingUser] = useState<any>(null);
+    const [verificationCode, setVerificationCode] = useState('');
 
     // Data State - Initialize from Storage or Seed
     const [pigs, setPigs] = useState<Pig[]>(() => loadData(STORAGE_KEYS.PIGS, SEED_PIGS));
@@ -186,375 +195,376 @@ const App: React.FC = () => {
             setCurrentUser(user);
             setIsAuthenticated(true);
             setLoginError('');
-            setShowOnboarding(true);
+            // Only show onboarding if user hasn't completed it
+            if (!user.hasCompletedOnboarding) {
+                setShowOnboarding(true);
+            }
         } else {
             setLoginError('Invalid email or password.');
         }
     };
 
-};
-
-const handleOnboardingComplete = () => {
-    setShowOnboarding(false);
-    if (currentUser) {
-        const updatedUser = { ...currentUser, hasCompletedOnboarding: true };
-        setCurrentUser(updatedUser);
-        setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
-    }
-};
-
-// Signup Handlers
-const handleSignupSubmit = async (formData: any) => {
-    setPendingUser(formData);
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setVerificationCode(code);
-
-    // Send Verification Email
-    await sendVerificationEmail(formData.email, code);
-
-    setIsSigningUp(false);
-    setIsVerifying(true);
-};
-
-const handleVerificationSuccess = async () => {
-    if (!pendingUser) return;
-
-    const newUser: User = {
-        id: `u${Date.now()}`,
-        name: `${pendingUser.firstName} ${pendingUser.lastName}`,
-        email: pendingUser.email,
-        role: pendingUser.role as UserRole,
-        password: pendingUser.password,
-        hasCompletedOnboarding: false
-    };
-
-    setUsers([...users, newUser]);
-    setCurrentUser(newUser);
-    setIsAuthenticated(true);
-    setIsVerifying(false);
-    setShowOnboarding(true);
-
-    // Send Welcome Email
-    await sendWelcomeEmail(newUser.email, newUser.name);
-};
-
-// Pig Management Handlers
-const handleSaveNewPig = (newPig: Pig) => {
-    setPigs([...pigs, newPig]);
-    setIsAddingPig(false);
-};
-
-const handleDeletePig = (id: string) => {
-    setPigs(pigs.filter(p => p.id !== id));
-    setSelectedPig(null); // Return to list
-};
-
-const handleUpdatePig = (updatedPig: Pig) => {
-    setPigs(pigs.map(p => p.id === updatedPig.id ? updatedPig : p));
-    setSelectedPig(updatedPig);
-    setIsEditingPig(false);
-};
-
-const handleNavClick = (view: ViewState) => {
-    setCurrentView(view);
-    // Reset sub-views when changing main module
-    if (view !== ViewState.Pigs) {
-        setSelectedPig(null);
-        setIsAddingPig(false);
-        setIsEditingPig(false);
-    }
-    if (view !== ViewState.Operations) {
-        setOperationsInitialTab(undefined);
-        setOperationsPigFilter(undefined);
-        setOperationsSubView('None');
-    }
-    if (view !== ViewState.Finance) {
-        setFinanceSubView('None');
-    }
-    if (view !== ViewState.AI_Tools) {
-        setIntelligentSubView('None');
-    }
-    if (view !== ViewState.Settings) {
-        setSettingsSubView('None');
-    }
-};
-
-// Link to Health Records from Pig Profile
-const handleViewHealthRecords = () => {
-    if (selectedPig) {
-        setOperationsPigFilter(selectedPig.tagId);
-    }
-    setOperationsInitialTab('Health');
-    setCurrentView(ViewState.Operations);
-};
-
-const handleLogout = () => {
-    setCurrentUser(null);
-    setIsAuthenticated(false);
-    setCurrentView(ViewState.Dashboard);
-};
-
-const handleAddUser = (newUser: User) => setUsers([...users, newUser]);
-
-const handleUpdatePassword = (newPassword: string) => {
-    if (!currentUser) return;
-    const updatedUsers = users.map(u =>
-        u.id === currentUser.id ? { ...u, password: newPassword } : u
-    );
-    setUsers(updatedUsers);
-    setCurrentUser({ ...currentUser, password: newPassword });
-};
-
-const handleSaveNotificationConfig = (config: NotificationConfig) => {
-    setNotificationConfig(config);
-    setSettingsSubView('None');
-    alert("Email & Alert preferences updated.");
-};
-
-// Feed Handlers
-const handleLogDailyFeed = (data: { feedId: string; quantity: number; pen: string; batch?: string }) => {
-    // 1. Deduct stock
-    const updatedFeeds = feeds.map(f => {
-        if (f.id === data.feedId) {
-            return { ...f, quantityKg: Math.max(0, f.quantityKg - data.quantity) };
+    const handleOnboardingComplete = () => {
+        setShowOnboarding(false);
+        if (currentUser) {
+            const updatedUser = { ...currentUser, hasCompletedOnboarding: true };
+            setCurrentUser(updatedUser);
+            setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
         }
-        return f;
-    });
-    setFeeds(updatedFeeds);
-    setOperationsSubView('None');
-    alert(`Feed Logged: ${data.quantity}kg for ${data.pen}`);
-};
-
-// Finance Handlers
-const handleSaveTransaction = (recordData: Omit<FinanceRecord, 'id'>) => {
-    const newRecord: FinanceRecord = {
-        id: `fin-${Date.now()}`,
-        ...recordData,
-        status: 'Paid' // Default to Paid for new logs
     };
-    setFinanceRecords([...financeRecords, newRecord]);
-    setFinanceSubView('None');
-};
 
-// GLOBAL QUICK ACTIONS HANDLER
-const handleQuickAction = (action: string) => {
-    switch (action) {
-        case 'add_pig':
-            setCurrentView(ViewState.Pigs);
-            setIsAddingPig(true);
+    // Signup Handlers
+    const handleSignupSubmit = async (formData: any) => {
+        setPendingUser(formData);
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        setVerificationCode(code);
+
+        // Send Verification Email
+        await sendVerificationEmail(formData.email, code);
+
+        setIsSigningUp(false);
+        setIsVerifying(true);
+    };
+
+    const handleVerificationSuccess = async () => {
+        if (!pendingUser) return;
+
+        const newUser: User = {
+            id: `u${Date.now()}`,
+            name: `${pendingUser.firstName} ${pendingUser.lastName}`,
+            email: pendingUser.email,
+            role: pendingUser.role as UserRole,
+            password: pendingUser.password,
+            hasCompletedOnboarding: false
+        };
+
+        setUsers([...users, newUser]);
+        setCurrentUser(newUser);
+        setIsAuthenticated(true);
+        setIsVerifying(false);
+        setShowOnboarding(true);
+
+        // Send Welcome Email
+        await sendWelcomeEmail(newUser.email, newUser.name);
+    };
+
+    // Pig Management Handlers
+    const handleSaveNewPig = (newPig: Pig) => {
+        setPigs([...pigs, newPig]);
+        setIsAddingPig(false);
+    };
+
+    const handleDeletePig = (id: string) => {
+        setPigs(pigs.filter(p => p.id !== id));
+        setSelectedPig(null); // Return to list
+    };
+
+    const handleUpdatePig = (updatedPig: Pig) => {
+        setPigs(pigs.map(p => p.id === updatedPig.id ? updatedPig : p));
+        setSelectedPig(updatedPig);
+        setIsEditingPig(false);
+    };
+
+    const handleNavClick = (view: ViewState) => {
+        setCurrentView(view);
+        // Reset sub-views when changing main module
+        if (view !== ViewState.Pigs) {
             setSelectedPig(null);
-            break;
+            setIsAddingPig(false);
+            setIsEditingPig(false);
+        }
+        if (view !== ViewState.Operations) {
+            setOperationsInitialTab(undefined);
+            setOperationsPigFilter(undefined);
+            setOperationsSubView('None');
+        }
+        if (view !== ViewState.Finance) {
+            setFinanceSubView('None');
+        }
+        if (view !== ViewState.AI_Tools) {
+            setIntelligentSubView('None');
+        }
+        if (view !== ViewState.Settings) {
+            setSettingsSubView('None');
+        }
+    };
 
-        case 'log_feed':
-            setCurrentView(ViewState.Operations);
-            setOperationsInitialTab('Feed');
-            setOperationsSubView('FeedLogger');
-            break;
+    // Link to Health Records from Pig Profile
+    const handleViewHealthRecords = () => {
+        if (selectedPig) {
+            setOperationsPigFilter(selectedPig.tagId);
+        }
+        setOperationsInitialTab('Health');
+        setCurrentView(ViewState.Operations);
+    };
 
-        case 'log_health':
-            setCurrentView(ViewState.Operations);
-            setOperationsInitialTab('Health');
-            break;
+    const handleLogout = () => {
+        setCurrentUser(null);
+        setIsAuthenticated(false);
+        setCurrentView(ViewState.Dashboard);
+    };
 
-        case 'add_task':
-            setCurrentView(ViewState.Operations);
-            setOperationsInitialTab('Tasks');
-            break;
+    const handleAddUser = (newUser: User) => setUsers([...users, newUser]);
 
-        case 'add_income':
-        case 'add_expense':
-            setCurrentView(ViewState.Finance);
-            setFinanceSubView('Logger');
-            break;
+    const handleUpdatePassword = (newPassword: string) => {
+        if (!currentUser) return;
+        const updatedUsers = users.map(u =>
+            u.id === currentUser.id ? { ...u, password: newPassword } : u
+        );
+        setUsers(updatedUsers);
+        setCurrentUser({ ...currentUser, password: newPassword });
+    };
 
-        case 'add_user':
-            setCurrentView(ViewState.Settings);
-            break;
+    const handleSaveNotificationConfig = (config: NotificationConfig) => {
+        setNotificationConfig(config);
+        setSettingsSubView('None');
+        alert("Email & Alert preferences updated.");
+    };
 
-        default:
-            // Fallback
-            break;
-    }
-};
-
-const handleFabClick = () => {
-    setCurrentView(ViewState.Pigs);
-    setIsAddingPig(true);
-};
-
-const renderContent = () => {
-    if (!currentUser) return null;
-    const allowedViews = ROLE_PERMISSIONS[currentUser.role] || [];
-
-    if (!allowedViews.includes(currentView)) {
-        return <div className="p-8 text-center text-gray-500">Access Restricted</div>;
-    }
-
-    switch (currentView) {
-        case ViewState.Dashboard:
-            return <Dashboard
-                pigs={pigs}
-                tasks={tasks}
-                financeRecords={financeRecords}
-                feeds={feeds}
-                onViewChange={handleNavClick}
-            />;
-
-        case ViewState.Pigs:
-            if (isAddingPig) {
-                return <PigForm onSave={handleSaveNewPig} onCancel={() => setIsAddingPig(false)} />;
+    // Feed Handlers
+    const handleLogDailyFeed = (data: { feedId: string; quantity: number; pen: string; batch?: string }) => {
+        // 1. Deduct stock
+        const updatedFeeds = feeds.map(f => {
+            if (f.id === data.feedId) {
+                return { ...f, quantityKg: Math.max(0, f.quantityKg - data.quantity) };
             }
-            if (isEditingPig && selectedPig) {
-                return <PigForm
-                    initialData={selectedPig}
-                    onSave={handleUpdatePig}
-                    onCancel={() => setIsEditingPig(false)}
+            return f;
+        });
+        setFeeds(updatedFeeds);
+        setOperationsSubView('None');
+        alert(`Feed Logged: ${data.quantity}kg for ${data.pen}`);
+    };
+
+    // Finance Handlers
+    const handleSaveTransaction = (recordData: Omit<FinanceRecord, 'id'>) => {
+        const newRecord: FinanceRecord = {
+            id: `fin-${Date.now()}`,
+            ...recordData,
+            status: 'Paid' // Default to Paid for new logs
+        };
+        setFinanceRecords([...financeRecords, newRecord]);
+        setFinanceSubView('None');
+    };
+
+    // GLOBAL QUICK ACTIONS HANDLER
+    const handleQuickAction = (action: string) => {
+        switch (action) {
+            case 'add_pig':
+                setCurrentView(ViewState.Pigs);
+                setIsAddingPig(true);
+                setSelectedPig(null);
+                break;
+
+            case 'log_feed':
+                setCurrentView(ViewState.Operations);
+                setOperationsInitialTab('Feed');
+                setOperationsSubView('FeedLogger');
+                break;
+
+            case 'log_health':
+                setCurrentView(ViewState.Operations);
+                setOperationsInitialTab('Health');
+                break;
+
+            case 'add_task':
+                setCurrentView(ViewState.Operations);
+                setOperationsInitialTab('Tasks');
+                break;
+
+            case 'add_income':
+            case 'add_expense':
+                setCurrentView(ViewState.Finance);
+                setFinanceSubView('Logger');
+                break;
+
+            case 'add_user':
+                setCurrentView(ViewState.Settings);
+                break;
+
+            default:
+                // Fallback
+                break;
+        }
+    };
+
+    const handleFabClick = () => {
+        setCurrentView(ViewState.Pigs);
+        setIsAddingPig(true);
+    };
+
+    const renderContent = () => {
+        if (!currentUser) return null;
+        const allowedViews = ROLE_PERMISSIONS[currentUser.role] || [];
+
+        if (!allowedViews.includes(currentView)) {
+            return <div className="p-8 text-center text-gray-500">Access Restricted</div>;
+        }
+
+        switch (currentView) {
+            case ViewState.Dashboard:
+                return <Dashboard
+                    pigs={pigs}
+                    tasks={tasks}
+                    financeRecords={financeRecords}
+                    feeds={feeds}
+                    onViewChange={handleNavClick}
                 />;
-            }
-            if (selectedPig) {
-                return <PigProfile
-                    pig={selectedPig}
-                    allPigs={pigs}
-                    onBack={() => setSelectedPig(null)}
-                    onDelete={handleDeletePig}
-                    onUpdate={handleUpdatePig}
-                    onEdit={() => setIsEditingPig(true)}
-                    onViewHealth={handleViewHealthRecords}
+
+            case ViewState.Pigs:
+                if (isAddingPig) {
+                    return <PigForm onSave={handleSaveNewPig} onCancel={() => setIsAddingPig(false)} />;
+                }
+                if (isEditingPig && selectedPig) {
+                    return <PigForm
+                        initialData={selectedPig}
+                        onSave={handleUpdatePig}
+                        onCancel={() => setIsEditingPig(false)}
+                    />;
+                }
+                if (selectedPig) {
+                    return <PigProfile
+                        pig={selectedPig}
+                        allPigs={pigs}
+                        onBack={() => setSelectedPig(null)}
+                        onDelete={handleDeletePig}
+                        onUpdate={handleUpdatePig}
+                        onEdit={() => setIsEditingPig(true)}
+                        onViewHealth={handleViewHealthRecords}
+                    />;
+                }
+                return <PigManager
+                    pigs={pigs}
+                    onAddPigClick={() => setIsAddingPig(true)}
+                    onSelectPig={setSelectedPig}
                 />;
-            }
-            return <PigManager
-                pigs={pigs}
-                onAddPigClick={() => setIsAddingPig(true)}
-                onSelectPig={setSelectedPig}
-            />;
 
-        case ViewState.Operations:
-            if (operationsSubView === 'FeedLogger') {
-                return <FeedLogger feeds={feeds} onSave={handleLogDailyFeed} onCancel={() => setOperationsSubView('None')} />;
-            }
-            if (operationsSubView === 'FeedFormulator') {
-                return <FeedFormulator onCancel={() => setOperationsSubView('None')} />;
-            }
-            return <Operations
-                feeds={feeds}
-                healthRecords={healthRecords}
-                tasks={tasks}
-                initialTab={operationsInitialTab}
-                pigFilter={operationsPigFilter}
-                onOpenFeedLogger={() => setOperationsSubView('FeedLogger')}
-                onOpenFeedFormulator={() => setOperationsSubView('FeedFormulator')}
-            />;
+            case ViewState.Operations:
+                if (operationsSubView === 'FeedLogger') {
+                    return <FeedLogger feeds={feeds} onSave={handleLogDailyFeed} onCancel={() => setOperationsSubView('None')} />;
+                }
+                if (operationsSubView === 'FeedFormulator') {
+                    return <FeedFormulator onCancel={() => setOperationsSubView('None')} />;
+                }
+                return <Operations
+                    feeds={feeds}
+                    healthRecords={healthRecords}
+                    tasks={tasks}
+                    initialTab={operationsInitialTab}
+                    pigFilter={operationsPigFilter}
+                    onOpenFeedLogger={() => setOperationsSubView('FeedLogger')}
+                    onOpenFeedFormulator={() => setOperationsSubView('FeedFormulator')}
+                />;
 
-        case ViewState.Finance:
-            if (financeSubView === 'Logger') {
-                return <FinanceLogger onSave={handleSaveTransaction} onCancel={() => setFinanceSubView('None')} />;
-            }
-            if (financeSubView === 'Batch') {
-                return <BatchProfitability records={financeRecords} onCancel={() => setFinanceSubView('None')} />;
-            }
-            if (financeSubView === 'Calculator') {
-                return <ProfitCalculator onCancel={() => setFinanceSubView('None')} />;
-            }
-            if (financeSubView === 'Forecast') {
-                return <CashFlowForecast records={financeRecords} pigs={pigs} onCancel={() => setFinanceSubView('None')} />;
-            }
-            if (financeSubView === 'Budget') {
-                return <BudgetAnalysis records={financeRecords} budgets={budgets} onCancel={() => setFinanceSubView('None')} />;
-            }
-            if (financeSubView === 'Loans') {
-                return <LoanManagement loans={loans} onCancel={() => setFinanceSubView('None')} />;
-            }
-            if (financeSubView === 'CostAnalysis') {
-                return <CostAnalysis onCancel={() => setFinanceSubView('None')} />;
-            }
-            if (financeSubView === 'Ratios') {
-                return <FinancialRatios financeRecords={financeRecords} pigs={pigs} feeds={feeds} loans={loans} onCancel={() => setFinanceSubView('None')} />;
-            }
-            return <Finance
-                records={financeRecords}
-                onOpenLogger={() => setFinanceSubView('Logger')}
-                onOpenBatch={() => setFinanceSubView('Batch')}
-                onOpenCalculator={() => setFinanceSubView('Calculator')}
-                onOpenForecast={() => setFinanceSubView('Forecast')}
-                onOpenBudget={() => setFinanceSubView('Budget')}
-                onOpenLoans={() => setFinanceSubView('Loans')}
-                onOpenCostAnalysis={() => setFinanceSubView('CostAnalysis')}
-                onOpenRatios={() => setFinanceSubView('Ratios')}
-            />;
+            case ViewState.Finance:
+                if (financeSubView === 'Logger') {
+                    return <FinanceLogger onSave={handleSaveTransaction} onCancel={() => setFinanceSubView('None')} />;
+                }
+                if (financeSubView === 'Batch') {
+                    return <BatchProfitability records={financeRecords} onCancel={() => setFinanceSubView('None')} />;
+                }
+                if (financeSubView === 'Calculator') {
+                    return <ProfitCalculator onCancel={() => setFinanceSubView('None')} />;
+                }
+                if (financeSubView === 'Forecast') {
+                    return <CashFlowForecast records={financeRecords} pigs={pigs} onCancel={() => setFinanceSubView('None')} />;
+                }
+                if (financeSubView === 'Budget') {
+                    return <BudgetAnalysis records={financeRecords} budgets={budgets} onCancel={() => setFinanceSubView('None')} />;
+                }
+                if (financeSubView === 'Loans') {
+                    return <LoanManagement loans={loans} onCancel={() => setFinanceSubView('None')} />;
+                }
+                if (financeSubView === 'CostAnalysis') {
+                    return <CostAnalysis onCancel={() => setFinanceSubView('None')} />;
+                }
+                if (financeSubView === 'Ratios') {
+                    return <FinancialRatios financeRecords={financeRecords} pigs={pigs} feeds={feeds} loans={loans} onCancel={() => setFinanceSubView('None')} />;
+                }
+                return <Finance
+                    records={financeRecords}
+                    onOpenLogger={() => setFinanceSubView('Logger')}
+                    onOpenBatch={() => setFinanceSubView('Batch')}
+                    onOpenCalculator={() => setFinanceSubView('Calculator')}
+                    onOpenForecast={() => setFinanceSubView('Forecast')}
+                    onOpenBudget={() => setFinanceSubView('Budget')}
+                    onOpenLoans={() => setFinanceSubView('Loans')}
+                    onOpenCostAnalysis={() => setFinanceSubView('CostAnalysis')}
+                    onOpenRatios={() => setFinanceSubView('Ratios')}
+                />;
 
-        case ViewState.AI_Tools:
-            if (intelligentSubView === 'Chat') {
-                return <SmartAssistant />;
-            }
-            if (intelligentSubView === 'Critical') {
-                return <CriticalWatch pigs={pigs} tasks={tasks} feeds={feeds} onCancel={() => setIntelligentSubView('None')} onNavigateToPig={(pig) => { setSelectedPig(pig); setCurrentView(ViewState.Pigs); }} />;
-            }
-            if (intelligentSubView === 'Optimizer') {
-                return <SlaughterOptimizer pigs={pigs} onCancel={() => setIntelligentSubView('None')} onNavigateToPig={(pig) => { setSelectedPig(pig); setCurrentView(ViewState.Pigs); }} />;
-            }
-            if (intelligentSubView === 'Breeding') {
-                return <BreedingAI pigs={pigs} onCancel={() => setIntelligentSubView('None')} onNavigateToPig={(pig) => { setSelectedPig(pig); setCurrentView(ViewState.Pigs); }} />;
-            }
-            return <IntelligentCore
-                onOpenBreeding={() => setIntelligentSubView('Breeding')}
-                onOpenOptimizer={() => setIntelligentSubView('Optimizer')}
-                onOpenCritical={() => setIntelligentSubView('Critical')}
-                onOpenChat={() => setIntelligentSubView('Chat')}
-            />;
+            case ViewState.AI_Tools:
+                if (intelligentSubView === 'Chat') {
+                    return <SmartAssistant />;
+                }
+                if (intelligentSubView === 'Critical') {
+                    return <CriticalWatch pigs={pigs} tasks={tasks} feeds={feeds} onCancel={() => setIntelligentSubView('None')} onNavigateToPig={(pig) => { setSelectedPig(pig); setCurrentView(ViewState.Pigs); }} />;
+                }
+                if (intelligentSubView === 'Optimizer') {
+                    return <SlaughterOptimizer pigs={pigs} onCancel={() => setIntelligentSubView('None')} onNavigateToPig={(pig) => { setSelectedPig(pig); setCurrentView(ViewState.Pigs); }} />;
+                }
+                if (intelligentSubView === 'Breeding') {
+                    return <BreedingAI pigs={pigs} onCancel={() => setIntelligentSubView('None')} onNavigateToPig={(pig) => { setSelectedPig(pig); setCurrentView(ViewState.Pigs); }} />;
+                }
+                return <IntelligentCore
+                    onOpenBreeding={() => setIntelligentSubView('Breeding')}
+                    onOpenOptimizer={() => setIntelligentSubView('Optimizer')}
+                    onOpenCritical={() => setIntelligentSubView('Critical')}
+                    onOpenChat={() => setIntelligentSubView('Chat')}
+                />;
 
-        case ViewState.Settings:
-            if (settingsSubView === 'EmailSetup') {
-                return <EmailAlertsSetup config={notificationConfig} onSave={handleSaveNotificationConfig} onCancel={() => setSettingsSubView('None')} />;
-            }
-            return <Settings
+            case ViewState.Settings:
+                if (settingsSubView === 'EmailSetup') {
+                    return <EmailAlertsSetup config={notificationConfig} onSave={handleSaveNotificationConfig} onCancel={() => setSettingsSubView('None')} />;
+                }
+                return <Settings
+                    currentUser={currentUser}
+                    allUsers={users}
+                    onAddUser={handleAddUser}
+                    onUpdatePassword={handleUpdatePassword}
+                    onLogout={handleLogout}
+                    onOpenEmailSetup={() => setSettingsSubView('EmailSetup')}
+                />;
+            default:
+                return <Dashboard pigs={pigs} tasks={tasks} financeRecords={financeRecords} feeds={feeds} onViewChange={handleNavClick} />;
+        }
+    };
+
+    if (!isAuthenticated) {
+        if (isVerifying) {
+            return <Verification
+                contactInfo={{ email: pendingUser?.email, phone: pendingUser?.phone }}
+                onVerifySuccess={handleVerificationSuccess}
+                onBack={() => { setIsVerifying(false); setIsSigningUp(true); }}
+            />;
+        }
+        if (isSigningUp) {
+            return <Signup
+                onSignupSubmit={handleSignupSubmit}
+                onNavigateToLogin={() => setIsSigningUp(false)}
+            />;
+        }
+        return <Login
+            onLogin={handleLogin}
+            onSignupClick={() => setIsSigningUp(true)}
+            error={loginError}
+        />;
+    }
+
+    return (
+        <>
+            <Layout
+                currentView={currentView}
+                setView={handleNavClick}
+                onAddClick={handleFabClick}
+                onQuickAction={handleQuickAction}
                 currentUser={currentUser}
-                allUsers={users}
-                onAddUser={handleAddUser}
-                onUpdatePassword={handleUpdatePassword}
                 onLogout={handleLogout}
-                onOpenEmailSetup={() => setSettingsSubView('EmailSetup')}
-            />;
-        default:
-            return <Dashboard pigs={pigs} tasks={tasks} financeRecords={financeRecords} feeds={feeds} onViewChange={handleNavClick} />;
-    }
-};
-
-if (!isAuthenticated) {
-    if (isVerifying) {
-        return <Verification
-            contactInfo={{ email: pendingUser?.email, phone: pendingUser?.phone }}
-            onVerifySuccess={handleVerificationSuccess}
-            onBack={() => { setIsVerifying(false); setIsSigningUp(true); }}
-        />;
-    }
-    if (isSigningUp) {
-        return <Signup
-            onSignupSubmit={handleSignupSubmit}
-            onNavigateToLogin={() => setIsSigningUp(false)}
-        />;
-    }
-    return <Login
-        onLogin={handleLogin}
-        onSignupClick={() => setIsSigningUp(true)}
-        error={loginError}
-    />;
-}
-
-return (
-    <>
-        <Layout
-            currentView={currentView}
-            setView={handleNavClick}
-            onAddClick={handleFabClick}
-            onQuickAction={handleQuickAction}
-            currentUser={currentUser}
-            onLogout={handleLogout}
-        >
-            {renderContent()}
-        </Layout>
-        {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
-    </>
-);
+            >
+                {renderContent()}
+            </Layout>
+            {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
+        </>
+    );
 };
 
 export default App;
