@@ -550,6 +550,41 @@ const App: React.FC = () => {
         />;
     }
 
+    // Determine Back Button Logic
+    let showBack = false;
+    let onBack: (() => void) | undefined = undefined;
+
+    if (currentView === ViewState.Pigs) {
+        if (selectedPig || isAddingPig || isEditingPig) {
+            showBack = true;
+            onBack = () => {
+                setSelectedPig(null);
+                setIsAddingPig(false);
+                setIsEditingPig(false);
+            };
+        }
+    } else if (currentView === ViewState.Operations) {
+        if (operationsSubView !== 'None') {
+            showBack = true;
+            onBack = () => setOperationsSubView('None');
+        }
+    } else if (currentView === ViewState.Finance) {
+        if (financeSubView !== 'None') {
+            showBack = true;
+            onBack = () => setFinanceSubView('None');
+        }
+    } else if (currentView === ViewState.AI_Tools) {
+        if (intelligentSubView !== 'None') {
+            showBack = true;
+            onBack = () => setIntelligentSubView('None');
+        }
+    } else if (currentView === ViewState.Settings) {
+        if (settingsSubView !== 'None') {
+            showBack = true;
+            onBack = () => setSettingsSubView('None');
+        }
+    }
+
     return (
         <>
             <Layout
@@ -559,6 +594,8 @@ const App: React.FC = () => {
                 onQuickAction={handleQuickAction}
                 currentUser={currentUser}
                 onLogout={handleLogout}
+                showBack={showBack}
+                onBack={onBack}
             >
                 {renderContent()}
             </Layout>

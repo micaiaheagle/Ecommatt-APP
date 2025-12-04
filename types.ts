@@ -25,6 +25,7 @@ export interface User {
   email: string;
   role: UserRole;
   password?: string; // Added for mock auth
+  hasCompletedOnboarding?: boolean;
 }
 
 export interface TimelineEvent {
