@@ -1,1272 +1,1299 @@
 
 import React, { useState, useEffect } from 'react';
 import { Pig, TimelineEvent } from '../types';
+import EventReportingModal from './EventReportingModal';
 
 interface PigProfileProps {
-  pig: Pig;
-  allPigs: Pig[];
-  onBack: () => void;
-  onDelete: (id: string) => void;
-  onUpdate: (updatedPig: Pig) => void;
-  onEdit: () => void;
-  onViewHealth: () => void;
+    pig: Pig;
+    allPigs: Pig[];
+    onBack: () => void;
+    onDelete: (id: string) => void;
+    onUpdate: (updatedPig: Pig) => void;
+    onEdit: () => void;
+    onViewHealth: () => void;
 }
 
 const PigProfile: React.FC<PigProfileProps> = ({ pig, allPigs, onBack, onDelete, onUpdate, onEdit, onViewHealth }) => {
-  const [activeTab, setActiveTab] = useState<'Overview' | 'Lifecycle' | 'Pedigree' | 'Gallery'>('Overview');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  
-  // Notes State
-  const [notes, setNotes] = useState(pig.notes || '');
-  const [isEditingNotes, setIsEditingNotes] = useState(false);
+    const [activeTab, setActiveTab] = useState<'Overview' | 'Lifecycle' | 'Pedigree' | 'Gallery'>('Overview');
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Quick Edit States
-  const [isEditingTag, setIsEditingTag] = useState(false);
-  const [editedTag, setEditedTag] = useState(pig.tagId);
+    // Notes State
+    const [notes, setNotes] = useState(pig.notes || '');
+    const [isEditingNotes, setIsEditingNotes] = useState(false);
 
-  const [isEditingWeight, setIsEditingWeight] = useState(false);
-  const [editedWeight, setEditedWeight] = useState(pig.weight?.toString() || '0');
+    // Quick Edit States
+    const [isEditingTag, setIsEditingTag] = useState(false);
+    const [editedTag, setEditedTag] = useState(pig.tagId);
 
-  // Pedigree Edit State
-  const [isEditingLineage, setIsEditingLineage] = useState(false);
-  const [lineageData, setLineageData] = useState({ sireId: pig.sireId || '', damId: pig.damId || '' });
+    const [isEditingWeight, setIsEditingWeight] = useState(false);
+    const [editedWeight, setEditedWeight] = useState(pig.weight?.toString() || '0');
 
-  // Timeline Event Modal State
-  const [showEventModal, setShowEventModal] = useState(false);
-  const [editingEventId, setEditingEventId] = useState<string | null>(null);
-  const [newEvent, setNewEvent] = useState<{title: string, subtitle: string, date: string, color: 'green' | 'yellow' | 'blue' | 'red'}>({
-      title: '',
-      subtitle: '',
-      date: new Date().toISOString().split('T')[0],
-      color: 'green'
-  });
+    // Pedigree Edit State
+    const [isEditingLineage, setIsEditingLineage] = useState(false);
+    const [lineageData, setLineageData] = useState({ sireId: pig.sireId || '', damId: pig.damId || '' });
 
-  // Feed Log Modal State
-  const [showFeedModal, setShowFeedModal] = useState(false);
-  const [feedData, setFeedData] = useState({
-      date: new Date().toISOString().split('T')[0],
-      time: new Date().toTimeString().slice(0, 5),
-      quantity: 0,
-      feedType: 'Grower Pellets'
-  });
+    // Timeline Event Modal State
+    const [showEventModal, setShowEventModal] = useState(false);
+    const [editingEventId, setEditingEventId] = useState<string | null>(null);
+    const [newEvent, setNewEvent] = useState<{ title: string, subtitle: string, date: string, color: 'green' | 'yellow' | 'blue' | 'red' }>({
+        title: '',
+        subtitle: '',
+        date: new Date().toISOString().split('T')[0],
+        color: 'green'
+    });
 
-  // Sync state when pig prop updates
-  useEffect(() => {
-      setNotes(pig.notes || '');
-      setLineageData({ sireId: pig.sireId || '', damId: pig.damId || '' });
-      setEditedTag(pig.tagId);
-      setEditedWeight(pig.weight?.toString() || '0');
-  }, [pig]);
+    // Feed Log Modal State
+    const [showFeedModal, setShowFeedModal] = useState(false);
+    const [feedData, setFeedData] = useState({
+        date: new Date().toISOString().split('T')[0],
+        time: new Date().toTimeString().slice(0, 5),
+        quantity: 0,
+        feedType: 'Grower Pellets'
+    });
 
-  // Helper to calculate age from DOB
-  const calculateAge = (dob: string) => {
-    if (!dob) return 'Unknown';
-    const birth = new Date(dob);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - birth.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays < 30) return `${diffDays} days`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months`;
-    const years = (diffDays / 365).toFixed(1);
-    return `${years} years`;
-  };
+    // Smart Event Reporting Modal State
+    const [showSmartReportModal, setShowSmartReportModal] = useState(false);
 
-  // Helper for lifecycle progress
-  const getDaysOld = (dob: string) => {
-      if (!dob) return 0;
-      const birth = new Date(dob);
-      const now = new Date();
-      return Math.ceil(Math.abs(now.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24));
-  };
+    // Sync state when pig prop updates
+    useEffect(() => {
+        setNotes(pig.notes || '');
+        setLineageData({ sireId: pig.sireId || '', damId: pig.damId || '' });
+        setEditedTag(pig.tagId);
+        setEditedWeight(pig.weight?.toString() || '0');
+    }, [pig]);
 
-  // --- FCR CALCULATION HELPER ---
-  const calculateFCR = () => {
-      // Simplified formula: Total Feed / Total Weight Gain
-      const weightGain = Math.max(1, pig.weight - 1.5);
-      const days = getDaysOld(pig.dob);
-      // Simulation: Piglets eat little, Growers eat ~2kg/day. Avg across life approx 1.8kg/day for this calc
-      const estTotalFeed = days * 1.8; 
-      
-      if (weightGain <= 0) return "0.0";
-      return (estTotalFeed / weightGain).toFixed(2);
-  };
+    // Helper to calculate age from DOB
+    const calculateAge = (dob: string) => {
+        if (!dob) return 'Unknown';
+        const birth = new Date(dob);
+        const now = new Date();
+        const diffTime = Math.abs(now.getTime() - birth.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-  const confirmDelete = () => {
-      onDelete(pig.id);
-      setShowDeleteConfirm(false);
-  };
+        if (diffDays < 30) return `${diffDays} days`;
+        if (diffDays < 365) return `${Math.floor(diffDays / 30)} months`;
+        const years = (diffDays / 365).toFixed(1);
+        return `${years} years`;
+    };
 
-  const handleSaveNotes = () => {
-      onUpdate({ ...pig, notes });
-      setIsEditingNotes(false);
-  };
+    // Helper for lifecycle progress
+    const getDaysOld = (dob: string) => {
+        if (!dob) return 0;
+        const birth = new Date(dob);
+        const now = new Date();
+        return Math.ceil(Math.abs(now.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24));
+    };
 
-  const handleSaveTag = () => {
-      if (editedTag.trim() !== "") {
-          onUpdate({ ...pig, tagId: editedTag });
-      } else {
-          setEditedTag(pig.tagId); // Revert if empty
-      }
-      setIsEditingTag(false);
-  };
+    // --- FCR CALCULATION HELPER ---
+    const calculateFCR = () => {
+        // Simplified formula: Total Feed / Total Weight Gain
+        const weightGain = Math.max(1, pig.weight - 1.5);
+        const days = getDaysOld(pig.dob);
+        // Simulation: Piglets eat little, Growers eat ~2kg/day. Avg across life approx 1.8kg/day for this calc
+        const estTotalFeed = days * 1.8;
 
-  const handleSaveWeight = () => {
-      const w = parseFloat(editedWeight);
-      if (!isNaN(w)) {
-          onUpdate({ ...pig, weight: w });
-      } else {
-          setEditedWeight(pig.weight?.toString() || '0');
-      }
-      setIsEditingWeight(false);
-  };
+        if (weightGain <= 0) return "0.0";
+        return (estTotalFeed / weightGain).toFixed(2);
+    };
 
-  const handleToggleEventStatus = (idx: number) => {
-      if (!pig.timeline) return;
-      const newTimeline = [...pig.timeline];
-      const event = newTimeline[idx];
-      event.status = event.status === 'Completed' ? 'Pending' : 'Completed';
-      onUpdate({ ...pig, timeline: newTimeline });
-  };
+    const confirmDelete = () => {
+        onDelete(pig.id);
+        setShowDeleteConfirm(false);
+    };
 
-  // --- ENHANCED DELETE EVENT (Recalculates Last Fed) ---
-  const handleDeleteEvent = (eventId?: string) => {
-      if (!eventId || !pig.timeline) return;
-      if(window.confirm("Are you sure you want to delete this log?")) {
-          const updatedTimeline = pig.timeline.filter(e => e.id !== eventId);
-          
-          // Check if we deleted a feed log and need to update the 'lastFed' stats
-          let newLastFed = pig.lastFed;
-          const deletedEvent = pig.timeline.find(e => e.id === eventId);
-          
-          if (deletedEvent?.title === 'Feed Logged') {
-             // Find the remaining feed logs
-             const remainingFeedLogs = updatedTimeline.filter(e => e.title === 'Feed Logged');
-             
-             if (remainingFeedLogs.length > 0) {
-                 // Sort descending by date to find the new latest
-                 remainingFeedLogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                 const latest = remainingFeedLogs[0];
-                 const dateObj = new Date(latest.date);
-                 // Since standard events don't store precise time, we fallback to date only
-                 newLastFed = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); 
-             } else {
-                 // No feed logs left
-                 newLastFed = undefined;
-             }
-          }
+    const handleSaveNotes = () => {
+        onUpdate({ ...pig, notes });
+        setIsEditingNotes(false);
+    };
 
-          onUpdate({ ...pig, timeline: updatedTimeline, lastFed: newLastFed });
-      }
-  };
+    const handleSaveTag = () => {
+        if (editedTag.trim() !== "") {
+            onUpdate({ ...pig, tagId: editedTag });
+        } else {
+            setEditedTag(pig.tagId); // Revert if empty
+        }
+        setIsEditingTag(false);
+    };
 
-  const openEditEventModal = (event: TimelineEvent) => {
-      if (event.title === 'Feed Logged') {
-          const parts = event.subtitle.split(' ');
-          const qty = parseFloat(parts[0].replace('kg', ''));
-          const type = parts.slice(1).join(' ');
-          
-          setFeedData({
-              date: event.date,
-              time: '12:00', // Default or would be parsed if stored separately
-              quantity: isNaN(qty) ? 0 : qty,
-              feedType: type || 'Grower Pellets'
-          });
-          setEditingEventId(event.id || null);
-          setShowFeedModal(true);
-      } else {
-          setNewEvent({
-              title: event.title,
-              subtitle: event.subtitle,
-              date: event.date,
-              color: event.color
-          });
-          setEditingEventId(event.id || null);
-          setShowEventModal(true);
-      }
-  };
+    const handleSaveWeight = () => {
+        const w = parseFloat(editedWeight);
+        if (!isNaN(w)) {
+            onUpdate({ ...pig, weight: w });
+        } else {
+            setEditedWeight(pig.weight?.toString() || '0');
+        }
+        setIsEditingWeight(false);
+    };
 
-  const handleSaveLineage = () => {
-      onUpdate({ ...pig, sireId: lineageData.sireId, damId: lineageData.damId });
-      setIsEditingLineage(false);
-  };
+    const handleToggleEventStatus = (idx: number) => {
+        if (!pig.timeline) return;
+        const newTimeline = [...pig.timeline];
+        const event = newTimeline[idx];
+        event.status = event.status === 'Completed' ? 'Pending' : 'Completed';
+        onUpdate({ ...pig, timeline: newTimeline });
+    };
 
-  const handleAddEvent = (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!newEvent.title || !newEvent.date) return;
+    // --- ENHANCED DELETE EVENT (Recalculates Last Fed) ---
+    const handleDeleteEvent = (eventId?: string) => {
+        if (!eventId || !pig.timeline) return;
+        if (window.confirm("Are you sure you want to delete this log?")) {
+            const updatedTimeline = pig.timeline.filter(e => e.id !== eventId);
 
-      let updatedTimeline = [...(pig.timeline || [])];
+            // Check if we deleted a feed log and need to update the 'lastFed' stats
+            let newLastFed = pig.lastFed;
+            const deletedEvent = pig.timeline.find(e => e.id === eventId);
 
-      if (editingEventId) {
-          updatedTimeline = updatedTimeline.map(ev => 
-              ev.id === editingEventId 
-              ? { ...ev, title: newEvent.title, subtitle: newEvent.subtitle, date: newEvent.date, color: newEvent.color }
-              : ev
-          );
-      } else {
-          const eventToAdd: TimelineEvent = {
-              id: `evt-${Date.now()}`,
-              title: newEvent.title,
-              subtitle: newEvent.subtitle,
-              date: newEvent.date,
-              color: newEvent.color,
-              status: 'Pending'
-          };
-          updatedTimeline.push(eventToAdd);
-      }
+            if (deletedEvent?.title === 'Feed Logged') {
+                // Find the remaining feed logs
+                const remainingFeedLogs = updatedTimeline.filter(e => e.title === 'Feed Logged');
 
-      updatedTimeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-      onUpdate({ ...pig, timeline: updatedTimeline });
-      setShowEventModal(false);
-      setEditingEventId(null);
-      setNewEvent({
-          title: '',
-          subtitle: '',
-          date: new Date().toISOString().split('T')[0],
-          color: 'green'
-      });
-  };
-
-  // --- ENHANCED LOG FEED (Updates Stats Correctly) ---
-  const handleLogFeed = (e: React.FormEvent) => {
-      e.preventDefault();
-      if (feedData.quantity <= 0) return;
-
-      // Create display string for the Stat Card (includes time)
-      const dateObj = new Date(`${feedData.date}T${feedData.time}`);
-      const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      const formattedTime = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-      const lastFedDisplayString = `${formattedDate} ${formattedTime}`;
-
-      let updatedTimeline = [...(pig.timeline || [])];
-      let eventIdToCheck = editingEventId;
-
-      if (editingEventId) {
-          // Edit existing
-          updatedTimeline = updatedTimeline.map(ev => 
-              ev.id === editingEventId
-              ? { 
-                  ...ev, 
-                  date: feedData.date, 
-                  subtitle: `${feedData.quantity}kg ${feedData.feedType}` 
+                if (remainingFeedLogs.length > 0) {
+                    // Sort descending by date to find the new latest
+                    remainingFeedLogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                    const latest = remainingFeedLogs[0];
+                    const dateObj = new Date(latest.date);
+                    // Since standard events don't store precise time, we fallback to date only
+                    newLastFed = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                } else {
+                    // No feed logs left
+                    newLastFed = undefined;
                 }
-              : ev
-          );
-      } else {
-          // Create new
-          eventIdToCheck = `feed-${Date.now()}`;
-          const feedEvent: TimelineEvent = {
-              id: eventIdToCheck,
-              date: feedData.date,
-              title: 'Feed Logged',
-              subtitle: `${feedData.quantity}kg ${feedData.feedType}`,
-              color: 'green',
-              status: 'Completed',
-              icon: 'fa-wheat'
-          };
-          updatedTimeline = [feedEvent, ...updatedTimeline];
-      }
+            }
 
-      // IMPORTANT: Sort timeline by date descending to find the true latest event
-      updatedTimeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            onUpdate({ ...pig, timeline: updatedTimeline, lastFed: newLastFed });
+        }
+    };
 
-      // Determine if we should update the main 'lastFed' statistic
-      // We only update it if the event we just saved is the most recent feed event in history.
-      const mostRecentFeedEvent = updatedTimeline.find(e => e.title === 'Feed Logged');
-      let newLastFedValue = pig.lastFed;
+    const openEditEventModal = (event: TimelineEvent) => {
+        if (event.title === 'Feed Logged') {
+            const parts = event.subtitle.split(' ');
+            const qty = parseFloat(parts[0].replace('kg', ''));
+            const type = parts.slice(1).join(' ');
 
-      if (mostRecentFeedEvent) {
-          if (mostRecentFeedEvent.id === eventIdToCheck) {
-              // The one we just edited/added IS the latest -> use the detailed time string
-              newLastFedValue = lastFedDisplayString;
-          } else {
-              // The latest is some other event (meaning we backdated this entry)
-              // Keep existing or update to match that event's date (time precision might be lost if not stored)
-              const d = new Date(mostRecentFeedEvent.date);
-              newLastFedValue = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          }
-      }
+            setFeedData({
+                date: event.date,
+                time: '12:00', // Default or would be parsed if stored separately
+                quantity: isNaN(qty) ? 0 : qty,
+                feedType: type || 'Grower Pellets'
+            });
+            setEditingEventId(event.id || null);
+            setShowFeedModal(true);
+        } else {
+            setNewEvent({
+                title: event.title,
+                subtitle: event.subtitle,
+                date: event.date,
+                color: event.color
+            });
+            setEditingEventId(event.id || null);
+            setShowEventModal(true);
+        }
+    };
 
-      onUpdate({ 
-          ...pig, 
-          lastFed: newLastFedValue,
-          timeline: updatedTimeline
-      });
-      
-      setShowFeedModal(false);
-      setEditingEventId(null);
-      setFeedData({
-          date: new Date().toISOString().split('T')[0],
-          time: new Date().toTimeString().slice(0, 5),
-          quantity: 0,
-          feedType: 'Grower Pellets'
-      });
-  };
+    const handleSaveLineage = () => {
+        onUpdate({ ...pig, sireId: lineageData.sireId, damId: lineageData.damId });
+        setIsEditingLineage(false);
+    };
 
-  // Lifecycle Stages Config (Includes Piglet)
-  const LIFE_STAGES = [
-      { label: 'Piglet', endDay: 30, icon: 'fa-baby-carriage' }, 
-      { label: 'Weaner', endDay: 70, icon: 'fa-cube' },
-      { label: 'Grower', endDay: 110, icon: 'fa-arrow-up' },
-      { label: 'Finisher', endDay: 180, icon: 'fa-weight-hanging' },
-      { label: 'Mature', endDay: 9999, icon: 'fa-medal' },
-  ];
+    const handleAddEvent = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newEvent.title || !newEvent.date) return;
 
-  // Calculate smooth progress percentage based on VISUAL STAGES not linear time
-  const getSmoothProgress = () => {
-      const days = getDaysOld(pig.dob);
-      
-      if (LIFE_STAGES.length <= 1) return 100;
+        let updatedTimeline = [...(pig.timeline || [])];
 
-      let currentStageIdx = -1;
-      for (let i = 0; i < LIFE_STAGES.length; i++) {
-          const prevEnd = i === 0 ? 0 : LIFE_STAGES[i-1].endDay;
-          if (days <= LIFE_STAGES[i].endDay || i === LIFE_STAGES.length - 1) {
-              currentStageIdx = i;
-              break;
-          }
-      }
+        if (editingEventId) {
+            updatedTimeline = updatedTimeline.map(ev =>
+                ev.id === editingEventId
+                    ? { ...ev, title: newEvent.title, subtitle: newEvent.subtitle, date: newEvent.date, color: newEvent.color }
+                    : ev
+            );
+        } else {
+            const eventToAdd: TimelineEvent = {
+                id: `evt-${Date.now()}`,
+                title: newEvent.title,
+                subtitle: newEvent.subtitle,
+                date: newEvent.date,
+                color: newEvent.color,
+                status: 'Pending'
+            };
+            updatedTimeline.push(eventToAdd);
+        }
 
-      if (currentStageIdx === -1) return 100;
+        updatedTimeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-      // Dynamic segment calculation
-      const segmentSize = 100 / (LIFE_STAGES.length - 1); 
-      const startPercent = currentStageIdx * segmentSize;
-      
-      const currentStage = LIFE_STAGES[currentStageIdx];
-      const prevEndDay = currentStageIdx === 0 ? 0 : LIFE_STAGES[currentStageIdx-1].endDay;
-      
-      // Handle mature/open-ended stage gracefully
-      const stageDuration = currentStage.endDay === 9999 ? 365 : currentStage.endDay - prevEndDay;
-      const daysInStage = days - prevEndDay;
-      
-      // Calculate progress within this specific stage (0 to 1)
-      const progressInStage = Math.min(1, Math.max(0, daysInStage / stageDuration));
-      
-      // Total visual progress, clamped to 100%
-      return Math.min(100, startPercent + (progressInStage * segmentSize));
-  }
+        onUpdate({ ...pig, timeline: updatedTimeline });
+        setShowEventModal(false);
+        setEditingEventId(null);
+        setNewEvent({
+            title: '',
+            subtitle: '',
+            date: new Date().toISOString().split('T')[0],
+            color: 'green'
+        });
+    };
 
-  // --- Pedigree Helper Functions ---
-  const getPigDetails = (id?: string) => {
-      if (!id) return null;
-      return allPigs.find(p => p.tagId === id) || { 
-          tagId: id, 
-          breed: 'Unknown', 
-          status: 'Unknown',
-          sireId: undefined,
-          damId: undefined
-      };
-  };
+    const handleSmartEventSubmit = (eventPayload: TimelineEvent) => {
+        const updatedTimeline = [eventPayload, ...(pig.timeline || [])];
+        // Sort by date descending
+        updatedTimeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  // Helper Component for Autocomplete Search
-  const PigSearchSelect = ({ 
-      value, 
-      onChange, 
-      gender, 
-      placeholder 
-  }: { 
-      value: string, 
-      onChange: (val: string) => void, 
-      gender: 'Male' | 'Female', 
-      placeholder: string 
-  }) => {
-      const [isOpen, setIsOpen] = useState(false);
-      const candidates = allPigs.filter(p => 
-          p.id !== pig.id && 
-          p.gender === gender &&
-          (p.tagId.toLowerCase().includes(value.toLowerCase()) || 
-           p.breed.toLowerCase().includes(value.toLowerCase()))
-      ).slice(0, 5);
+        onUpdate({ ...pig, timeline: updatedTimeline });
+        setShowSmartReportModal(false);
+    };
 
-      return (
-          <div className="relative w-full">
-              <div className="relative">
-                  <input 
-                      className="w-full text-xs p-1.5 pr-6 border rounded bg-white focus:ring-2 focus:ring-ecomattGreen focus:ring-offset-1 outline-none transition-all"
-                      value={value}
-                      onChange={(e) => { onChange(e.target.value); setIsOpen(true); }}
-                      onFocus={() => setIsOpen(true)}
-                      onBlur={() => setTimeout(() => setIsOpen(false), 200)}
-                      placeholder={placeholder}
-                  />
-                  <i className="fas fa-search absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] pointer-events-none"></i>
-              </div>
-              
-              {isOpen && candidates.length > 0 && (
-                  <div className="absolute top-full left-0 w-48 bg-white shadow-xl rounded-lg border border-gray-100 mt-1 z-[60] max-h-40 overflow-y-auto text-left">
-                      {candidates.map(candidate => (
-                          <div 
-                              key={candidate.id}
-                              className="p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0 flex flex-col"
-                              onMouseDown={(e) => {
-                                  e.preventDefault(); // Prevent input blur
-                                  onChange(candidate.tagId);
-                                  setIsOpen(false);
-                              }}
-                          >
-                              <span className="font-bold text-xs text-gray-800">{candidate.tagId}</span>
-                              <span className="text-[9px] text-gray-500">{candidate.breed} • {candidate.penLocation}</span>
-                          </div>
-                      ))}
-                  </div>
-              )}
-          </div>
-      );
-  };
+    // --- ENHANCED LOG FEED (Updates Stats Correctly) ---
+    const handleLogFeed = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (feedData.quantity <= 0) return;
 
-  const TreeNode = ({ role, id, type, isGrandparent = false }: { role: string, id?: string, type: 'sire' | 'dam' | 'subject', isGrandparent?: boolean }) => {
-      const details = getPigDetails(id);
-      const bgColor = type === 'sire' ? 'bg-blue-50 border-blue-200 text-blue-800' : type === 'dam' ? 'bg-pink-50 border-pink-200 text-pink-800' : 'bg-green-50 border-green-200 text-green-800';
-      const iconColor = type === 'sire' ? 'text-blue-400' : type === 'dam' ? 'text-pink-400' : 'text-green-400';
-      
-      if (!id) {
-           return (
-              <div className={`flex flex-col items-center justify-center p-2 rounded-xl border border-dashed border-gray-300 bg-gray-50/50 ${isGrandparent ? 'w-24 h-24' : 'w-32 h-32'}`}>
-                  <span className="text-[10px] text-gray-400 font-bold uppercase mb-1">{role}</span>
-                  <span className="text-xs text-gray-300 italic">Unknown</span>
-              </div>
-           );
-      }
+        // Create display string for the Stat Card (includes time)
+        const dateObj = new Date(`${feedData.date}T${feedData.time}`);
+        const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const formattedTime = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const lastFedDisplayString = `${formattedDate} ${formattedTime}`;
 
-      return (
-          <div className={`flex flex-col items-center justify-center p-2 rounded-xl border shadow-sm relative transition-all hover:scale-105 cursor-pointer z-10 ${bgColor} ${isGrandparent ? 'w-24 min-h-[6rem]' : 'w-32 min-h-[8rem]'}`}>
-              <span className={`absolute -top-2 px-2 py-0.5 text-[8px] font-bold uppercase rounded-full bg-white border shadow-sm ${type === 'sire' ? 'text-blue-600 border-blue-100' : type === 'dam' ? 'text-pink-600 border-pink-100' : 'text-green-600 border-green-100'}`}>
-                  {role}
-              </span>
-              <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm ${iconColor}`}>
-                  <i className={`fas ${type === 'sire' ? 'fa-venus-mars' : type === 'dam' ? 'fa-venus' : 'fa-dna'}`}></i>
-              </div>
-              <p className={`font-bold text-center leading-tight break-all ${isGrandparent ? 'text-xs' : 'text-sm'}`}>{details.tagId}</p>
-              {/* @ts-ignore */}
-              {details.breed && <p className="text-[9px] opacity-70 mt-1 text-center leading-tight">{details.breed}</p>}
-          </div>
-      );
-  };
+        let updatedTimeline = [...(pig.timeline || [])];
+        let eventIdToCheck = editingEventId;
 
-  return (
-    <div className="bg-grayBg min-h-screen pb-20 animate-in slide-in-from-right duration-300 relative">
-      
-      {/* Screen 3: Profile Header */}
-      <div className="h-64 bg-gray-900 relative">
-          <img 
-            src={pig.imageUrl || "https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&q=80&w=800"} 
-            className="w-full h-full object-cover opacity-60" 
-            alt="Pig" 
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
-          
-          <button 
-            onClick={onBack}
-            className="absolute top-6 left-4 text-white w-10 h-10 bg-black/30 rounded-full flex items-center justify-center backdrop-blur-md hover:bg-black/50 transition z-10"
-          >
-            <i className="fas fa-arrow-left"></i>
-          </button>
-          
-          <div className="absolute top-6 right-4 flex gap-2 z-10">
-            <button 
-                onClick={onEdit}
-                className="text-white w-10 h-10 bg-black/30 rounded-full flex items-center justify-center backdrop-blur-md hover:bg-black/50 transition"
-                title="Edit Details"
-            >
-                <i className="fas fa-edit"></i>
-            </button>
-             <button 
-                onClick={() => setShowDeleteConfirm(true)} 
-                className="text-red-400 w-10 h-10 bg-black/30 rounded-full flex items-center justify-center backdrop-blur-md hover:bg-red-900/50 transition" 
-                title="Delete Record"
-             >
-                <i className="fas fa-trash"></i>
-            </button>
-          </div>
+        if (editingEventId) {
+            // Edit existing
+            updatedTimeline = updatedTimeline.map(ev =>
+                ev.id === editingEventId
+                    ? {
+                        ...ev,
+                        date: feedData.date,
+                        subtitle: `${feedData.quantity}kg ${feedData.feedType}`
+                    }
+                    : ev
+            );
+        } else {
+            // Create new
+            eventIdToCheck = `feed-${Date.now()}`;
+            const feedEvent: TimelineEvent = {
+                id: eventIdToCheck,
+                date: feedData.date,
+                title: 'Feed Logged',
+                subtitle: `${feedData.quantity}kg ${feedData.feedType}`,
+                color: 'green',
+                status: 'Completed',
+                icon: 'fa-wheat'
+            };
+            updatedTimeline = [feedEvent, ...updatedTimeline];
+        }
 
-          <div className="absolute bottom-6 left-6 text-white w-full pr-12">
-            {isEditingTag ? (
-                <input 
-                    type="text"
-                    className="text-4xl font-bold tracking-tight bg-transparent border-b border-white/50 text-white w-full max-w-[250px] outline-none"
-                    value={editedTag}
-                    onChange={(e) => setEditedTag(e.target.value)}
-                    onBlur={handleSaveTag}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSaveTag()}
-                    autoFocus
-                />
-            ) : (
-                <h1 
-                    className="text-4xl font-bold tracking-tight flex items-center gap-2 cursor-pointer group"
-                    onClick={() => setIsEditingTag(true)}
-                >
-                    {pig.tagId}
-                    <i className="fas fa-pencil-alt text-base opacity-50 group-hover:opacity-100 transition-opacity"></i>
-                </h1>
-            )}
-            <p className="text-ecomattYellow font-medium text-sm mt-1">{pig.breed} • {pig.stage}</p>
-          </div>
-      </div>
+        // IMPORTANT: Sort timeline by date descending to find the true latest event
+        updatedTimeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-      <div className="p-5 -mt-6 bg-grayBg rounded-t-3xl relative z-10">
-          
-        {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
-            {/* Age */}
-            <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
-                <p className="text-[10px] text-gray-400 font-bold uppercase">Age</p>
-                <p className="text-lg font-bold text-gray-900">{calculateAge(pig.dob)}</p>
-            </div>
-            
-            {/* Gender */}
-            <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
-                <p className="text-[10px] text-gray-400 font-bold uppercase">Gender</p>
-                <p className="text-lg font-bold text-gray-900">{pig.gender}</p>
-            </div>
+        // Determine if we should update the main 'lastFed' statistic
+        // We only update it if the event we just saved is the most recent feed event in history.
+        const mostRecentFeedEvent = updatedTimeline.find(e => e.title === 'Feed Logged');
+        let newLastFedValue = pig.lastFed;
 
-            {/* Breed */}
-            <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
-                <p className="text-[10px] text-gray-400 font-bold uppercase">Breed</p>
-                <p className="text-lg font-bold text-gray-900 truncate">{pig.breed}</p>
-            </div>
+        if (mostRecentFeedEvent) {
+            if (mostRecentFeedEvent.id === eventIdToCheck) {
+                // The one we just edited/added IS the latest -> use the detailed time string
+                newLastFedValue = lastFedDisplayString;
+            } else {
+                // The latest is some other event (meaning we backdated this entry)
+                // Keep existing or update to match that event's date (time precision might be lost if not stored)
+                const d = new Date(mostRecentFeedEvent.date);
+                newLastFedValue = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+        }
 
-            {/* Location */}
-            <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
-                <p className="text-[10px] text-gray-400 font-bold uppercase">Location</p>
-                <p className="text-lg font-bold text-gray-900">{pig.penLocation}</p>
-            </div>
+        onUpdate({
+            ...pig,
+            lastFed: newLastFedValue,
+            timeline: updatedTimeline
+        });
 
-            {/* Status */}
-            <div className="bg-green-50 p-3 rounded-2xl text-center border border-green-100 shadow-sm">
-                <p className="text-[10px] text-green-600 font-bold uppercase">Status</p>
-                <p className="text-lg font-bold text-green-700">{pig.status}</p>
-            </div>
-            
-            {/* Weight - Editable */}
-            <div 
-                className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm relative group cursor-pointer"
-                onClick={() => setIsEditingWeight(true)}
-            >
-                <p className="text-[10px] text-gray-400 font-bold uppercase">Weight</p>
-                {isEditingWeight ? (
-                    <div className="flex justify-center items-center gap-1" onClick={e => e.stopPropagation()}>
-                        <input 
-                            type="number" 
-                            className="w-16 text-lg font-bold text-gray-900 text-center border-b border-ecomattGreen outline-none bg-transparent p-0"
-                            value={editedWeight}
-                            onChange={(e) => setEditedWeight(e.target.value)}
-                            onBlur={handleSaveWeight}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSaveWeight()}
-                            autoFocus
-                        />
-                        <span className="text-sm text-gray-500">kg</span>
-                    </div>
-                ) : (
-                    <p className="text-lg font-bold text-gray-900 flex items-center justify-center gap-1">
-                        {pig.weight}kg <i className="fas fa-pencil-alt text-[10px] text-gray-300"></i>
-                    </p>
-                )}
-            </div>
+        setShowFeedModal(false);
+        setEditingEventId(null);
+        setFeedData({
+            date: new Date().toISOString().split('T')[0],
+            time: new Date().toTimeString().slice(0, 5),
+            quantity: 0,
+            feedType: 'Grower Pellets'
+        });
+    };
 
-            {/* FCR (Calculated) */}
-            <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
-                <p className="text-[10px] text-gray-400 font-bold uppercase">Est. FCR</p>
-                <p className="text-lg font-bold text-ecomattYellow">{calculateFCR()}</p>
-            </div>
+    // Lifecycle Stages Config (Includes Piglet)
+    const LIFE_STAGES = [
+        { label: 'Piglet', endDay: 30, icon: 'fa-baby-carriage' },
+        { label: 'Weaner', endDay: 70, icon: 'fa-cube' },
+        { label: 'Grower', endDay: 110, icon: 'fa-arrow-up' },
+        { label: 'Finisher', endDay: 180, icon: 'fa-weight-hanging' },
+        { label: 'Mature', endDay: 9999, icon: 'fa-medal' },
+    ];
 
-            {/* Last Fed */}
-             <div className="col-span-1 bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm relative overflow-hidden group">
-                <div className="flex justify-center items-center gap-1 mb-1">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase">Last Fed</p>
-                    <button onClick={() => setShowFeedModal(true)} className="text-ecomattGreen hover:bg-green-50 rounded-full w-4 h-4 flex items-center justify-center">
-                        <i className="fas fa-plus-circle text-xs"></i>
-                    </button>
+    // Calculate smooth progress percentage based on VISUAL STAGES not linear time
+    const getSmoothProgress = () => {
+        const days = getDaysOld(pig.dob);
+
+        if (LIFE_STAGES.length <= 1) return 100;
+
+        let currentStageIdx = -1;
+        for (let i = 0; i < LIFE_STAGES.length; i++) {
+            const prevEnd = i === 0 ? 0 : LIFE_STAGES[i - 1].endDay;
+            if (days <= LIFE_STAGES[i].endDay || i === LIFE_STAGES.length - 1) {
+                currentStageIdx = i;
+                break;
+            }
+        }
+
+        if (currentStageIdx === -1) return 100;
+
+        // Dynamic segment calculation
+        const segmentSize = 100 / (LIFE_STAGES.length - 1);
+        const startPercent = currentStageIdx * segmentSize;
+
+        const currentStage = LIFE_STAGES[currentStageIdx];
+        const prevEndDay = currentStageIdx === 0 ? 0 : LIFE_STAGES[currentStageIdx - 1].endDay;
+
+        // Handle mature/open-ended stage gracefully
+        const stageDuration = currentStage.endDay === 9999 ? 365 : currentStage.endDay - prevEndDay;
+        const daysInStage = days - prevEndDay;
+
+        // Calculate progress within this specific stage (0 to 1)
+        const progressInStage = Math.min(1, Math.max(0, daysInStage / stageDuration));
+
+        // Total visual progress, clamped to 100%
+        return Math.min(100, startPercent + (progressInStage * segmentSize));
+    }
+
+    // --- Pedigree Helper Functions ---
+    const getPigDetails = (id?: string) => {
+        if (!id) return null;
+        return allPigs.find(p => p.tagId === id) || {
+            tagId: id,
+            breed: 'Unknown',
+            status: 'Unknown',
+            sireId: undefined,
+            damId: undefined
+        };
+    };
+
+    // Helper Component for Autocomplete Search
+    const PigSearchSelect = ({
+        value,
+        onChange,
+        gender,
+        placeholder
+    }: {
+        value: string,
+        onChange: (val: string) => void,
+        gender: 'Male' | 'Female',
+        placeholder: string
+    }) => {
+        const [isOpen, setIsOpen] = useState(false);
+        const candidates = allPigs.filter(p =>
+            p.id !== pig.id &&
+            p.gender === gender &&
+            (p.tagId.toLowerCase().includes(value.toLowerCase()) ||
+                p.breed.toLowerCase().includes(value.toLowerCase()))
+        ).slice(0, 5);
+
+        return (
+            <div className="relative w-full">
+                <div className="relative">
+                    <input
+                        className="w-full text-xs p-1.5 pr-6 border rounded bg-white focus:ring-2 focus:ring-ecomattGreen focus:ring-offset-1 outline-none transition-all"
+                        value={value}
+                        onChange={(e) => { onChange(e.target.value); setIsOpen(true); }}
+                        onFocus={() => setIsOpen(true)}
+                        onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+                        placeholder={placeholder}
+                    />
+                    <i className="fas fa-search absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] pointer-events-none"></i>
                 </div>
-                <p className="text-lg font-bold text-gray-900 truncate px-1">
-                    {pig.lastFed ? pig.lastFed.split(' ').slice(1).join(' ') : 'N/A'}
-                </p>
-            </div>
-        </div>
 
-        {/* Enhanced Tab Navigation - Sticky & Brand Colored */}
-        <div className="sticky top-0 bg-grayBg z-10 pb-2 pt-1">
-            <div className="flex overflow-x-auto gap-2 no-scrollbar">
-                {['Overview', 'Lifecycle', 'Pedigree', 'Gallery'].map(tab => (
-                    <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab as any)}
-                        className={`px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-200 shadow-sm ${
-                            activeTab === tab 
-                            ? 'bg-ecomattGreen text-white shadow-md transform scale-105' 
-                            : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                        }`}
-                    >
-                        {tab}
-                    </button>
-                ))}
-            </div>
-        </div>
-
-        {/* --- TAB CONTENT --- */}
-
-        {/* Overview & Lifecycle Content */}
-        {(activeTab === 'Overview' || activeTab === 'Lifecycle') && (
-            <div className="animate-in fade-in space-y-4">
-                
-                {/* 1. Lifecycle: Visual Stage Tracker */}
-                {activeTab === 'Lifecycle' && (
-                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 mb-4 overflow-x-auto">
-                        <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                            <i className="fas fa-chart-line text-ecomattGreen"></i> Growth Progression
-                        </h3>
-                        
-                        <div className="relative min-w-[340px]">
-                            {/* Track Line */}
-                            <div className="absolute top-4 left-0 w-full h-1 bg-gray-200 rounded-full z-0"></div>
-                            
-                            {/* Smooth Progress Fill Line */}
-                            <div 
-                                className="absolute top-4 left-0 h-1 bg-ecomattGreen rounded-full z-0 transition-all duration-1000 ease-out"
-                                style={{ width: `${getSmoothProgress()}%` }}
-                            ></div>
-                            
-                            {/* Stages */}
-                            <div className="flex justify-between relative z-10">
-                                {LIFE_STAGES.map((stage, idx) => {
-                                    const daysOld = getDaysOld(pig.dob);
-                                    const isCompleted = daysOld > stage.endDay;
-                                    const isCurrent = daysOld <= stage.endDay && (idx === 0 || daysOld > LIFE_STAGES[idx - 1].endDay);
-                                    const startDay = idx === 0 ? 0 : LIFE_STAGES[idx - 1].endDay;
-                                    
-                                    // Calculate approximate date range for this stage based on DOB
-                                    const stageStartDate = new Date(pig.dob);
-                                    stageStartDate.setDate(stageStartDate.getDate() + startDay);
-                                    const stageEndDate = new Date(pig.dob);
-                                    if (stage.endDay === 9999) {
-                                        stageEndDate.setFullYear(stageEndDate.getFullYear() + 10); // Effectively open-ended
-                                    } else {
-                                        stageEndDate.setDate(new Date(pig.dob).getDate() + stage.endDay);
-                                    }
-                                    
-                                    const dateOptions: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-                                    const startDateStr = stageStartDate.toLocaleDateString('en-US', dateOptions);
-                                    const endDateStr = stage.endDay === 9999 ? '...' : stageEndDate.toLocaleDateString('en-US', dateOptions);
-                                    const dateRange = `${startDateStr} - ${endDateStr}`;
-                                    
-                                    const duration = stage.endDay === 9999 ? 'Ongoing' : `${stage.endDay - startDay} Days`;
-
-                                    return (
-                                        <div key={idx} className="flex flex-col items-center gap-2 w-16">
-                                            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs border-4 transition-all duration-500
-                                                ${isCompleted ? 'bg-ecomattGreen border-ecomattGreen text-white' : 
-                                                  isCurrent ? 'bg-white border-ecomattGreen text-ecomattGreen shadow-lg scale-110' : 
-                                                  'bg-white border-gray-200 text-gray-300'}
-                                            `}>
-                                                <i className={`fas ${stage.icon}`}></i>
-                                            </div>
-                                            <div className="text-center">
-                                                <span className={`text-[9px] font-bold text-center block ${isCurrent ? 'text-ecomattGreen' : 'text-gray-400'}`}>
-                                                    {stage.label}
-                                                </span>
-                                                
-                                                {/* Duration and Date Range */}
-                                                <span className="text-[8px] text-gray-500 font-bold block leading-tight mt-0.5">
-                                                    {duration}
-                                                </span>
-                                                <span className="text-[7px] text-gray-400 block leading-tight mt-0.5">
-                                                    {dateRange}
-                                                </span>
-
-                                                {isCurrent && (
-                                                    <div className="mt-1">
-                                                        <span className="text-[8px] text-ecomattGreen font-bold font-mono block bg-green-50 px-1 rounded border border-green-100">
-                                                            Day {daysOld}
-                                                        </span>
-                                                        <span className="text-[7px] text-green-600 font-bold block mt-0.5">
-                                                            {stage.endDay !== 9999 ? `${Math.max(0, stage.endDay - daysOld)}d left` : 'Ongoing'}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-
-                            {/* Info Banner */}
-                            <div className={`mt-6 p-3 rounded-xl border flex items-start gap-3 ${getDaysOld(pig.dob) <= 30 ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-100'}`}>
-                                <i className={`fas ${getDaysOld(pig.dob) <= 30 ? 'fa-exclamation-triangle text-red-500' : 'fa-info-circle text-blue-500'} mt-1`}></i>
-                                <div>
-                                    <p className={`text-xs font-bold ${getDaysOld(pig.dob) <= 30 ? 'text-red-800' : 'text-blue-800'}`}>
-                                        Current Phase: { LIFE_STAGES.find((s, i) => getDaysOld(pig.dob) <= s.endDay && (i === 0 || getDaysOld(pig.dob) > LIFE_STAGES[i-1].endDay))?.label || 'Mature' }
-                                        {getDaysOld(pig.dob) <= 30 && <span className="ml-2 bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded-full">CRITICAL CARE</span>}
-                                    </p>
-                                    <p className={`text-[10px] leading-tight mt-1 ${getDaysOld(pig.dob) <= 30 ? 'text-red-700' : 'text-blue-600'}`}>
-                                        {getDaysOld(pig.dob) <= 30 ? 
-                                            "Piglet Phase (0-30 Days): High mortality risk. Ensure creep feed is available, maintain temperature, and monitor for scouring daily." : 
-                                            "Monitor feed conversion ratio closely. Ensure water availability and clean bedding."}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* 2. Overview: Bio Details Card */}
-                {activeTab === 'Overview' && (
-                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
-                        <div className="flex items-center justify-between mb-4">
-                             <div>
-                                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Date of Birth</p>
-                                <h4 className="text-gray-900 font-bold flex items-center gap-2">
-                                    <i className="fas fa-birthday-cake text-pink-400"></i> {pig.dob}
-                                </h4>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Exact Age</p>
-                                <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">
-                                    {calculateAge(pig.dob)}
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <div className="flex gap-2">
-                            <button 
-                                onClick={() => setShowFeedModal(true)}
-                                className="flex-1 bg-yellow-50 text-yellow-700 border border-yellow-100 py-3 rounded-xl font-bold text-xs hover:bg-yellow-100 transition flex items-center justify-center gap-2"
+                {isOpen && candidates.length > 0 && (
+                    <div className="absolute top-full left-0 w-48 bg-white shadow-xl rounded-lg border border-gray-100 mt-1 z-[60] max-h-40 overflow-y-auto text-left">
+                        {candidates.map(candidate => (
+                            <div
+                                key={candidate.id}
+                                className="p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0 flex flex-col"
+                                onMouseDown={(e) => {
+                                    e.preventDefault(); // Prevent input blur
+                                    onChange(candidate.tagId);
+                                    setIsOpen(false);
+                                }}
                             >
-                                <i className="fas fa-utensils"></i> Log Feed
-                            </button>
-                            <button 
-                                onClick={onViewHealth}
-                                className="flex-1 bg-blue-50 text-blue-600 border border-blue-100 py-3 rounded-xl font-bold text-xs hover:bg-blue-100 transition flex items-center justify-center gap-2"
-                            >
-                                <i className="fas fa-file-medical-alt"></i> View Health
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* 3. Overview: Recent Feed History (New) */}
-                {activeTab === 'Overview' && (
-                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
-                        <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2 text-sm">
-                            <i className="fas fa-history text-yellow-500"></i> Recent Feeding
-                        </h3>
-                        {pig.timeline?.filter(e => e.title === 'Feed Logged').length === 0 ? (
-                            <p className="text-xs text-gray-400 italic">No feeding history recorded.</p>
-                        ) : (
-                            <div className="space-y-2">
-                                {pig.timeline?.filter(e => e.title === 'Feed Logged')
-                                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                                    .slice(0, 3) // Show last 3
-                                    .map(event => (
-                                        <div key={event.id} className="flex justify-between items-center bg-yellow-50/30 p-2.5 rounded-lg border border-yellow-100/50">
-                                            <div>
-                                                <p className="text-xs font-bold text-gray-800">{event.date}</p>
-                                                <p className="text-[10px] text-gray-600">{event.subtitle}</p>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <button onClick={() => openEditEventModal(event)} className="w-7 h-7 bg-white rounded-full flex items-center justify-center text-blue-500 shadow-sm border border-blue-100 hover:bg-blue-50"><i className="fas fa-pencil-alt text-[10px]"></i></button>
-                                                <button onClick={() => handleDeleteEvent(event.id)} className="w-7 h-7 bg-white rounded-full flex items-center justify-center text-red-500 shadow-sm border border-red-100 hover:bg-red-50"><i className="fas fa-trash text-[10px]"></i></button>
-                                            </div>
-                                        </div>
-                                    ))
-                                }
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* 4. Overview: Notes Section */}
-                {activeTab === 'Overview' && (
-                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                        <div className="flex justify-between items-center mb-3">
-                            <h3 className="font-bold text-gray-900">General Notes</h3>
-                            {!isEditingNotes && (
-                                <button onClick={() => setIsEditingNotes(true)} className="text-ecomattGreen text-xs font-bold hover:underline">
-                                    <i className="fas fa-pencil-alt mr-1"></i> Edit
-                                </button>
-                            )}
-                        </div>
-                        {isEditingNotes ? (
-                            <div className="animate-in fade-in">
-                                <textarea
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:border-ecomattGreen outline-none mb-2"
-                                    rows={4}
-                                    placeholder="Add observations, behavioral notes, or medical history..."
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
-                                />
-                                <div className="flex justify-end gap-2">
-                                    <button 
-                                        onClick={() => {
-                                            setNotes(pig.notes || '');
-                                            setIsEditingNotes(false);
-                                        }} 
-                                        className="text-gray-500 text-xs font-bold px-3 py-2 rounded-lg hover:bg-gray-100"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button 
-                                        onClick={handleSaveNotes} 
-                                        className="bg-ecomattGreen text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm hover:bg-green-600"
-                                    >
-                                        Save Notes
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
-                                    {notes || <span className="text-gray-400 italic">No notes recorded for this animal.</span>}
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* 5. Shared: Timeline */}
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                    <h3 className="font-bold text-gray-900 mb-6">Timeline & History</h3>
-                    <div className="border-l-2 border-gray-100 ml-3 space-y-8">
-                        
-                        {/* Render existing Timeline Events */}
-                        {pig.timeline && pig.timeline.map((event, idx) => (
-                             <div key={idx} className={`relative pl-8 transition-opacity duration-300 ${event.status === 'Completed' ? 'opacity-60' : 'opacity-100'}`}>
-                                <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-white shadow-sm flex items-center justify-center cursor-pointer hover:scale-110 transition-transform
-                                    ${event.status === 'Completed' ? 'bg-gray-400' :
-                                      event.color === 'green' ? 'bg-green-500' : 
-                                      event.color === 'yellow' ? 'bg-yellow-500' :
-                                      event.color === 'blue' ? 'bg-blue-500' : 'bg-red-500'}
-                                `} onClick={() => handleToggleEventStatus(idx)}>
-                                    {event.icon ? (
-                                        <i className={`fas ${event.icon} text-[8px] text-white`}></i>
-                                    ) : (
-                                        event.status === 'Completed' && <i className="fas fa-check text-[8px] text-white"></i>
-                                    )}
-                                </div>
-                                
-                                <div className="flex flex-col gap-2 group">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <p className="text-xs text-gray-400 mb-1 font-mono">{event.date}</p>
-                                            <h4 className={`font-bold text-sm text-gray-900 ${event.status === 'Completed' ? 'line-through text-gray-500' : ''}`}>{event.title}</h4>
-                                            <p className="text-xs text-gray-500">{event.subtitle}</p>
-                                        </div>
-                                        <button 
-                                            onClick={() => handleToggleEventStatus(idx)}
-                                            className={`text-[10px] px-2 py-1 rounded font-bold border transition-colors
-                                                ${event.status === 'Completed' 
-                                                    ? 'bg-gray-100 text-gray-500 border-gray-200' 
-                                                    : 'bg-white text-ecomattGreen border-green-200 hover:bg-green-50'}
-                                            `}
-                                        >
-                                            {event.status === 'Completed' ? 'Done' : 'Mark Done'}
-                                        </button>
-                                    </div>
-                                    
-                                    {/* Actions */}
-                                    <div className="flex gap-3 border-t border-gray-50 pt-2 mt-1">
-                                        <button 
-                                            onClick={() => openEditEventModal(event)}
-                                            className="text-[10px] font-bold text-blue-500 flex items-center gap-1 hover:text-blue-700"
-                                        >
-                                            <i className="fas fa-pencil-alt"></i> Edit
-                                        </button>
-                                        <button 
-                                            onClick={() => handleDeleteEvent(event.id)}
-                                            className="text-[10px] font-bold text-red-400 flex items-center gap-1 hover:text-red-600"
-                                        >
-                                            <i className="fas fa-trash"></i> Delete
-                                        </button>
-                                    </div>
-                                </div>
+                                <span className="font-bold text-xs text-gray-800">{candidate.tagId}</span>
+                                <span className="text-[9px] text-gray-500">{candidate.breed} • {candidate.penLocation}</span>
                             </div>
                         ))}
-
-                        {/* Fallback event if empty */}
-                        {(!pig.timeline || pig.timeline.length === 0) && (
-                            <div className="relative pl-8">
-                                <div className="absolute -left-[9px] top-1 w-4 h-4 bg-gray-300 rounded-full border-2 border-white shadow-sm"></div>
-                                <p className="text-xs text-gray-400 mb-1">{pig.dob}</p>
-                                <h4 className="font-bold text-gray-900 text-sm">Born / Acquired</h4>
-                                <p className="text-xs text-gray-500">Entry into system</p>
-                            </div>
-                        )}
-                        
                     </div>
-                    
-                    <div className="flex gap-2 mt-6">
-                        <button 
-                            onClick={() => setShowFeedModal(true)}
-                            className="flex-1 bg-yellow-50 text-yellow-700 border border-yellow-200 py-3 rounded-xl font-bold text-xs hover:bg-yellow-100 transition flex items-center justify-center gap-2"
-                        >
-                            <i className="fas fa-utensils"></i> Log Feed
-                        </button>
-                        <button 
-                            onClick={() => setShowEventModal(true)}
-                            className="flex-1 bg-green-50 text-ecomattGreen border border-green-200 py-3 rounded-xl font-bold text-xs hover:bg-green-100 transition flex items-center justify-center gap-2"
-                        >
-                            <i className="fas fa-plus-circle"></i> Log Event
-                        </button>
-                    </div>
-                </div>
+                )}
             </div>
-        )}
+        );
+    };
 
-        {/* Enhanced Pedigree / Lineage Chart */}
-        {activeTab === 'Pedigree' && (
-             <div className="animate-in fade-in text-center">
-                 <div className="flex justify-between items-center mb-6">
-                     <h2 className="text-xl font-bold text-gray-900">Family Tree</h2>
-                     <button 
-                        onClick={() => {
-                            if (isEditingLineage) handleSaveLineage();
-                            else {
-                                setLineageData({ sireId: pig.sireId || '', damId: pig.damId || '' });
-                                setIsEditingLineage(true);
-                            }
-                        }}
-                        className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${
-                            isEditingLineage 
-                            ? 'bg-ecomattGreen text-white border-ecomattGreen shadow-md' 
-                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                        }`}
-                     >
-                        {isEditingLineage ? 'Save Changes' : 'Edit Parents'}
-                     </button>
-                 </div>
+    const TreeNode = ({ role, id, type, isGrandparent = false }: { role: string, id?: string, type: 'sire' | 'dam' | 'subject', isGrandparent?: boolean }) => {
+        const details = getPigDetails(id);
+        const bgColor = type === 'sire' ? 'bg-blue-50 border-blue-200 text-blue-800' : type === 'dam' ? 'bg-pink-50 border-pink-200 text-pink-800' : 'bg-green-50 border-green-200 text-green-800';
+        const iconColor = type === 'sire' ? 'text-blue-400' : type === 'dam' ? 'text-pink-400' : 'text-green-400';
 
-                 {/* Tree Visualization Container */}
-                 <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 overflow-x-auto">
-                    <div className="min-w-[300px] flex flex-col items-center gap-6 py-6">
-                        
-                        {/* Generation 1: Subject */}
-                        <div className="relative z-20">
-                            <TreeNode role="Subject" id={pig.tagId} type="subject" />
-                            {/* Line Up */}
-                            <div className="absolute -bottom-6 left-1/2 w-px h-6 bg-gray-300"></div>
-                        </div>
+        if (!id) {
+            return (
+                <div className={`flex flex-col items-center justify-center p-2 rounded-xl border border-dashed border-gray-300 bg-gray-50/50 ${isGrandparent ? 'w-24 h-24' : 'w-32 h-32'}`}>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase mb-1">{role}</span>
+                    <span className="text-xs text-gray-300 italic">Unknown</span>
+                </div>
+            );
+        }
 
-                        {/* Generation 2: Parents */}
-                        <div className="flex gap-4 sm:gap-12 relative z-10 pt-4">
-                            {/* Horizontal Connector */}
-                             <div className="absolute top-0 left-1/4 right-1/4 h-px bg-gray-300 border-t border-gray-300 rounded-full"></div>
-                             <div className="absolute top-0 left-1/4 h-4 w-px bg-gray-300"></div>
-                             <div className="absolute top-0 right-1/4 h-4 w-px bg-gray-300"></div>
+        return (
+            <div className={`flex flex-col items-center justify-center p-2 rounded-xl border shadow-sm relative transition-all hover:scale-105 cursor-pointer z-10 ${bgColor} ${isGrandparent ? 'w-24 min-h-[6rem]' : 'w-32 min-h-[8rem]'}`}>
+                <span className={`absolute -top-2 px-2 py-0.5 text-[8px] font-bold uppercase rounded-full bg-white border shadow-sm ${type === 'sire' ? 'text-blue-600 border-blue-100' : type === 'dam' ? 'text-pink-600 border-pink-100' : 'text-green-600 border-green-100'}`}>
+                    {role}
+                </span>
+                <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm ${iconColor}`}>
+                    <i className={`fas ${type === 'sire' ? 'fa-venus-mars' : type === 'dam' ? 'fa-venus' : 'fa-dna'}`}></i>
+                </div>
+                <p className={`font-bold text-center leading-tight break-all ${isGrandparent ? 'text-xs' : 'text-sm'}`}>{details.tagId}</p>
+                {/* @ts-ignore */}
+                {details.breed && <p className="text-[9px] opacity-70 mt-1 text-center leading-tight">{details.breed}</p>}
+            </div>
+        );
+    };
 
-                            {/* Sire Node */}
-                            <div className="flex flex-col items-center">
-                                {isEditingLineage ? (
-                                    <div className="bg-blue-50 border border-blue-200 p-3 rounded-xl w-32 min-h-[100px] flex flex-col justify-center relative z-50">
-                                        <label className="text-[9px] font-bold text-blue-800 uppercase block mb-1">Sire ID</label>
-                                        <PigSearchSelect 
-                                            value={lineageData.sireId}
-                                            onChange={(val: string) => setLineageData(prev => ({...prev, sireId: val}))}
-                                            gender="Male"
-                                            placeholder="Search Boar"
-                                        />
-                                    </div>
-                                ) : (
-                                    <>
-                                        <TreeNode role="Sire" id={pig.sireId} type="sire" />
-                                        {/* Line Down to GPs */}
-                                        <div className="w-px h-6 bg-gray-300 mt-0"></div>
-                                    </>
-                                )}
-                            </div>
+    return (
+        <div className="bg-grayBg min-h-screen pb-20 animate-in slide-in-from-right duration-300 relative">
 
-                            {/* Dam Node */}
-                            <div className="flex flex-col items-center">
-                                {isEditingLineage ? (
-                                     <div className="bg-pink-50 border border-pink-200 p-3 rounded-xl w-32 min-h-[100px] flex flex-col justify-center relative z-50">
-                                        <label className="text-[9px] font-bold text-pink-800 uppercase block mb-1">Dam ID</label>
-                                        <PigSearchSelect 
-                                            value={lineageData.damId}
-                                            onChange={(val: string) => setLineageData(prev => ({...prev, damId: val}))}
-                                            gender="Female"
-                                            placeholder="Search Sow"
-                                        />
-                                    </div>
-                                ) : (
-                                    <>
-                                        <TreeNode role="Dam" id={pig.damId} type="dam" />
-                                        {/* Line Down to GPs */}
-                                        <div className="w-px h-6 bg-gray-300 mt-0"></div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
+            {/* Screen 3: Profile Header */}
+            <div className="h-64 bg-gray-900 relative">
+                <img
+                    src={pig.imageUrl || "https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&q=80&w=800"}
+                    className="w-full h-full object-cover opacity-60"
+                    alt="Pig"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
 
-                        {/* Generation 3: Grandparents (Visible only if not editing) */}
-                        {!isEditingLineage && (
-                            <div className="flex gap-2 sm:gap-6 pt-2">
-                                {/* Paternal GPs */}
-                                <div className="flex gap-1 relative">
-                                    {/* Connector */}
-                                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-full border-t border-gray-300 h-2"></div>
-                                    <div className="absolute -top-6 left-1/4 h-2 w-px bg-gray-300"></div>
-                                    <div className="absolute -top-6 right-1/4 h-2 w-px bg-gray-300"></div>
-                                    
-                                    {(() => {
-                                        const sire = getPigDetails(pig.sireId);
-                                        return (
-                                            <>
-                                                <TreeNode role="G.Sire" id={sire?.sireId} type="sire" isGrandparent />
-                                                <TreeNode role="G.Dam" id={sire?.damId} type="dam" isGrandparent />
-                                            </>
-                                        );
-                                    })()}
-                                </div>
-
-                                {/* Spacer */}
-                                <div className="w-2"></div>
-
-                                {/* Maternal GPs */}
-                                <div className="flex gap-1 relative">
-                                     {/* Connector */}
-                                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-full border-t border-gray-300 h-2"></div>
-                                    <div className="absolute -top-6 left-1/4 h-2 w-px bg-gray-300"></div>
-                                    <div className="absolute -top-6 right-1/4 h-2 w-px bg-gray-300"></div>
-
-                                     {(() => {
-                                        const dam = getPigDetails(pig.damId);
-                                        return (
-                                            <>
-                                                <TreeNode role="G.Sire" id={dam?.sireId} type="sire" isGrandparent />
-                                                <TreeNode role="G.Dam" id={dam?.damId} type="dam" isGrandparent />
-                                            </>
-                                        );
-                                    })()}
-                                </div>
-                            </div>
-                        )}
-
-                    </div>
-                 </div>
-                 
-                 <p className="text-xs text-gray-400 mt-4 italic mb-4">
-                    <i className="fas fa-info-circle mr-1"></i>
-                    Click "Edit Parents" to link existing animals from the database.
-                 </p>
-
-                 <button
-                    onClick={onViewHealth}
-                    className="w-full bg-blue-50 text-blue-600 border border-blue-200 py-3 rounded-xl font-bold text-xs hover:bg-blue-100 transition flex items-center justify-center gap-2"
+                <button
+                    onClick={onBack}
+                    className="absolute top-6 left-4 text-white w-10 h-10 bg-black/30 rounded-full flex items-center justify-center backdrop-blur-md hover:bg-black/50 transition z-10"
                 >
-                    <i className="fas fa-file-medical-alt"></i> Check Genetic Health History
+                    <i className="fas fa-arrow-left"></i>
                 </button>
-             </div>
-        )}
 
-        {/* Gallery (Screen 19) */}
-        {activeTab === 'Gallery' && (
-            <div className="animate-in fade-in">
-                <div 
-                    className="border-2 border-dashed border-gray-300 rounded-2xl p-8 flex flex-col items-center justify-center text-gray-400 mb-6 hover:border-ecomattGreen hover:text-ecomattGreen transition cursor-pointer bg-white"
-                >
-                    <i className="fas fa-cloud-upload-alt text-3xl mb-2"></i>
-                    <span className="text-xs font-bold">Tap to Upload Photo</span>
+                <div className="absolute top-6 right-4 flex gap-2 z-10">
+                    <button
+                        onClick={onEdit}
+                        className="text-white w-10 h-10 bg-black/30 rounded-full flex items-center justify-center backdrop-blur-md hover:bg-black/50 transition"
+                        title="Edit Details"
+                    >
+                        <i className="fas fa-edit"></i>
+                    </button>
+                    <button
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="text-red-400 w-10 h-10 bg-black/30 rounded-full flex items-center justify-center backdrop-blur-md hover:bg-red-900/50 transition"
+                        title="Delete Record"
+                    >
+                        <i className="fas fa-trash"></i>
+                    </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                    {pig.imageUrl && (
-                        <div className="aspect-square bg-gray-200 rounded-xl relative overflow-hidden group">
-                            <img src={pig.imageUrl} className="w-full h-full object-cover" alt="Pig" />
-                            <div className="absolute bottom-0 left-0 w-full bg-black/60 p-2 opacity-100">
-                                <p className="text-[10px] text-white">Profile Photo</p>
+                <div className="absolute bottom-6 left-6 text-white w-full pr-12">
+                    {isEditingTag ? (
+                        <input
+                            type="text"
+                            className="text-4xl font-bold tracking-tight bg-transparent border-b border-white/50 text-white w-full max-w-[250px] outline-none"
+                            value={editedTag}
+                            onChange={(e) => setEditedTag(e.target.value)}
+                            onBlur={handleSaveTag}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSaveTag()}
+                            autoFocus
+                        />
+                    ) : (
+                        <h1
+                            className="text-4xl font-bold tracking-tight flex items-center gap-2 cursor-pointer group"
+                            onClick={() => setIsEditingTag(true)}
+                        >
+                            {pig.tagId}
+                            <i className="fas fa-pencil-alt text-base opacity-50 group-hover:opacity-100 transition-opacity"></i>
+                        </h1>
+                    )}
+                    <p className="text-ecomattYellow font-medium text-sm mt-1">{pig.breed} • {pig.stage}</p>
+                </div>
+            </div>
+
+            <div className="p-5 -mt-6 bg-grayBg rounded-t-3xl relative z-10">
+
+                {/* Quick Stats Grid */}
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                    {/* Age */}
+                    <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
+                        <p className="text-[10px] text-gray-400 font-bold uppercase">Age</p>
+                        <p className="text-lg font-bold text-gray-900">{calculateAge(pig.dob)}</p>
+                    </div>
+
+                    {/* Gender */}
+                    <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
+                        <p className="text-[10px] text-gray-400 font-bold uppercase">Gender</p>
+                        <p className="text-lg font-bold text-gray-900">{pig.gender}</p>
+                    </div>
+
+                    {/* Breed */}
+                    <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
+                        <p className="text-[10px] text-gray-400 font-bold uppercase">Breed</p>
+                        <p className="text-lg font-bold text-gray-900 truncate">{pig.breed}</p>
+                    </div>
+
+                    {/* Location */}
+                    <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
+                        <p className="text-[10px] text-gray-400 font-bold uppercase">Location</p>
+                        <p className="text-lg font-bold text-gray-900">{pig.penLocation}</p>
+                    </div>
+
+                    {/* Status */}
+                    <div className="bg-green-50 p-3 rounded-2xl text-center border border-green-100 shadow-sm">
+                        <p className="text-[10px] text-green-600 font-bold uppercase">Status</p>
+                        <p className="text-lg font-bold text-green-700">{pig.status}</p>
+                    </div>
+
+                    {/* Weight - Editable */}
+                    <div
+                        className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm relative group cursor-pointer"
+                        onClick={() => setIsEditingWeight(true)}
+                    >
+                        <p className="text-[10px] text-gray-400 font-bold uppercase">Weight</p>
+                        {isEditingWeight ? (
+                            <div className="flex justify-center items-center gap-1" onClick={e => e.stopPropagation()}>
+                                <input
+                                    type="number"
+                                    className="w-16 text-lg font-bold text-gray-900 text-center border-b border-ecomattGreen outline-none bg-transparent p-0"
+                                    value={editedWeight}
+                                    onChange={(e) => setEditedWeight(e.target.value)}
+                                    onBlur={handleSaveWeight}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSaveWeight()}
+                                    autoFocus
+                                />
+                                <span className="text-sm text-gray-500">kg</span>
+                            </div>
+                        ) : (
+                            <p className="text-lg font-bold text-gray-900 flex items-center justify-center gap-1">
+                                {pig.weight}kg <i className="fas fa-pencil-alt text-[10px] text-gray-300"></i>
+                            </p>
+                        )}
+                    </div>
+
+                    {/* FCR (Calculated) */}
+                    <div className="bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
+                        <p className="text-[10px] text-gray-400 font-bold uppercase">Est. FCR</p>
+                        <p className="text-lg font-bold text-ecomattYellow">{calculateFCR()}</p>
+                    </div>
+
+                    {/* Last Fed */}
+                    <div className="col-span-1 bg-white p-3 rounded-2xl text-center border border-gray-100 shadow-sm relative overflow-hidden group">
+                        <div className="flex justify-center items-center gap-1 mb-1">
+                            <p className="text-[10px] text-gray-400 font-bold uppercase">Last Fed</p>
+                            <button onClick={() => setShowFeedModal(true)} className="text-ecomattGreen hover:bg-green-50 rounded-full w-4 h-4 flex items-center justify-center">
+                                <i className="fas fa-plus-circle text-xs"></i>
+                            </button>
+                        </div>
+                        <p className="text-lg font-bold text-gray-900 truncate px-1">
+                            {pig.lastFed ? pig.lastFed.split(' ').slice(1).join(' ') : 'N/A'}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Enhanced Tab Navigation - Sticky & Brand Colored */}
+                <div className="sticky top-0 bg-grayBg z-10 pb-2 pt-1">
+                    <div className="flex overflow-x-auto gap-2 no-scrollbar">
+                        {['Overview', 'Lifecycle', 'Pedigree', 'Gallery'].map(tab => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab as any)}
+                                className={`px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-200 shadow-sm ${activeTab === tab
+                                    ? 'bg-ecomattGreen text-white shadow-md transform scale-105'
+                                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                                    }`}
+                            >
+                                {tab}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* --- TAB CONTENT --- */}
+
+                {/* Overview & Lifecycle Content */}
+                {(activeTab === 'Overview' || activeTab === 'Lifecycle') && (
+                    <div className="animate-in fade-in space-y-4">
+
+                        {/* 1. Lifecycle: Visual Stage Tracker */}
+                        {activeTab === 'Lifecycle' && (
+                            <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 mb-4 overflow-x-auto">
+                                <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <i className="fas fa-chart-line text-ecomattGreen"></i> Growth Progression
+                                </h3>
+
+                                <div className="relative min-w-[340px]">
+                                    {/* Track Line */}
+                                    <div className="absolute top-4 left-0 w-full h-1 bg-gray-200 rounded-full z-0"></div>
+
+                                    {/* Smooth Progress Fill Line */}
+                                    <div
+                                        className="absolute top-4 left-0 h-1 bg-ecomattGreen rounded-full z-0 transition-all duration-1000 ease-out"
+                                        style={{ width: `${getSmoothProgress()}%` }}
+                                    ></div>
+
+                                    {/* Stages */}
+                                    <div className="flex justify-between relative z-10">
+                                        {LIFE_STAGES.map((stage, idx) => {
+                                            const daysOld = getDaysOld(pig.dob);
+                                            const isCompleted = daysOld > stage.endDay;
+                                            const isCurrent = daysOld <= stage.endDay && (idx === 0 || daysOld > LIFE_STAGES[idx - 1].endDay);
+                                            const startDay = idx === 0 ? 0 : LIFE_STAGES[idx - 1].endDay;
+
+                                            // Calculate approximate date range for this stage based on DOB
+                                            const stageStartDate = new Date(pig.dob);
+                                            stageStartDate.setDate(stageStartDate.getDate() + startDay);
+                                            const stageEndDate = new Date(pig.dob);
+                                            if (stage.endDay === 9999) {
+                                                stageEndDate.setFullYear(stageEndDate.getFullYear() + 10); // Effectively open-ended
+                                            } else {
+                                                stageEndDate.setDate(new Date(pig.dob).getDate() + stage.endDay);
+                                            }
+
+                                            const dateOptions: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+                                            const startDateStr = stageStartDate.toLocaleDateString('en-US', dateOptions);
+                                            const endDateStr = stage.endDay === 9999 ? '...' : stageEndDate.toLocaleDateString('en-US', dateOptions);
+                                            const dateRange = `${startDateStr} - ${endDateStr}`;
+
+                                            const duration = stage.endDay === 9999 ? 'Ongoing' : `${stage.endDay - startDay} Days`;
+
+                                            return (
+                                                <div key={idx} className="flex flex-col items-center gap-2 w-16">
+                                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs border-4 transition-all duration-500
+                                                ${isCompleted ? 'bg-ecomattGreen border-ecomattGreen text-white' :
+                                                            isCurrent ? 'bg-white border-ecomattGreen text-ecomattGreen shadow-lg scale-110' :
+                                                                'bg-white border-gray-200 text-gray-300'}
+                                            `}>
+                                                        <i className={`fas ${stage.icon}`}></i>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <span className={`text-[9px] font-bold text-center block ${isCurrent ? 'text-ecomattGreen' : 'text-gray-400'}`}>
+                                                            {stage.label}
+                                                        </span>
+
+                                                        {/* Duration and Date Range */}
+                                                        <span className="text-[8px] text-gray-500 font-bold block leading-tight mt-0.5">
+                                                            {duration}
+                                                        </span>
+                                                        <span className="text-[7px] text-gray-400 block leading-tight mt-0.5">
+                                                            {dateRange}
+                                                        </span>
+
+                                                        {isCurrent && (
+                                                            <div className="mt-1">
+                                                                <span className="text-[8px] text-ecomattGreen font-bold font-mono block bg-green-50 px-1 rounded border border-green-100">
+                                                                    Day {daysOld}
+                                                                </span>
+                                                                <span className="text-[7px] text-green-600 font-bold block mt-0.5">
+                                                                    {stage.endDay !== 9999 ? `${Math.max(0, stage.endDay - daysOld)}d left` : 'Ongoing'}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Info Banner */}
+                                    <div className={`mt-6 p-3 rounded-xl border flex items-start gap-3 ${getDaysOld(pig.dob) <= 30 ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-100'}`}>
+                                        <i className={`fas ${getDaysOld(pig.dob) <= 30 ? 'fa-exclamation-triangle text-red-500' : 'fa-info-circle text-blue-500'} mt-1`}></i>
+                                        <div>
+                                            <p className={`text-xs font-bold ${getDaysOld(pig.dob) <= 30 ? 'text-red-800' : 'text-blue-800'}`}>
+                                                Current Phase: {LIFE_STAGES.find((s, i) => getDaysOld(pig.dob) <= s.endDay && (i === 0 || getDaysOld(pig.dob) > LIFE_STAGES[i - 1].endDay))?.label || 'Mature'}
+                                                {getDaysOld(pig.dob) <= 30 && <span className="ml-2 bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded-full">CRITICAL CARE</span>}
+                                            </p>
+                                            <p className={`text-[10px] leading-tight mt-1 ${getDaysOld(pig.dob) <= 30 ? 'text-red-700' : 'text-blue-600'}`}>
+                                                {getDaysOld(pig.dob) <= 30 ?
+                                                    "Piglet Phase (0-30 Days): High mortality risk. Ensure creep feed is available, maintain temperature, and monitor for scouring daily." :
+                                                    "Monitor feed conversion ratio closely. Ensure water availability and clean bedding."}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 2. Overview: Bio Details Card */}
+                        {activeTab === 'Overview' && (
+                            <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <p className="text-xs text-gray-500 font-bold uppercase mb-1">Date of Birth</p>
+                                        <h4 className="text-gray-900 font-bold flex items-center gap-2">
+                                            <i className="fas fa-birthday-cake text-pink-400"></i> {pig.dob}
+                                        </h4>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs text-gray-500 font-bold uppercase mb-1">Exact Age</p>
+                                        <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">
+                                            {calculateAge(pig.dob)}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setShowFeedModal(true)}
+                                        className="flex-1 bg-yellow-50 text-yellow-700 border border-yellow-100 py-3 rounded-xl font-bold text-xs hover:bg-yellow-100 transition flex items-center justify-center gap-2"
+                                    >
+                                        <i className="fas fa-utensils"></i> Log Feed
+                                    </button>
+                                    <button
+                                        onClick={onViewHealth}
+                                        className="flex-1 bg-blue-50 text-blue-600 border border-blue-100 py-3 rounded-xl font-bold text-xs hover:bg-blue-100 transition flex items-center justify-center gap-2"
+                                    >
+                                        <i className="fas fa-file-medical-alt"></i> View Health
+                                    </button>
+                                </div>
+
+                                {/* Smart Report Button */}
+                                <button
+                                    onClick={() => setShowSmartReportModal(true)}
+                                    className="w-full mt-2 bg-gray-900 text-white py-3 rounded-xl font-bold text-xs hover:bg-black transition flex items-center justify-center gap-2 shadow-lg shadow-gray-200"
+                                >
+                                    <i className="fas fa-clipboard-check text-ecomattGreen"></i> Log Smart Event (Guided)
+                                </button>
+                            </div>
+                        )}
+
+                        {/* 3. Overview: Recent Feed History (New) */}
+                        {activeTab === 'Overview' && (
+                            <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                                <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2 text-sm">
+                                    <i className="fas fa-history text-yellow-500"></i> Recent Feeding
+                                </h3>
+                                {pig.timeline?.filter(e => e.title === 'Feed Logged').length === 0 ? (
+                                    <p className="text-xs text-gray-400 italic">No feeding history recorded.</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {pig.timeline?.filter(e => e.title === 'Feed Logged')
+                                            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                            .slice(0, 3) // Show last 3
+                                            .map(event => (
+                                                <div key={event.id} className="flex justify-between items-center bg-yellow-50/30 p-2.5 rounded-lg border border-yellow-100/50">
+                                                    <div>
+                                                        <p className="text-xs font-bold text-gray-800">{event.date}</p>
+                                                        <p className="text-[10px] text-gray-600">{event.subtitle}</p>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <button onClick={() => openEditEventModal(event)} className="w-7 h-7 bg-white rounded-full flex items-center justify-center text-blue-500 shadow-sm border border-blue-100 hover:bg-blue-50"><i className="fas fa-pencil-alt text-[10px]"></i></button>
+                                                        <button onClick={() => handleDeleteEvent(event.id)} className="w-7 h-7 bg-white rounded-full flex items-center justify-center text-red-500 shadow-sm border border-red-100 hover:bg-red-50"><i className="fas fa-trash text-[10px]"></i></button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        }
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* 4. Overview: Notes Section */}
+                        {activeTab === 'Overview' && (
+                            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                                <div className="flex justify-between items-center mb-3">
+                                    <h3 className="font-bold text-gray-900">General Notes</h3>
+                                    {!isEditingNotes && (
+                                        <button onClick={() => setIsEditingNotes(true)} className="text-ecomattGreen text-xs font-bold hover:underline">
+                                            <i className="fas fa-pencil-alt mr-1"></i> Edit
+                                        </button>
+                                    )}
+                                </div>
+                                {isEditingNotes ? (
+                                    <div className="animate-in fade-in">
+                                        <textarea
+                                            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:border-ecomattGreen outline-none mb-2"
+                                            rows={4}
+                                            placeholder="Add observations, behavioral notes, or medical history..."
+                                            value={notes}
+                                            onChange={(e) => setNotes(e.target.value)}
+                                        />
+                                        <div className="flex justify-end gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    setNotes(pig.notes || '');
+                                                    setIsEditingNotes(false);
+                                                }}
+                                                className="text-gray-500 text-xs font-bold px-3 py-2 rounded-lg hover:bg-gray-100"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={handleSaveNotes}
+                                                className="bg-ecomattGreen text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm hover:bg-green-600"
+                                            >
+                                                Save Notes
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                        <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
+                                            {notes || <span className="text-gray-400 italic">No notes recorded for this animal.</span>}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* 5. Shared: Timeline */}
+                        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                            <h3 className="font-bold text-gray-900 mb-6">Timeline & History</h3>
+                            <div className="border-l-2 border-gray-100 ml-3 space-y-8">
+
+                                {/* Render existing Timeline Events */}
+                                {pig.timeline && pig.timeline.map((event, idx) => (
+                                    <div key={idx} className={`relative pl-8 transition-opacity duration-300 ${event.status === 'Completed' ? 'opacity-60' : 'opacity-100'}`}>
+                                        <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-white shadow-sm flex items-center justify-center cursor-pointer hover:scale-110 transition-transform
+                                    ${event.status === 'Completed' ? 'bg-gray-400' :
+                                                event.color === 'green' ? 'bg-green-500' :
+                                                    event.color === 'yellow' ? 'bg-yellow-500' :
+                                                        event.color === 'blue' ? 'bg-blue-500' : 'bg-red-500'}
+                                `} onClick={() => handleToggleEventStatus(idx)}>
+                                            {event.icon ? (
+                                                <i className={`fas ${event.icon} text-[8px] text-white`}></i>
+                                            ) : (
+                                                event.status === 'Completed' && <i className="fas fa-check text-[8px] text-white"></i>
+                                            )}
+                                        </div>
+
+                                        <div className="flex flex-col gap-2 group">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <p className="text-xs text-gray-400 mb-1 font-mono">{event.date}</p>
+                                                    <h4 className={`font-bold text-sm text-gray-900 ${event.status === 'Completed' ? 'line-through text-gray-500' : ''}`}>{event.title}</h4>
+                                                    <p className="text-xs text-gray-500">{event.subtitle}</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleToggleEventStatus(idx)}
+                                                    className={`text-[10px] px-2 py-1 rounded font-bold border transition-colors
+                                                ${event.status === 'Completed'
+                                                            ? 'bg-gray-100 text-gray-500 border-gray-200'
+                                                            : 'bg-white text-ecomattGreen border-green-200 hover:bg-green-50'}
+                                            `}
+                                                >
+                                                    {event.status === 'Completed' ? 'Done' : 'Mark Done'}
+                                                </button>
+                                            </div>
+
+                                            {/* Actions */}
+                                            <div className="flex gap-3 border-t border-gray-50 pt-2 mt-1">
+                                                <button
+                                                    onClick={() => openEditEventModal(event)}
+                                                    className="text-[10px] font-bold text-blue-500 flex items-center gap-1 hover:text-blue-700"
+                                                >
+                                                    <i className="fas fa-pencil-alt"></i> Edit
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteEvent(event.id)}
+                                                    className="text-[10px] font-bold text-red-400 flex items-center gap-1 hover:text-red-600"
+                                                >
+                                                    <i className="fas fa-trash"></i> Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {/* Fallback event if empty */}
+                                {(!pig.timeline || pig.timeline.length === 0) && (
+                                    <div className="relative pl-8">
+                                        <div className="absolute -left-[9px] top-1 w-4 h-4 bg-gray-300 rounded-full border-2 border-white shadow-sm"></div>
+                                        <p className="text-xs text-gray-400 mb-1">{pig.dob}</p>
+                                        <h4 className="font-bold text-gray-900 text-sm">Born / Acquired</h4>
+                                        <p className="text-xs text-gray-500">Entry into system</p>
+                                    </div>
+                                )}
+
+                            </div>
+
+                            <div className="flex gap-2 mt-6">
+                                <button
+                                    onClick={() => setShowFeedModal(true)}
+                                    className="flex-1 bg-yellow-50 text-yellow-700 border border-yellow-200 py-3 rounded-xl font-bold text-xs hover:bg-yellow-100 transition flex items-center justify-center gap-2"
+                                >
+                                    <i className="fas fa-utensils"></i> Log Feed
+                                </button>
+                                <button
+                                    onClick={() => setShowEventModal(true)}
+                                    className="flex-1 bg-green-50 text-ecomattGreen border border-green-200 py-3 rounded-xl font-bold text-xs hover:bg-green-100 transition flex items-center justify-center gap-2"
+                                >
+                                    <i className="fas fa-plus-circle"></i> Log Event
+                                </button>
                             </div>
                         </div>
-                    )}
-                    <div className="aspect-square bg-gray-800 rounded-xl relative overflow-hidden">
-                        <div className="absolute bottom-0 left-0 w-full bg-black/60 p-2">
-                            <p className="text-[10px] text-white">Oct '25</p>
+                    </div>
+                )}
+
+                {/* Enhanced Pedigree / Lineage Chart */}
+                {activeTab === 'Pedigree' && (
+                    <div className="animate-in fade-in text-center">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-gray-900">Family Tree</h2>
+                            <button
+                                onClick={() => {
+                                    if (isEditingLineage) handleSaveLineage();
+                                    else {
+                                        setLineageData({ sireId: pig.sireId || '', damId: pig.damId || '' });
+                                        setIsEditingLineage(true);
+                                    }
+                                }}
+                                className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${isEditingLineage
+                                    ? 'bg-ecomattGreen text-white border-ecomattGreen shadow-md'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                    }`}
+                            >
+                                {isEditingLineage ? 'Save Changes' : 'Edit Parents'}
+                            </button>
+                        </div>
+
+                        {/* Tree Visualization Container */}
+                        <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 overflow-x-auto">
+                            <div className="min-w-[300px] flex flex-col items-center gap-6 py-6">
+
+                                {/* Generation 1: Subject */}
+                                <div className="relative z-20">
+                                    <TreeNode role="Subject" id={pig.tagId} type="subject" />
+                                    {/* Line Up */}
+                                    <div className="absolute -bottom-6 left-1/2 w-px h-6 bg-gray-300"></div>
+                                </div>
+
+                                {/* Generation 2: Parents */}
+                                <div className="flex gap-4 sm:gap-12 relative z-10 pt-4">
+                                    {/* Horizontal Connector */}
+                                    <div className="absolute top-0 left-1/4 right-1/4 h-px bg-gray-300 border-t border-gray-300 rounded-full"></div>
+                                    <div className="absolute top-0 left-1/4 h-4 w-px bg-gray-300"></div>
+                                    <div className="absolute top-0 right-1/4 h-4 w-px bg-gray-300"></div>
+
+                                    {/* Sire Node */}
+                                    <div className="flex flex-col items-center">
+                                        {isEditingLineage ? (
+                                            <div className="bg-blue-50 border border-blue-200 p-3 rounded-xl w-32 min-h-[100px] flex flex-col justify-center relative z-50">
+                                                <label className="text-[9px] font-bold text-blue-800 uppercase block mb-1">Sire ID</label>
+                                                <PigSearchSelect
+                                                    value={lineageData.sireId}
+                                                    onChange={(val: string) => setLineageData(prev => ({ ...prev, sireId: val }))}
+                                                    gender="Male"
+                                                    placeholder="Search Boar"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <TreeNode role="Sire" id={pig.sireId} type="sire" />
+                                                {/* Line Down to GPs */}
+                                                <div className="w-px h-6 bg-gray-300 mt-0"></div>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* Dam Node */}
+                                    <div className="flex flex-col items-center">
+                                        {isEditingLineage ? (
+                                            <div className="bg-pink-50 border border-pink-200 p-3 rounded-xl w-32 min-h-[100px] flex flex-col justify-center relative z-50">
+                                                <label className="text-[9px] font-bold text-pink-800 uppercase block mb-1">Dam ID</label>
+                                                <PigSearchSelect
+                                                    value={lineageData.damId}
+                                                    onChange={(val: string) => setLineageData(prev => ({ ...prev, damId: val }))}
+                                                    gender="Female"
+                                                    placeholder="Search Sow"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <TreeNode role="Dam" id={pig.damId} type="dam" />
+                                                {/* Line Down to GPs */}
+                                                <div className="w-px h-6 bg-gray-300 mt-0"></div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Generation 3: Grandparents (Visible only if not editing) */}
+                                {!isEditingLineage && (
+                                    <div className="flex gap-2 sm:gap-6 pt-2">
+                                        {/* Paternal GPs */}
+                                        <div className="flex gap-1 relative">
+                                            {/* Connector */}
+                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-full border-t border-gray-300 h-2"></div>
+                                            <div className="absolute -top-6 left-1/4 h-2 w-px bg-gray-300"></div>
+                                            <div className="absolute -top-6 right-1/4 h-2 w-px bg-gray-300"></div>
+
+                                            {(() => {
+                                                const sire = getPigDetails(pig.sireId);
+                                                return (
+                                                    <>
+                                                        <TreeNode role="G.Sire" id={sire?.sireId} type="sire" isGrandparent />
+                                                        <TreeNode role="G.Dam" id={sire?.damId} type="dam" isGrandparent />
+                                                    </>
+                                                );
+                                            })()}
+                                        </div>
+
+                                        {/* Spacer */}
+                                        <div className="w-2"></div>
+
+                                        {/* Maternal GPs */}
+                                        <div className="flex gap-1 relative">
+                                            {/* Connector */}
+                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-full border-t border-gray-300 h-2"></div>
+                                            <div className="absolute -top-6 left-1/4 h-2 w-px bg-gray-300"></div>
+                                            <div className="absolute -top-6 right-1/4 h-2 w-px bg-gray-300"></div>
+
+                                            {(() => {
+                                                const dam = getPigDetails(pig.damId);
+                                                return (
+                                                    <>
+                                                        <TreeNode role="G.Sire" id={dam?.sireId} type="sire" isGrandparent />
+                                                        <TreeNode role="G.Dam" id={dam?.damId} type="dam" isGrandparent />
+                                                    </>
+                                                );
+                                            })()}
+                                        </div>
+                                    </div>
+                                )}
+
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-gray-400 mt-4 italic mb-4">
+                            <i className="fas fa-info-circle mr-1"></i>
+                            Click "Edit Parents" to link existing animals from the database.
+                        </p>
+
+                        <button
+                            onClick={onViewHealth}
+                            className="w-full bg-blue-50 text-blue-600 border border-blue-200 py-3 rounded-xl font-bold text-xs hover:bg-blue-100 transition flex items-center justify-center gap-2"
+                        >
+                            <i className="fas fa-file-medical-alt"></i> Check Genetic Health History
+                        </button>
+                    </div>
+                )}
+
+                {/* Gallery (Screen 19) */}
+                {activeTab === 'Gallery' && (
+                    <div className="animate-in fade-in">
+                        <div
+                            className="border-2 border-dashed border-gray-300 rounded-2xl p-8 flex flex-col items-center justify-center text-gray-400 mb-6 hover:border-ecomattGreen hover:text-ecomattGreen transition cursor-pointer bg-white"
+                        >
+                            <i className="fas fa-cloud-upload-alt text-3xl mb-2"></i>
+                            <span className="text-xs font-bold">Tap to Upload Photo</span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            {pig.imageUrl && (
+                                <div className="aspect-square bg-gray-200 rounded-xl relative overflow-hidden group">
+                                    <img src={pig.imageUrl} className="w-full h-full object-cover" alt="Pig" />
+                                    <div className="absolute bottom-0 left-0 w-full bg-black/60 p-2 opacity-100">
+                                        <p className="text-[10px] text-white">Profile Photo</p>
+                                    </div>
+                                </div>
+                            )}
+                            <div className="aspect-square bg-gray-800 rounded-xl relative overflow-hidden">
+                                <div className="absolute bottom-0 left-0 w-full bg-black/60 p-2">
+                                    <p className="text-[10px] text-white">Oct '25</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+            </div>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
+                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i className="fas fa-exclamation-triangle text-red-500 text-xl"></i>
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900 text-center mb-2">Delete Record?</h3>
+                        <p className="text-sm text-gray-500 text-center mb-6">
+                            Are you sure you want to delete this pig?
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowDeleteConfirm(false)}
+                                className="flex-1 bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200 transition"
+                            >
+                                No
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="flex-1 bg-red-500 text-white font-bold py-3 rounded-xl hover:bg-red-600 shadow-lg shadow-red-200 transition"
+                            >
+                                Yes
+                            </button>
                         </div>
                     </div>
                 </div>
-            </div>
-        )}
+            )}
 
-      </div>
+            {/* Log Event Modal (Also serves as Edit Event Modal) */}
+            {showEventModal && (
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:px-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in slide-in-from-bottom duration-300">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold text-gray-900">{editingEventId ? 'Edit Event' : 'Log Timeline Event'}</h3>
+                            <button onClick={() => { setShowEventModal(false); setEditingEventId(null); }} className="text-gray-400 hover:text-gray-600">
+                                <i className="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i className="fas fa-exclamation-triangle text-red-500 text-xl"></i>
+                        <form onSubmit={handleAddEvent} className="space-y-4">
+                            <div>
+                                <label className="text-xs text-gray-500 font-bold uppercase ml-1">Event Title</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Vaccination, Weaning, Moved"
+                                    required
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none"
+                                    value={newEvent.title}
+                                    onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs text-gray-500 font-bold uppercase ml-1">Date</label>
+                                    <input
+                                        type="date"
+                                        required
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none"
+                                        value={newEvent.date}
+                                        onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-500 font-bold uppercase ml-1">Type (Color)</label>
+                                    <select
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none"
+                                        value={newEvent.color}
+                                        onChange={(e) => setNewEvent({ ...newEvent, color: e.target.value as any })}
+                                    >
+                                        <option value="green">General (Green)</option>
+                                        <option value="blue">Movement (Blue)</option>
+                                        <option value="yellow">Repro (Yellow)</option>
+                                        <option value="red">Medical (Red)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-xs text-gray-500 font-bold uppercase ml-1">Description (Subtitle)</label>
+                                <input
+                                    type="text"
+                                    placeholder="Brief details..."
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none"
+                                    value={newEvent.subtitle}
+                                    onChange={(e) => setNewEvent({ ...newEvent, subtitle: e.target.value })}
+                                />
+                            </div>
+
+                            <button className="w-full bg-ecomattGreen text-white font-bold py-3 rounded-xl shadow-lg mt-4">
+                                {editingEventId ? 'Save Changes' : 'Add Event'}
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 text-center mb-2">Delete Record?</h3>
-                <p className="text-sm text-gray-500 text-center mb-6">
-                    Are you sure you want to delete this pig?
-                </p>
-                <div className="flex gap-3">
-                    <button 
-                        onClick={() => setShowDeleteConfirm(false)}
-                        className="flex-1 bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200 transition"
-                    >
-                        No
-                    </button>
-                    <button 
-                        onClick={confirmDelete}
-                        className="flex-1 bg-red-500 text-white font-bold py-3 rounded-xl hover:bg-red-600 shadow-lg shadow-red-200 transition"
-                    >
-                        Yes
-                    </button>
+            )}
+
+            {/* Log Feed Modal */}
+            {showFeedModal && (
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:px-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in slide-in-from-bottom duration-300">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold text-gray-900">Log Feed Consumption</h3>
+                            <button onClick={() => setShowFeedModal(false)} className="text-gray-400 hover:text-gray-600">
+                                <i className="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleLogFeed} className="space-y-4">
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs text-gray-500 font-bold uppercase ml-1">Date</label>
+                                    <input
+                                        type="date"
+                                        required
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none"
+                                        value={feedData.date}
+                                        onChange={(e) => setFeedData({ ...feedData, date: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-500 font-bold uppercase ml-1">Time</label>
+                                    <input
+                                        type="time"
+                                        required
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none"
+                                        value={feedData.time}
+                                        onChange={(e) => setFeedData({ ...feedData, time: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs text-gray-500 font-bold uppercase ml-1">Quantity (Kg)</label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        placeholder="0.0"
+                                        required
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none font-bold"
+                                        value={feedData.quantity}
+                                        onChange={(e) => setFeedData({ ...feedData, quantity: parseFloat(e.target.value) })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-500 font-bold uppercase ml-1">Feed Type</label>
+                                    <select
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none"
+                                        value={feedData.feedType}
+                                        onChange={(e) => setFeedData({ ...feedData, feedType: e.target.value })}
+                                    >
+                                        <option value="Creep Feed">Creep Feed</option>
+                                        <option value="Weaner Pellets">Weaner Pellets</option>
+                                        <option value="Grower Pellets">Grower Pellets</option>
+                                        <option value="Finisher Meal">Finisher Meal</option>
+                                        <option value="Sow & Boar">Sow & Boar</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 mt-2">
+                                <p className="text-xs text-yellow-800">
+                                    <i className="fas fa-info-circle mr-1"></i>
+                                    This will update the 'Last Fed' timestamp for this animal.
+                                </p>
+                            </div>
+
+                            <button className="w-full bg-ecomattYellow text-black font-bold py-3 rounded-xl shadow-lg mt-4 hover:bg-yellow-500 transition-colors">
+                                Confirm Feed
+                            </button>
+                        </form>
+                    </div>
                 </div>
-            </div>
+            )}
+
+            {/* Smart Reporting Modal */}
+            <EventReportingModal
+                isOpen={showSmartReportModal}
+                onClose={() => setShowSmartReportModal(false)}
+                onSubmit={handleSmartEventSubmit}
+                pig={pig}
+            />
+
         </div>
-      )}
-
-      {/* Log Event Modal (Also serves as Edit Event Modal) */}
-      {showEventModal && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:px-4 animate-in fade-in duration-200">
-              <div className="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in slide-in-from-bottom duration-300">
-                  <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-lg font-bold text-gray-900">{editingEventId ? 'Edit Event' : 'Log Timeline Event'}</h3>
-                      <button onClick={() => { setShowEventModal(false); setEditingEventId(null); }} className="text-gray-400 hover:text-gray-600">
-                          <i className="fas fa-times text-xl"></i>
-                      </button>
-                  </div>
-                  
-                  <form onSubmit={handleAddEvent} className="space-y-4">
-                      <div>
-                          <label className="text-xs text-gray-500 font-bold uppercase ml-1">Event Title</label>
-                          <input 
-                            type="text" 
-                            placeholder="e.g. Vaccination, Weaning, Moved" 
-                            required
-                            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none"
-                            value={newEvent.title}
-                            onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
-                          />
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-xs text-gray-500 font-bold uppercase ml-1">Date</label>
-                            <input 
-                                type="date" 
-                                required
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none"
-                                value={newEvent.date}
-                                onChange={(e) => setNewEvent({...newEvent, date: e.target.value})}
-                            />
-                        </div>
-                        <div>
-                            <label className="text-xs text-gray-500 font-bold uppercase ml-1">Type (Color)</label>
-                            <select 
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none"
-                                value={newEvent.color}
-                                onChange={(e) => setNewEvent({...newEvent, color: e.target.value as any})}
-                            >
-                                <option value="green">General (Green)</option>
-                                <option value="blue">Movement (Blue)</option>
-                                <option value="yellow">Repro (Yellow)</option>
-                                <option value="red">Medical (Red)</option>
-                            </select>
-                        </div>
-                      </div>
-
-                      <div>
-                          <label className="text-xs text-gray-500 font-bold uppercase ml-1">Description (Subtitle)</label>
-                          <input 
-                            type="text" 
-                            placeholder="Brief details..." 
-                            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none"
-                            value={newEvent.subtitle}
-                            onChange={(e) => setNewEvent({...newEvent, subtitle: e.target.value})}
-                          />
-                      </div>
-
-                      <button className="w-full bg-ecomattGreen text-white font-bold py-3 rounded-xl shadow-lg mt-4">
-                          {editingEventId ? 'Save Changes' : 'Add Event'}
-                      </button>
-                  </form>
-              </div>
-          </div>
-      )}
-
-      {/* Log Feed Modal */}
-      {showFeedModal && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:px-4 animate-in fade-in duration-200">
-              <div className="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in slide-in-from-bottom duration-300">
-                  <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-lg font-bold text-gray-900">Log Feed Consumption</h3>
-                      <button onClick={() => setShowFeedModal(false)} className="text-gray-400 hover:text-gray-600">
-                          <i className="fas fa-times text-xl"></i>
-                      </button>
-                  </div>
-                  
-                  <form onSubmit={handleLogFeed} className="space-y-4">
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-xs text-gray-500 font-bold uppercase ml-1">Date</label>
-                            <input 
-                                type="date" 
-                                required
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none"
-                                value={feedData.date}
-                                onChange={(e) => setFeedData({...feedData, date: e.target.value})}
-                            />
-                        </div>
-                         <div>
-                            <label className="text-xs text-gray-500 font-bold uppercase ml-1">Time</label>
-                            <input 
-                                type="time" 
-                                required
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none"
-                                value={feedData.time}
-                                onChange={(e) => setFeedData({...feedData, time: e.target.value})}
-                            />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-xs text-gray-500 font-bold uppercase ml-1">Quantity (Kg)</label>
-                            <input 
-                                type="number" 
-                                step="0.1"
-                                placeholder="0.0" 
-                                required
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none font-bold"
-                                value={feedData.quantity}
-                                onChange={(e) => setFeedData({...feedData, quantity: parseFloat(e.target.value)})}
-                            />
-                        </div>
-                        <div>
-                            <label className="text-xs text-gray-500 font-bold uppercase ml-1">Feed Type</label>
-                            <select 
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 mt-1 text-sm focus:border-ecomattGreen outline-none"
-                                value={feedData.feedType}
-                                onChange={(e) => setFeedData({...feedData, feedType: e.target.value})}
-                            >
-                                <option value="Creep Feed">Creep Feed</option>
-                                <option value="Weaner Pellets">Weaner Pellets</option>
-                                <option value="Grower Pellets">Grower Pellets</option>
-                                <option value="Finisher Meal">Finisher Meal</option>
-                                <option value="Sow & Boar">Sow & Boar</option>
-                            </select>
-                        </div>
-                      </div>
-
-                      <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 mt-2">
-                        <p className="text-xs text-yellow-800">
-                            <i className="fas fa-info-circle mr-1"></i>
-                            This will update the 'Last Fed' timestamp for this animal.
-                        </p>
-                      </div>
-
-                      <button className="w-full bg-ecomattYellow text-black font-bold py-3 rounded-xl shadow-lg mt-4 hover:bg-yellow-500 transition-colors">
-                          Confirm Feed
-                      </button>
-                  </form>
-              </div>
-          </div>
-      )}
-
-    </div>
-  );
+    );
 };
 
 export default PigProfile;

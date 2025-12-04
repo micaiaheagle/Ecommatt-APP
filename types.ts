@@ -35,6 +35,7 @@ export interface TimelineEvent {
   color: 'green' | 'yellow' | 'blue' | 'red';
   icon?: string;
   status?: 'Pending' | 'Completed'; // Added for tracking completion
+  data?: any; // Added for structured event data (Smart Reporting)
 }
 
 export interface Pig {
@@ -50,11 +51,11 @@ export interface Pig {
   lastCheckup?: string;
   imageUrl?: string;
   notes?: string;
-  
+
   // Lineage
   sireId?: string;
   damId?: string;
-  
+
   // Extended Data
   timeline?: TimelineEvent[];
   lastFed?: string; // New Field
