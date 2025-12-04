@@ -1,4 +1,3 @@
-
 {
   "name": "ecomatt-farm-pwa",
   "private": true,
@@ -10,11 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/genai": "*",
+    "jspdf": "^3.0.4",
+    "jspdf-autotable": "^5.0.2",
+    "lucide-react": "^0.344.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@google/genai": "*",
-    "lucide-react": "^0.344.0",
-    "recharts": "^2.10.3"
+    "recharts": "^2.10.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",
