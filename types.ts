@@ -28,6 +28,7 @@ export interface User {
   role: UserRole;
   password?: string; // Added for mock auth
   hasCompletedOnboarding?: boolean;
+  language?: 'English' | 'Shona' | 'Ndebele'; // Added for Localization
 }
 
 export interface TimelineEvent {
@@ -137,6 +138,7 @@ export interface NotificationConfig {
     tasks: boolean;
     finance: boolean;
   };
+  smsFallback?: boolean; // Added for Connectivity
 }
 
 // Live Ops
@@ -275,7 +277,16 @@ export interface HarvestLog {
   id: string;
   cycleId: string;
   date: string;
-  quantity: number;
   quality: string;
+}
+
+export interface TimesheetLog {
+  id: string;
+  userId: string;
+  date: string;
+  activityType: 'General' | 'Field Work' | 'Machinery' | 'Herding' | 'Other';
+  hours: number;
+  description: string;
+  relatedId?: string; // Links to Field/Asset/Pig
 }
 

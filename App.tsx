@@ -714,7 +714,15 @@ const App: React.FC = () => {
 
             case ViewState.AI_Tools:
                 if (intelligentSubView === 'Chat') {
-                    return <SmartAssistant />;
+                    return <SmartAssistant
+                        user={currentUser}
+                        onUpdateUser={(updated) => {
+                            setUsers(users.map(u => u.id === updated.id ? updated : u));
+                            setCurrentUser(updated);
+                        }}
+                        config={notificationConfig}
+                        onUpdateConfig={setNotificationConfig}
+                    />;
                 }
                 if (intelligentSubView === 'Critical') {
                     return <CriticalWatch pigs={pigs} tasks={tasks} feeds={feeds} onCancel={() => setIntelligentSubView('None')} onNavigateToPig={(pig) => { setSelectedPig(pig); setCurrentView(ViewState.Pigs); }} />;
@@ -797,7 +805,9 @@ const App: React.FC = () => {
                     financeRecords={financeRecords}
                     feeds={feeds}
                     fields={fields}
+                    fields={fields}
                     cropCycles={cropCycles}
+                    assets={assets}
                     onViewChange={handleNavClick}
                 />;
         }

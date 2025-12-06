@@ -74,8 +74,22 @@ Based on industry standards and [FarmerERP Features](https://farmererp.com/featu
 -   **Multi-Location Dashboard**: Unified view if farm expands to multiple sites.
 -   **IFRS Compliant Reports**: Standardized accounting for bank/audit readiness.
 
-### 11. Localization & Accessibility (Hurudza AI Inspired)
+### 11. Localization & Accessibility (Sbali AI Inspired)
 -   **Voice Assistant**: Speak to the app for logs/queries (English/Shona/Ndebele).
 -   **SMS Fallback**: Receive critical alerts (e.g., weather, prices) via SMS if data is off.
 -   **AI Disease Diagnosis**: Upload photo of crop leaf/pig skin for instant AI diagnosis.
 -   **Market Linkage**: Real-time commodity prices (Market Data) to decide when to sell.
+
+### 12. Crop Integration (Mixed Farming Future)
+-   **Manure Management**: Track waste output from the piggery and schedule its application as fertilizer to specific crop fields.
+-   **Feed Crop Planning**: If the farm grows its own maize/soya, link the harvest directly to the feed inventory.
+
+### 13. Supply Chain & Logistics (High Value)
+-   **Supplier Management Portal**: A module to track vendors (feed, meds, equipment), performance ratings, and purchase history.
+-   **Harvest & Logistics Planner**: Tools to schedule transport for market-ready pigs, including route optimization and coordination with abattoirs.
+-   **Inventory QR Scanning**: Use the camera to scan barcodes on feed bags or medicine bottles to instantly log stock usage or intake (beyond just animal tags).
+
+### 14. Enhanced Biosecurity & Compliance
+-   **Geofencing for Disease Control**: Use GPS to track movement between "Clean" and "Dirty" zones. Alert staff if they cross zones without logging a sanitation break.
+-   **Regulatory Reporting**: Automated generation of government-compliant movement permits and veterinary health certificates.
+-   **Environmental Monitoring Integration**: Connect to IoT sensors (temperature, humidity, ammonia levels) in the pens for real-time environmental alerts instead of manual checks.

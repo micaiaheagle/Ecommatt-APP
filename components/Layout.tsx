@@ -62,7 +62,7 @@ const Layout: React.FC<LayoutProps> = ({
     { id: ViewState.Machinery, icon: 'fa-tractor', label: 'Machinery', roles: ['Farm Manager', 'Herdsman'] },
     { id: ViewState.Staff, icon: 'fa-users', label: 'Staff & Labor', roles: ['Farm Manager'] },
     { id: ViewState.Finance, icon: 'fa-chart-pie', label: 'Financials', roles: ['Farm Manager'] },
-    { id: ViewState.AI_Tools, icon: 'fa-brain', label: 'Intelligent Core', roles: ['Farm Manager', 'Veterinarian'] },
+    { id: ViewState.AI_Tools, icon: 'fa-brain', label: 'Chitsano AI', roles: ['Farm Manager', 'Veterinarian'] },
     { id: ViewState.Settings, icon: 'fa-cog', label: 'Settings', roles: ['Farm Manager'] },
   ];
 
@@ -86,7 +86,7 @@ const Layout: React.FC<LayoutProps> = ({
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-tight">Ecomatt<span className="text-ecomattGreen">Farm</span></h1>
-            <p className="text-[10px] text-white font-bold uppercase tracking-widest bg-blue-600 px-2 py-0.5 rounded mt-1 inline-block">v11.8 Live</p>
+            <p className="text-[10px] text-white font-bold uppercase tracking-widest bg-blue-600 px-2 py-0.5 rounded mt-1 inline-block">v11.9 Live</p>
           </div>
         </div>
 
@@ -241,14 +241,12 @@ const Layout: React.FC<LayoutProps> = ({
 
       </div>
 
-      {/* Mobile Bottom Nav - Hide when in detail view (showBack is true) */}
-      {!showBack && (
-        <MobileNav
-          currentView={currentView}
-          setView={setView}
-          visibleItems={visibleNavItems}
-        />
-      )}
+      {/* Mobile Bottom Nav - ALWAYS VISIBLE */}
+      <MobileNav
+        currentView={currentView}
+        setView={setView}
+        visibleItems={visibleNavItems}
+      />
 
     </div>
   );
