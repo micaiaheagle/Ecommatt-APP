@@ -17,6 +17,7 @@ interface OperationsProps {
     onSaveMedicalItem: (item: MedicalItem) => void;
     onDeleteMedicalItem: (id: string) => void;
     onSaveHealthRecord: (record: HealthRecord) => void;
+    onLogManure?: (amount: number, date: string) => void;
 }
 
 const Operations: React.FC<OperationsProps> = ({
@@ -31,10 +32,15 @@ const Operations: React.FC<OperationsProps> = ({
     medicalItems,
     onSaveMedicalItem,
     onDeleteMedicalItem,
-    onSaveHealthRecord
+    onSaveHealthRecord,
+    onLogManure
 }) => {
-    const [activeTab, setActiveTab] = useState<'Tasks' | 'Feed' | 'Health' | 'Pharmacy'>('Tasks');
+    const [activeTab, setActiveTab] = useState<'Tasks' | 'Feed' | 'Health' | 'Pharmacy' | 'Manure'>('Tasks');
     const [sortBy, setSortBy] = useState<'dueDate' | 'priority'>('dueDate');
+
+    // Manure State
+    const [showManureForm, setShowManureForm] = useState(false);
+    const [manureLog, setManureLog] = useState({ date: new Date().toISOString().split('T')[0], amount: 0, pen: '' });
 
     // Health Form State
     const [showHealthForm, setShowHealthForm] = useState(false);
@@ -82,8 +88,8 @@ const Operations: React.FC<OperationsProps> = ({
                 <button className="text-ecomattGreen text-sm font-bold bg-green-50 px-3 py-1 rounded-lg">Calendar</button>
             </div>
 
-            <div className="flex bg-white p-1 rounded-xl mb-6 shadow-sm border border-gray-100">
-                {['Tasks', 'Feed', 'Health', 'Pharmacy'].map(tab => (
+            <div className="flex bg-white p-1 rounded-xl mb-6 shadow-sm border border-gray-100 overflow-x-auto">
+                {['Tasks', 'Feed', 'Health', 'Pharmacy', 'Manure'].map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab as any)}
@@ -444,6 +450,82 @@ const Operations: React.FC<OperationsProps> = ({
                     onDelete={onDeleteMedicalItem}
                     onCancel={() => setActiveTab('Tasks')}
                 />
+            )}
+
+            {/* Manure View (New) */}
+            {activeTab === 'Manure' && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="bg-gradient-to-br from-amber-700 to-amber-900 text-white p-5 rounded-2xl mb-6 relative overflow-hidden shadow-xl">
+                        <div className="relative z-10">
+                            <h3 className="text-xs font-bold text-white/70 uppercase tracking-wider">Manure Stock</h3>
+                            <div className="flex items-end gap-2 mt-1">
+                                <h1 className="text-4xl font-bold">1,250</h1>
+                                <span className="text-sm text-white/70 mb-1">kg</span>
+                            </div>
+                            <p className="text-[10px] text-white/50 mt-2">Ready for Crop Application</p>
+                        </div>
+                        <div className="absolute -right-4 -bottom-4 text-7xl text-white/10">
+                            <i className="fas fa-recycle"></i>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-xl border border-gray-100 text-center">
+                        <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-3 text-amber-700 text-2xl">
+                            <i className="fas fa-poop"></i>
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">Log Manure Collection</h3>
+                        <p className="text-xs text-gray-500 mb-4 max-w-xs mx-auto">Record daily waste collection from Piggery to increase fertilizer stock.</p>
+
+                        <button
+                            onClick={() => setShowManureForm(true)}
+                            className="bg-amber-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-amber-900/20 hover:bg-amber-800 transition text-sm"
+                        >
+                            <i className="fas fa-plus mr-2"></i> Record Collection
+                        </button>
+                    </div>
+
+                    {/* Manure Form Modal */}
+                    {showManureForm && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-3xl w-full max-w-xs p-6 animate-in zoom-in duration-200">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4">Record Manure</h3>
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="text-xs font-bold text-gray-500">Date</label>
+                                        <input
+                                            type="date"
+                                            value={manureLog.date}
+                                            onChange={e => setManureLog({ ...manureLog, date: e.target.value })}
+                                            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold text-gray-500">Amount (kg)</label>
+                                        <input
+                                            type="number"
+                                            value={manureLog.amount}
+                                            onChange={e => setManureLog({ ...manureLog, amount: parseFloat(e.target.value) })}
+                                            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold"
+                                        />
+                                    </div>
+                                    <div className="flex gap-2 mt-4">
+                                        <button onClick={() => setShowManureForm(false)} className="flex-1 py-2 text-gray-500 font-bold text-sm">Cancel</button>
+                                        <button
+                                            onClick={() => {
+                                                if (onLogManure) onLogManure(manureLog.amount, manureLog.date);
+                                                setShowManureForm(false);
+                                                setManureLog({ ...manureLog, amount: 0 });
+                                            }}
+                                            className="flex-1 py-2 bg-amber-700 text-white rounded-lg font-bold text-sm"
+                                        >
+                                            Save
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
             )}
 
         </div>

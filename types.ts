@@ -260,6 +260,8 @@ export interface CropCycle {
   harvestDate?: string;
   yieldAmount?: number;
   yieldQuality?: string;
+  destination?: 'Market' | 'FeedInventory'; // Added for Mixed Farming
+  feedTypeId?: string; // If destined for Feed
   notes?: string;
 }
 
@@ -271,13 +273,17 @@ export interface CropActivity {
   type: 'Scouting' | 'Fertilizer' | 'Pest Control' | 'Irrigation' | 'Harvest' | 'Land Prep' | 'Other';
   description: string;
   cost: number;
+  fertilizerSource?: 'Synthetic' | 'Manure'; // Added for Mixed Farming
 }
 
 export interface HarvestLog {
   id: string;
   cycleId: string;
   date: string;
+  quantity: number; // Added quantity
   quality: string;
+  destination?: 'Market' | 'FeedInventory'; // Added for Mixed Farming
+  feedTypeId?: string; // If destined for Feed
 }
 
 export interface TimesheetLog {

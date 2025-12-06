@@ -193,7 +193,12 @@ const App: React.FC = () => {
     const [assets, setAssets] = useState<Asset[]>(() => loadData('ECOMATT_ASSETS', []));
     const [maintenanceLogs, setMaintenanceLogs] = useState<MaintenanceLog[]>(() => loadData('ECOMATT_MAINTENANCE', []));
     const [fuelLogs, setFuelLogs] = useState<FuelLog[]>(() => loadData('ECOMATT_FUEL', []));
+
     const [timesheets, setTimesheets] = useState<TimesheetLog[]>(() => loadData('ECOMATT_TIMESHEETS', []));
+
+    // Manure State
+    const [manureStock, setManureStock] = useState<number>(() => loadData('ECOMATT_MANURE_STOCK', 0));
+
 
 
     // Save Effects
@@ -202,6 +207,8 @@ const App: React.FC = () => {
     useEffect(() => saveData('ECOMATT_ASSETS', assets), [assets]);
     useEffect(() => saveData('ECOMATT_MAINTENANCE', maintenanceLogs), [maintenanceLogs]);
     useEffect(() => saveData('ECOMATT_FUEL', fuelLogs), [fuelLogs]);
+    useEffect(() => saveData('ECOMATT_MANURE_STOCK', manureStock), [manureStock]);
+
 
 
     // Crop Handlers
@@ -228,14 +235,16 @@ const App: React.FC = () => {
         setFields(fields.map(f => f.id === fieldId ? { ...f, status } : f));
     };
 
-    const handleHarvestCrop = (cycleId: string, date: string, quantity: number, quality: string) => {
+    const handleHarvestCrop = (cycleId: string, date: string, quantity: number, quality: string, destination: 'Market' | 'FeedInventory', feedType?: string) => {
         // 1. Update Cycle
         setCropCycles(cropCycles.map(c => c.id === cycleId ? {
             ...c,
             status: 'Harvested',
             harvestDate: date,
             yieldAmount: quantity,
-            yieldQuality: quality
+            yieldQuality: quality,
+            destination: destination,
+            feedTypeId: feedType
         } : c));
 
         // 2. Free Field
@@ -244,16 +253,40 @@ const App: React.FC = () => {
             setFields(fields.map(f => f.id === cycle.fieldId ? { ...f, status: 'Fallow', currentCropId: undefined } : f));
         }
 
-        // 3. Record Finance Income (Estimated)
-        // In a real app we'd ask for price, for now assuming typical price
-        handleSaveTransaction({
-            date,
-            type: 'Income',
-            category: 'Crop Sales',
-            amount: quantity * 100, // Dummy pricing logic
-            description: `Harvest: ${quantity} tons (Quality: ${quality})`,
-            status: 'Projected'
-        });
+        // 3. Handle Destination
+        if (destination === 'Market') {
+            // Record Finance Income (Estimated)
+            handleSaveTransaction({
+                date,
+                type: 'Income',
+                category: 'Crop Sales',
+                amount: quantity * 100, // Dummy pricing logic
+                description: `Harvest: ${quantity} tons (Quality: ${quality})`,
+                status: 'Projected'
+            });
+        } else if (destination === 'FeedInventory' && feedType) {
+            // Convert Tonnes to Kg
+            const quantityKg = quantity * 1000;
+
+            // Update or Add to Feed Inventory
+            const existingFeed = feeds.find(f => f.name.toLowerCase().includes(feedType.toLowerCase()));
+
+            if (existingFeed) {
+                setFeeds(feeds.map(f => f.id === existingFeed.id ? { ...f, quantityKg: f.quantityKg + quantityKg, lastRestock: date } : f));
+                alert(`Added ${quantityKg}kg to ${existingFeed.name} inventory.`);
+            } else {
+                const newFeed: FeedInventory = {
+                    id: `feed-${Date.now()}`,
+                    name: `${feedType} (Harvest)`,
+                    type: 'Grain',
+                    quantityKg: quantityKg,
+                    reorderLevel: 100,
+                    lastRestock: date
+                };
+                setFeeds([...feeds, newFeed]);
+                alert(`Created new feed: ${newFeed.name} with ${quantityKg}kg.`);
+            }
+        }
     };
 
     // Persistence Effects - Auto Save when state changes
@@ -439,6 +472,11 @@ const App: React.FC = () => {
         setFeeds(updatedFeeds);
         setOperationsSubView('None');
         alert(`Feed Logged: ${data.quantity}kg for ${data.pen}`);
+    };
+
+    const handleLogManure = (amount: number, date: string) => {
+        setManureStock(prev => prev + amount);
+        alert(`Logged ${amount}kg of manure. Total Stock: ${manureStock + amount}kg`);
     };
 
     // Finance Handlers
@@ -664,6 +702,7 @@ const App: React.FC = () => {
                     onSaveMedicalItem={handleSaveMedicalItem}
                     onDeleteMedicalItem={handleDeleteMedicalItem}
                     onSaveHealthRecord={handleSaveHealthRecord}
+                    onLogManure={handleLogManure}
                 />;
 
             case ViewState.Finance:
@@ -804,7 +843,6 @@ const App: React.FC = () => {
                     tasks={tasks}
                     financeRecords={financeRecords}
                     feeds={feeds}
-                    fields={fields}
                     fields={fields}
                     cropCycles={cropCycles}
                     assets={assets}

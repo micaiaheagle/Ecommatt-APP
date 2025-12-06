@@ -9,7 +9,7 @@ interface CropManagerProps {
     cycles: CropCycle[];
     activities: CropActivity[];
     onPlantField: (fieldId: string, cropId: string, date: string) => void;
-    onHarvest: (cycleId: string, date: string, quantity: number, quality: string) => void;
+    onHarvest: (cycleId: string, date: string, quantity: number, quality: string, destination: 'Market' | 'FeedInventory', feedType?: string) => void;
     onUpdateFieldStatus: (fieldId: string, status: 'Fallow' | 'Preparation') => void;
     onLogActivity: (activity: CropActivity) => void;
 }
@@ -23,12 +23,15 @@ const CropManager: React.FC<CropManagerProps> = ({ fields, crops, cycles, activi
     // Plant Modal State
     const [isPlanting, setIsPlanting] = useState<string | null>(null); // Field ID
     const [selectedCrop, setSelectedCrop] = useState<string>('');
+
     const [plantDate, setPlantDate] = useState(new Date().toISOString().split('T')[0]);
 
     // Harvest Modal State
     const [isHarvesting, setIsHarvesting] = useState<string | null>(null); // Cycle ID
     const [harvestQty, setHarvestQty] = useState('');
-    const [harvestQuality, setHarvestQuality] = useState('Grade A');
+    const [harvestQuality, setHarvestQuality] = useState('A'); // Default
+    const [harvestDest, setHarvestDest] = useState<'Market' | 'FeedInventory'>('Market');
+    const [feedType, setFeedType] = useState<string>('Maize');
 
     // Activity Modal State
     const [isLoggingActivity, setIsLoggingActivity] = useState<string | null>(null); // Field ID
@@ -36,8 +39,10 @@ const CropManager: React.FC<CropManagerProps> = ({ fields, crops, cycles, activi
     const [activityDesc, setActivityDesc] = useState('');
     const [activityCost, setActivityCost] = useState('');
     const [activityDate, setActivityDate] = useState(new Date().toISOString().split('T')[0]);
+    const [fertilizerSource, setFertilizerSource] = useState<'Synthetic' | 'Manure'>('Synthetic');
 
-    // Helper: Get active cycle for a field
+
+    // Helpers
     const getActiveCycle = (fieldId: string) => cycles.find(c => c.fieldId === fieldId && c.status === 'Active');
     const getCropDetails = (cropId: string) => crops.find(c => c.id === cropId);
 
@@ -59,9 +64,10 @@ const CropManager: React.FC<CropManagerProps> = ({ fields, crops, cycles, activi
 
     const handleHarvestSubmit = () => {
         if (isHarvesting && harvestQty) {
-            onHarvest(isHarvesting, new Date().toISOString().split('T')[0], parseFloat(harvestQty), harvestQuality);
+            onHarvest(isHarvesting, new Date().toISOString().split('T')[0], parseFloat(harvestQty), harvestQuality, harvestDest, feedType);
             setIsHarvesting(null);
             setHarvestQty('');
+            setHarvestDest('Market');
         }
     };
 
@@ -74,12 +80,14 @@ const CropManager: React.FC<CropManagerProps> = ({ fields, crops, cycles, activi
                 date: activityDate,
                 type: activityType,
                 description: activityDesc,
-                cost: activityCost ? parseFloat(activityCost) : 0
+                cost: activityCost ? parseFloat(activityCost) : 0,
+                fertilizerSource: activityType === 'Fertilizer' ? fertilizerSource : undefined
             };
             onLogActivity(newActivity);
             setIsLoggingActivity(null);
             setActivityDesc('');
             setActivityCost('');
+            setFertilizerSource('Synthetic'); // Reset
         }
     }
 
@@ -424,6 +432,41 @@ const CropManager: React.FC<CropManagerProps> = ({ fields, crops, cycles, activi
                                     onChange={e => setHarvestQty(e.target.value)}
                                 />
                             </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 mb-1">Destination</label>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setHarvestDest('Market')}
+                                        className={`flex-1 py-2 rounded-lg text-xs font-bold border ${harvestDest === 'Market' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'border-gray-200 text-gray-600'}`}
+                                    >
+                                        Market
+                                    </button>
+                                    <button
+                                        onClick={() => setHarvestDest('FeedInventory')}
+                                        className={`flex-1 py-2 rounded-lg text-xs font-bold border ${harvestDest === 'FeedInventory' ? 'bg-amber-50 border-amber-200 text-amber-700' : 'border-gray-200 text-gray-600'}`}
+                                    >
+                                        Feed Stock
+                                    </button>
+                                </div>
+                            </div>
+
+                            {harvestDest === 'FeedInventory' && (
+                                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">Feed Type</label>
+                                    <select
+                                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-ecomattGreen"
+                                        value={feedType}
+                                        onChange={e => setFeedType(e.target.value)}
+                                    >
+                                        <option value="Maize">Maize (Grain)</option>
+                                        <option value="Soya">Soya Beans</option>
+                                        <option value="Sunflower">Sunflower</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                    <p className="text-[10px] text-amber-600 mt-1">Hasvest will be added to Feed Inventory.</p>
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 mb-1">Quality Grade</label>
                                 <select
