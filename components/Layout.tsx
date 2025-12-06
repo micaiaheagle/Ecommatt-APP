@@ -55,9 +55,11 @@ const Layout: React.FC<LayoutProps> = ({
   const NAV_ITEMS = [
     { id: ViewState.Dashboard, icon: 'fa-tachometer-alt', label: 'Dashboard', roles: [] },
     { id: ViewState.Pigs, icon: 'fa-database', label: 'Pig Database', roles: ['Farm Manager', 'Herdsman', 'Veterinarian'] },
+    { id: ViewState.Crops, icon: 'fa-seedling', label: 'Crops Manager', roles: ['Farm Manager', 'General Worker'] },
     { id: ViewState.Operations, icon: 'fa-clipboard-list', label: 'Tasks & Ops', roles: ['Farm Manager', 'Herdsman', 'Veterinarian', 'General Worker'] },
     { id: ViewState.Calendar, icon: 'fa-calendar-alt', label: 'Calendar', roles: ['Farm Manager', 'Herdsman', 'Veterinarian'] },
     { id: ViewState.POS, icon: 'fa-cash-register', label: 'Farm POS', roles: ['Farm Manager', 'General Worker'] },
+    { id: ViewState.Machinery, icon: 'fa-tractor', label: 'Machinery', roles: ['Farm Manager', 'Herdsman'] },
     { id: ViewState.Finance, icon: 'fa-chart-pie', label: 'Financials', roles: ['Farm Manager'] },
     { id: ViewState.AI_Tools, icon: 'fa-brain', label: 'Intelligent Core', roles: ['Farm Manager', 'Veterinarian'] },
     { id: ViewState.Settings, icon: 'fa-cog', label: 'Settings', roles: ['Farm Manager'] },

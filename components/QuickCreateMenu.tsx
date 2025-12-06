@@ -15,9 +15,9 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
       // Only apply click-outside logic on desktop where it's a dropdown.
       // On mobile, the overlay click handles it.
       if (window.innerWidth >= 768) {
-          if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-            setIsOpen(false);
-          }
+        if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+          setIsOpen(false);
+        }
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -31,7 +31,7 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
 
   // Helper for Mobile Grid Item
   const MobileGridItem = ({ icon, label, action, colorClass, iconColor }: any) => (
-    <button 
+    <button
       onClick={() => handleItemClick(action)}
       className="flex flex-col items-center gap-2 p-2 active:scale-95 transition-transform"
     >
@@ -45,8 +45,8 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
   // Helper for Desktop List Item
   const DesktopListItem = ({ icon, label, action }: any) => (
     <li>
-      <button 
-        onClick={() => handleItemClick(action)} 
+      <button
+        onClick={() => handleItemClick(action)}
         className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 text-gray-700 hover:text-ecomattGreen transition-colors group text-left"
       >
         <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm border border-gray-100 text-gray-400 group-hover:text-ecomattGreen group-hover:border-green-200">
@@ -59,15 +59,14 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
 
   return (
     <div className="" ref={menuRef}>
-      
+
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 relative z-50 ${
-          isOpen 
-            ? 'bg-gray-200 text-gray-600 rotate-45 md:bg-white md:text-ecomattGreen' 
-            : 'bg-ecomattGreen text-white shadow-lg hover:bg-green-600'
-        }`}
+        className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 relative z-50 ${isOpen
+          ? 'bg-gray-200 text-gray-600 rotate-45 md:bg-white md:text-ecomattGreen'
+          : 'bg-ecomattGreen text-white shadow-lg hover:bg-green-600'
+          }`}
         title="Quick Create"
       >
         <i className="fas fa-plus text-xl"></i>
@@ -75,9 +74,9 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
 
       {/* Overlay for Mobile */}
       {isOpen && (
-        <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-200"
-            onClick={() => setIsOpen(false)}
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-200"
+          onClick={() => setIsOpen(false)}
         ></div>
       )}
 
@@ -94,59 +93,59 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
             md:absolute md:top-14 md:right-0 md:bottom-auto md:left-auto md:w-[600px] md:h-auto md:rounded-xl md:shadow-2xl md:border md:border-gray-100
             md:animate-in md:fade-in md:slide-in-from-top-2
         `}>
-          
+
           {/* Mobile Handle */}
           <div className="md:hidden bg-gray-50 pt-3 pb-2 flex justify-center border-b border-gray-100" onClick={() => setIsOpen(false)}>
-             <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+            <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
           </div>
 
           {/* Content Wrapper */}
           <div className="md:p-6 max-h-[80vh] overflow-y-auto no-scrollbar">
-            
+
             {/* === MOBILE VIEW (Grid Layout) === */}
             <div className="md:hidden p-6 pb-10 space-y-6">
-                
-                {/* General Section */}
-                <div>
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">General</h4>
-                    <div className="grid grid-cols-4 gap-4">
-                        <MobileGridItem icon="fa-user-plus" label="User" action="add_user" colorClass="bg-gray-100" iconColor="text-gray-600" />
-                        <MobileGridItem icon="fa-check-circle" label="Task" action="add_task" colorClass="bg-gray-100" iconColor="text-gray-600" />
-                        <MobileGridItem icon="fa-cog" label="Settings" action="settings" colorClass="bg-gray-100" iconColor="text-gray-600" />
-                    </div>
-                </div>
 
-                {/* Livestock Section */}
-                <div>
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Livestock</h4>
-                    <div className="grid grid-cols-4 gap-4">
-                        <MobileGridItem icon="fa-piggy-bank" label="Add Pig" action="add_pig" colorClass="bg-green-50" iconColor="text-ecomattGreen" />
-                        <MobileGridItem icon="fa-history" label="Event" action="log_event" colorClass="bg-green-50" iconColor="text-ecomattGreen" />
-                        <MobileGridItem icon="fa-venus-mars" label="Mating" action="log_mating" colorClass="bg-green-50" iconColor="text-ecomattGreen" />
-                        <MobileGridItem icon="fa-baby-carriage" label="Farrow" action="log_farrowing" colorClass="bg-green-50" iconColor="text-ecomattGreen" />
-                    </div>
+              {/* General Section */}
+              <div>
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">General</h4>
+                <div className="grid grid-cols-4 gap-4">
+                  <MobileGridItem icon="fa-user-plus" label="User" action="add_user" colorClass="bg-gray-100" iconColor="text-gray-600" />
+                  <MobileGridItem icon="fa-check-circle" label="Task" action="add_task" colorClass="bg-gray-100" iconColor="text-gray-600" />
+                  <MobileGridItem icon="fa-cog" label="Settings" action="settings" colorClass="bg-gray-100" iconColor="text-gray-600" />
                 </div>
+              </div>
 
-                {/* Operations Section */}
-                <div>
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Operations</h4>
-                    <div className="grid grid-cols-4 gap-4">
-                        <MobileGridItem icon="fa-utensils" label="Feed" action="log_feed" colorClass="bg-blue-50" iconColor="text-blue-500" />
-                        <MobileGridItem icon="fa-syringe" label="Health" action="log_health" colorClass="bg-red-50" iconColor="text-red-500" />
-                        <MobileGridItem icon="fa-truck-loading" label="Stock" action="add_feed_stock" colorClass="bg-yellow-50" iconColor="text-yellow-600" />
-                        <MobileGridItem icon="fa-broom" label="Clean" action="cleaning_log" colorClass="bg-blue-50" iconColor="text-blue-500" />
-                    </div>
+              {/* Livestock Section */}
+              <div>
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Livestock</h4>
+                <div className="grid grid-cols-4 gap-4">
+                  <MobileGridItem icon="fa-piggy-bank" label="Add Pig" action="add_pig" colorClass="bg-green-50" iconColor="text-ecomattGreen" />
+                  <MobileGridItem icon="fa-history" label="Event" action="log_event" colorClass="bg-green-50" iconColor="text-ecomattGreen" />
+                  <MobileGridItem icon="fa-venus-mars" label="Mating" action="log_mating" colorClass="bg-green-50" iconColor="text-ecomattGreen" />
+                  <MobileGridItem icon="fa-baby-carriage" label="Farrow" action="log_farrowing" colorClass="bg-green-50" iconColor="text-ecomattGreen" />
                 </div>
+              </div>
 
-                 {/* Finance Section */}
-                <div>
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Finance</h4>
-                    <div className="grid grid-cols-4 gap-4">
-                        <MobileGridItem icon="fa-arrow-down" label="Income" action="add_income" colorClass="bg-green-100" iconColor="text-green-700" />
-                        <MobileGridItem icon="fa-arrow-up" label="Expense" action="add_expense" colorClass="bg-red-100" iconColor="text-red-600" />
-                        <MobileGridItem icon="fa-file-invoice" label="Invoice" action="create_invoice" colorClass="bg-gray-100" iconColor="text-gray-600" />
-                    </div>
+              {/* Operations Section */}
+              <div>
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Operations</h4>
+                <div className="grid grid-cols-4 gap-4">
+                  <MobileGridItem icon="fa-utensils" label="Feed" action="log_feed" colorClass="bg-blue-50" iconColor="text-blue-500" />
+                  <MobileGridItem icon="fa-syringe" label="Health" action="log_health" colorClass="bg-red-50" iconColor="text-red-500" />
+                  <MobileGridItem icon="fa-truck-loading" label="Stock" action="add_feed_stock" colorClass="bg-yellow-50" iconColor="text-yellow-600" />
+                  <MobileGridItem icon="fa-broom" label="Clean" action="cleaning_log" colorClass="bg-blue-50" iconColor="text-blue-500" />
                 </div>
+              </div>
+
+              {/* Finance Section */}
+              <div>
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Finance</h4>
+                <div className="grid grid-cols-4 gap-4">
+                  <MobileGridItem icon="fa-arrow-down" label="Income" action="add_income" colorClass="bg-green-100" iconColor="text-green-700" />
+                  <MobileGridItem icon="fa-arrow-up" label="Expense" action="add_expense" colorClass="bg-red-100" iconColor="text-red-600" />
+                  <MobileGridItem icon="fa-file-invoice" label="Invoice" action="create_invoice" colorClass="bg-gray-100" iconColor="text-gray-600" />
+                </div>
+              </div>
             </div>
 
 
@@ -175,6 +174,8 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
               </div>
 
               {/* Col 3 */}
+
+              {/* Col 3 */}
               <div>
                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">Finance</h4>
                 <ul className="space-y-1">
@@ -183,12 +184,24 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
                   <DesktopListItem icon="fa-file-invoice-dollar" label="Create Invoice" action="create_invoice" />
                 </ul>
               </div>
+
+              {/* Col 4 (New) - Machinery & Crops */}
+              <div>
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">Assets & Crops</h4>
+                <ul className="space-y-1">
+                  <DesktopListItem icon="fa-tractor" label="Add Asset" action="add_asset" />
+                  <DesktopListItem icon="fa-wrench" label="Log Maintenance" action="log_maintenance" />
+                  <DesktopListItem icon="fa-gas-pump" label="Log Fuel" action="log_fuel" />
+                  <DesktopListItem icon="fa-seedling" label="Plant Field" action="plant_field" />
+                  <DesktopListItem icon="fa-leaf" label="Crop Activity" action="log_crop_activity" />
+                </ul>
+              </div>
             </div>
 
           </div>
-        </div>
+        </div >
       )}
-    </div>
+    </div >
   );
 };
 

@@ -36,3 +36,11 @@ Implement a dedicated module for managing crop farming operations, specifically 
 2.  **Planting**: "Plant" a crop in a field, verify status changes to "Planted".
 3.  **Harvesting**: Log a harvest, verify cycle closes or updates.
 4.  **Navigation**: Ensure "Crops" view is accessible.
+
+## Completed Features
+- [x] **Core Module** (Fields, Planting, Harvesting)
+- [x] **Activity Logging**
+  - [x] Create `CropActivity` type (Land Prep, Fertilizer, etc.)
+  - [x] Add "Log Activity" button on Field Cards
+  - [x] Create Timeline View for Field Activities
+  - [x] **Integration**: Link specific activities (e.g. Fertilizing) to **Expenses** automatically.

@@ -15,6 +15,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({ pigs, tasks, financeRecords
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<string | null>(new Date().toISOString().split('T')[0]);
 
+    // Event Details Modal State
+    const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+
     const events = useMemo(() => getAggregatedEvents(pigs, tasks, financeRecords), [pigs, tasks, financeRecords]);
 
     const daysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -33,6 +36,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({ pigs, tasks, financeRecords
     const handleDateClick = (day: number) => {
         const dateStr = new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toISOString().split('T')[0];
         setSelectedDate(dateStr);
+    };
+
+    const handleEventClick = (event: CalendarEvent) => {
+        setSelectedEvent(event);
     };
 
     const renderCalendarGrid = () => {
@@ -81,6 +88,104 @@ const CalendarView: React.FC<CalendarViewProps> = ({ pigs, tasks, financeRecords
     };
 
     const selectedEvents = selectedDate ? events.filter(e => e.date === selectedDate) : [];
+
+    const renderEventDetails = () => {
+        if (!selectedEvent) return null;
+
+        const { type, details } = selectedEvent;
+
+        return (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 animate-in zoom-in duration-200">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className={`p-3 rounded-xl ${selectedEvent.color.split(' ')[0]} bg-opacity-20`}>
+                            {type === 'Task' && <CheckCircle size={24} className={selectedEvent.color.split(' ')[1]} />}
+                            {type === 'Pig' && <Activity size={24} className="text-purple-600" />}
+                            {type === 'Finance' && <DollarSign size={24} className="text-emerald-600" />}
+                        </div>
+                        <button onClick={() => setSelectedEvent(null)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition">
+                            <i className="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">{selectedEvent.title}</h3>
+                    <p className="text-sm text-gray-500 mb-6 flex items-center gap-2">
+                        <CalendarIcon size={14} /> {new Date(selectedEvent.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+
+                    <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                        {type === 'Task' && (
+                            <>
+                                <div className="flex justify-between">
+                                    <span className="text-xs font-bold text-gray-400 uppercase">Priority</span>
+                                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${details.priority === 'High' ? 'bg-red-100 text-red-700' :
+                                        details.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'
+                                        }`}>{details.priority}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-xs font-bold text-gray-400 uppercase">Status</span>
+                                    <span className="text-sm font-bold text-gray-800">{details.status}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-xs font-bold text-gray-400 uppercase">Category</span>
+                                    <span className="text-sm font-bold text-gray-800">{details.type}</span>
+                                </div>
+                            </>
+                        )}
+
+                        {type === 'Pig' && (
+                            <>
+                                <div className="flex justify-between">
+                                    <span className="text-xs font-bold text-gray-400 uppercase">Pig ID</span>
+                                    <span className="text-sm font-bold text-gray-800">{details.pig.tagId}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-xs font-bold text-gray-400 uppercase">Event</span>
+                                    <span className="text-sm font-bold text-gray-800">{details.event.title}</span>
+                                </div>
+                                <div>
+                                    <span className="text-xs font-bold text-gray-400 uppercase block mb-1">Details</span>
+                                    <p className="text-sm text-gray-600 italic bg-white p-2 rounded border border-gray-100">
+                                        {details.event.subtitle}
+                                    </p>
+                                </div>
+                            </>
+                        )}
+
+                        {type === 'Finance' && (
+                            <>
+                                <div className="flex justify-between">
+                                    <span className="text-xs font-bold text-gray-400 uppercase">Amount</span>
+                                    <span className={`text-lg font-bold ${details.type === 'Income' ? 'text-green-600' : 'text-red-600'}`}>
+                                        {details.type === 'Income' ? '+' : '-'}${details.amount}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-xs font-bold text-gray-400 uppercase">Category</span>
+                                    <span className="text-sm font-bold text-gray-800">{details.category}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-xs font-bold text-gray-400 uppercase">Status</span>
+                                    <span className="text-sm font-bold text-gray-800">{details.status}</span>
+                                </div>
+                                <div>
+                                    <span className="text-xs font-bold text-gray-400 uppercase block mb-1">Description</span>
+                                    <p className="text-sm text-gray-600">{details.description}</p>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    <button
+                        onClick={() => setSelectedEvent(null)}
+                        className="w-full mt-6 bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition"
+                    >
+                        Close
+                    </button>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="flex flex-col h-full animate-in fade-in duration-500">
@@ -133,17 +238,24 @@ const CalendarView: React.FC<CalendarViewProps> = ({ pigs, tasks, financeRecords
                     {selectedDate ? (
                         <div className="space-y-3 overflow-y-auto flex-1 max-h-[500px] pr-1 custom-scrollbar">
                             {selectedEvents.length > 0 ? selectedEvents.map(event => (
-                                <div key={event.id} className={`p-3 rounded-lg border-l-4 ${event.color.replace('text-', 'border-').split(' ')[0]} bg-white shadow-sm border border-gray-100`}>
+                                <div
+                                    key={event.id}
+                                    onClick={() => handleEventClick(event)}
+                                    className={`p-3 rounded-lg border-l-4 ${event.color.replace('text-', 'border-').split(' ')[0]} bg-white shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all group`}
+                                >
                                     <div className="flex items-start gap-3">
-                                        <div className="mt-0.5">
+                                        <div className="mt-0.5 group-hover:scale-110 transition-transform">
                                             {event.type === 'Task' && <CheckCircle size={16} className="text-gray-400" />}
                                             {event.type === 'Pig' && <Activity size={16} className="text-purple-400" />}
                                             {event.type === 'Finance' && <DollarSign size={16} className="text-emerald-400" />}
                                         </div>
                                         <div>
-                                            <h4 className="text-sm font-bold text-gray-900">{event.title}</h4>
+                                            <h4 className="text-sm font-bold text-gray-900 group-hover:text-ecomattGreen transition-colors">{event.title}</h4>
                                             {event.subType && <p className="text-xs text-ecomattGreen font-medium mt-0.5">{event.subType}</p>}
-                                            <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-wide">{event.type}</p>
+                                            <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-wide flex justify-between w-full">
+                                                {event.type}
+                                                <span className="text-ecomattGreen opacity-0 group-hover:opacity-100 transition-opacity">View Details &rarr;</span>
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -162,6 +274,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({ pigs, tasks, financeRecords
                     )}
                 </div>
             </div>
+
+            {/* Render Modal */}
+            {renderEventDetails()}
         </div>
     );
 };

@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { FeedInventory, HealthRecord, Task, MedicalItem } from '../types';
+import { FeedInventory, HealthRecord, Task, MedicalItem, Pig } from '../types';
 import { exportToPDF, exportToExcel } from '../services/exportService';
 import MedicalInventoryManager from './MedicalInventoryManager';
 
 interface OperationsProps {
+    pigs: Pig[];
     feeds: FeedInventory[];
     healthRecords: HealthRecord[];
     tasks: Task[];
@@ -15,9 +16,11 @@ interface OperationsProps {
     medicalItems: MedicalItem[];
     onSaveMedicalItem: (item: MedicalItem) => void;
     onDeleteMedicalItem: (id: string) => void;
+    onSaveHealthRecord: (record: HealthRecord) => void;
 }
 
 const Operations: React.FC<OperationsProps> = ({
+    pigs,
     feeds,
     healthRecords,
     tasks,
@@ -27,10 +30,19 @@ const Operations: React.FC<OperationsProps> = ({
     onOpenFeedFormulator,
     medicalItems,
     onSaveMedicalItem,
-    onDeleteMedicalItem
+    onDeleteMedicalItem,
+    onSaveHealthRecord
 }) => {
     const [activeTab, setActiveTab] = useState<'Tasks' | 'Feed' | 'Health' | 'Pharmacy'>('Tasks');
     const [sortBy, setSortBy] = useState<'dueDate' | 'priority'>('dueDate');
+
+    // Health Form State
+    const [showHealthForm, setShowHealthForm] = useState(false);
+    const [newHealthRecord, setNewHealthRecord] = useState<Partial<HealthRecord>>({
+        date: new Date().toISOString().split('T')[0],
+        type: 'Treatment'
+    });
+
 
     useEffect(() => {
         if (initialTab) {
@@ -270,9 +282,157 @@ const Operations: React.FC<OperationsProps> = ({
                         )}
                     </div>
 
-                    <button className="w-full mt-6 bg-red-50 text-red-600 border border-red-100 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-red-100 transition">
+                    <button
+                        onClick={() => setShowHealthForm(true)}
+                        className="w-full mt-6 bg-red-50 text-red-600 border border-red-100 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-red-100 transition"
+                    >
                         <i className="fas fa-plus"></i> Record Treatment
                     </button>
+
+                    {/* Health Log Modal */}
+                    {showHealthForm && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden animate-in zoom-in duration-200">
+                                <div className="p-6">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h3 className="text-xl font-bold text-gray-900">Log Health Record</h3>
+                                        <button onClick={() => setShowHealthForm(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                                            <i className="fas fa-times"></i>
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Date</label>
+                                            <input
+                                                type="date"
+                                                value={newHealthRecord.date}
+                                                onChange={e => setNewHealthRecord({ ...newHealthRecord, date: e.target.value })}
+                                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-bold text-gray-900 focus:outline-none focus:border-ecomattGreen"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Pig ID</label>
+                                                <select
+                                                    value={newHealthRecord.pigId || ''}
+                                                    onChange={e => setNewHealthRecord({ ...newHealthRecord, pigId: e.target.value })}
+                                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-bold text-gray-900 focus:outline-none focus:border-ecomattGreen"
+                                                >
+                                                    <option value="">Select Pig</option>
+                                                    {pigs.map(pig => (
+                                                        <option key={pig.id} value={pig.tagId}>{pig.tagId}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Type</label>
+                                                <select
+                                                    value={newHealthRecord.type}
+                                                    onChange={e => setNewHealthRecord({ ...newHealthRecord, type: e.target.value as any })}
+                                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-bold text-gray-900 focus:outline-none focus:border-ecomattGreen"
+                                                >
+                                                    <option value="Treatment">Treatment</option>
+                                                    <option value="Vaccination">Vaccination</option>
+                                                    <option value="Checkup">Checkup</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Description</label>
+                                            <input
+                                                type="text"
+                                                placeholder="e.g. Coughing, Swine Flu..."
+                                                value={newHealthRecord.description || ''}
+                                                onChange={e => setNewHealthRecord({ ...newHealthRecord, description: e.target.value })}
+                                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-bold text-gray-900 focus:outline-none focus:border-ecomattGreen"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Medication Used (Inventory)</label>
+                                            <select
+                                                value={newHealthRecord.medicalItemId || ''}
+                                                onChange={e => {
+                                                    const item = medicalItems.find(i => i.id === e.target.value);
+                                                    setNewHealthRecord({
+                                                        ...newHealthRecord,
+                                                        medicalItemId: e.target.value,
+                                                        medication: item ? item.name : ''
+                                                    });
+                                                }}
+                                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-bold text-gray-900 focus:outline-none focus:border-ecomattGreen"
+                                            >
+                                                <option value="">None / External</option>
+                                                {medicalItems.map(item => (
+                                                    <option key={item.id} value={item.id}>
+                                                        {item.name} ({item.quantity} {item.unit} available)
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {newHealthRecord.medicalItemId && (
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Quantity Used</label>
+                                                <div className="flex gap-2 items-center">
+                                                    <input
+                                                        type="number"
+                                                        value={newHealthRecord.quantityUsed || ''}
+                                                        onChange={e => setNewHealthRecord({ ...newHealthRecord, quantityUsed: parseFloat(e.target.value) })}
+                                                        className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-bold text-gray-900 focus:outline-none focus:border-ecomattGreen"
+                                                        placeholder="Amount"
+                                                    />
+                                                    <span className="text-sm font-bold text-gray-500">
+                                                        {medicalItems.find(i => i.id === newHealthRecord.medicalItemId)?.unit}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Administered By</label>
+                                            <input
+                                                type="text"
+                                                value={newHealthRecord.administeredBy || ''}
+                                                onChange={e => setNewHealthRecord({ ...newHealthRecord, administeredBy: e.target.value })}
+                                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-bold text-gray-900 focus:outline-none focus:border-ecomattGreen"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-8 flex gap-3">
+                                        <button
+                                            onClick={() => setShowHealthForm(false)}
+                                            className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-200 transition"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (newHealthRecord.pigId && newHealthRecord.description) {
+                                                    onSaveHealthRecord({
+                                                        id: Date.now().toString(),
+                                                        ...newHealthRecord as HealthRecord
+                                                    });
+                                                    setShowHealthForm(false);
+                                                    setNewHealthRecord({
+                                                        date: new Date().toISOString().split('T')[0],
+                                                        type: 'Treatment'
+                                                    });
+                                                }
+                                            }}
+                                            className="flex-1 bg-ecomattGreen text-white py-3 rounded-xl font-bold shadow-lg shadow-green-500/20 hover:scale-[1.02] transition"
+                                        >
+                                            Save Record
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </>
             )}
 

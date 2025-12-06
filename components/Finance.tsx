@@ -12,7 +12,8 @@ interface FinanceProps {
     onOpenBudget: () => void;
     onOpenLoans: () => void;
     onOpenCostAnalysis: () => void;
-    onOpenRatios: () => void; // New prop
+    onOpenRatios: () => void;
+    onOpenCostCenters: () => void;
 }
 
 const Finance: React.FC<FinanceProps> = ({
@@ -24,7 +25,8 @@ const Finance: React.FC<FinanceProps> = ({
     onOpenBudget,
     onOpenLoans,
     onOpenCostAnalysis,
-    onOpenRatios
+    onOpenRatios,
+    onOpenCostCenters
 }) => {
     // Metrics: Only include 'Paid' (Actual) transactions for the header stats
     const totalIncome = records.filter(r => r.type === 'Income' && (r.status === 'Paid' || !r.status)).reduce((acc, curr) => acc + curr.amount, 0);
@@ -115,6 +117,10 @@ const Finance: React.FC<FinanceProps> = ({
                 <button onClick={onOpenRatios} className="col-span-1 flex flex-col items-center justify-center bg-white border border-gray-200 text-gray-700 p-3 rounded-2xl hover:border-ecomattGreen transition">
                     <i className="fas fa-balance-scale mb-1 text-lg text-teal-500"></i>
                     <span className="text-[9px] font-bold text-center leading-tight">Ratios</span>
+                </button>
+                <button onClick={onOpenCostCenters} className="col-span-1 flex flex-col items-center justify-center bg-white border border-gray-200 text-gray-700 p-3 rounded-2xl hover:border-ecomattGreen transition">
+                    <i className="fas fa-chart-pie mb-1 text-lg text-indigo-500"></i>
+                    <span className="text-[9px] font-bold text-center leading-tight">Centers</span>
                 </button>
             </div>
 

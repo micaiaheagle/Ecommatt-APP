@@ -10,6 +10,9 @@ import FeedLogger from './components/FeedLogger';
 import FeedFormulator from './components/FeedFormulator';
 import CalendarView from './components/CalendarView';
 import PointOfSale from './components/PointOfSale';
+import CropManager from './components/CropManager';
+import MachineryManager from './components/MachineryManager';
+import CostCenters from './components/CostCenters';
 import Finance from './components/Finance';
 import FinanceLogger from './components/FinanceLogger';
 import BatchProfitability from './components/BatchProfitability';
@@ -31,7 +34,7 @@ import Onboarding from './components/Onboarding';
 import Signup from './components/Signup';
 import Verification from './components/Verification';
 import { sendVerificationEmail, sendWelcomeEmail } from './services/emailService';
-import { Pig, Task, PigStatus, PigStage, FeedInventory, HealthRecord, FinanceRecord, BudgetRecord, LoanRecord, ViewState, User, UserRole, TimelineEvent, NotificationConfig, MedicalItem, Product, CartItem } from './types';
+import { Pig, Task, PigStatus, PigStage, FeedInventory, HealthRecord, FinanceRecord, BudgetRecord, LoanRecord, ViewState, User, UserRole, TimelineEvent, NotificationConfig, MedicalItem, Product, CartItem, Field, Crop, CropCycle, CropActivity, Asset, MaintenanceLog, FuelLog } from './types';
 import { loadData, saveData, STORAGE_KEYS } from './services/storageService';
 
 // Mock Data (Used as initial seed only)
@@ -128,10 +131,10 @@ const INITIAL_USERS: User[] = [
 ];
 
 const ROLE_PERMISSIONS: Record<UserRole, ViewState[]> = {
-    'Farm Manager': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Calendar, ViewState.POS, ViewState.Finance, ViewState.AI_Tools, ViewState.Settings],
-    'Herdsman': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Calendar],
-    'General Worker': [ViewState.Dashboard, ViewState.Operations, ViewState.Calendar, ViewState.POS],
-    'Veterinarian': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Calendar, ViewState.AI_Tools]
+    'Farm Manager': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Calendar, ViewState.POS, ViewState.Finance, ViewState.AI_Tools, ViewState.Settings, ViewState.Crops, ViewState.Machinery],
+    'Herdsman': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Calendar, ViewState.Crops, ViewState.Machinery],
+    'General Worker': [ViewState.Dashboard, ViewState.Operations, ViewState.Calendar, ViewState.POS, ViewState.Crops],
+    'Veterinarian': [ViewState.Dashboard, ViewState.Operations, ViewState.Pigs, ViewState.Calendar, ViewState.AI_Tools]
 };
 
 const App: React.FC = () => {
@@ -168,6 +171,89 @@ const App: React.FC = () => {
         { id: 'p5', name: 'Pig Manure (Compost)', category: 'Manure', price: 2.00, unit: 'bag', inStock: true },
     ]);
 
+    // Crop State
+    const [fields, setFields] = useState<Field[]>(() => loadData('ECOMATT_FIELDS', [
+        { id: 'f1', name: 'Lower Field', size: 2.5, soilType: 'Loam', location: 'South Valley', status: 'Fallow' },
+        { id: 'f2', name: 'Upper Terrace', size: 1.2, soilType: 'Clay-Loam', location: 'North Ridge', status: 'Preparation' },
+        { id: 'f3', name: 'Greenhouse A', size: 0.1, soilType: 'Potting Mix', location: 'Near Barn', status: 'Fallow' }
+    ]));
+
+    const [crops] = useState<Crop[]>([
+        { id: 'c1', name: 'Maize', variety: 'SC727', type: 'Cereal', daysToMaturity: 120, expectedYieldPerHa: 8 },
+        { id: 'c2', name: 'Sugar Beans', variety: 'NUA45', type: 'Legume', daysToMaturity: 90, expectedYieldPerHa: 2 },
+        { id: 'c3', name: 'Tomatoes', variety: 'Rodade', type: 'Vegetable', daysToMaturity: 75, expectedYieldPerHa: 40 },
+        { id: 'c4', name: 'Cabbages', variety: 'Fabian', type: 'Vegetable', daysToMaturity: 85, expectedYieldPerHa: 60 }
+    ]);
+
+    const [cropCycles, setCropCycles] = useState<CropCycle[]>(() => loadData('ECOMATT_CYCLES', []));
+    const [cropActivities, setCropActivities] = useState<CropActivity[]>(() => loadData('ECOMATT_CROP_ACTIVITIES', []));
+
+    // Machinery State
+    const [assets, setAssets] = useState<Asset[]>(() => loadData('ECOMATT_ASSETS', []));
+    const [maintenanceLogs, setMaintenanceLogs] = useState<MaintenanceLog[]>(() => loadData('ECOMATT_MAINTENANCE', []));
+    const [fuelLogs, setFuelLogs] = useState<FuelLog[]>(() => loadData('ECOMATT_FUEL', []));
+
+
+    // Save Effects
+    useEffect(() => saveData('ECOMATT_FIELDS', fields), [fields]);
+    useEffect(() => saveData('ECOMATT_CYCLES', cropCycles), [cropCycles]);
+    useEffect(() => saveData('ECOMATT_ASSETS', assets), [assets]);
+    useEffect(() => saveData('ECOMATT_MAINTENANCE', maintenanceLogs), [maintenanceLogs]);
+    useEffect(() => saveData('ECOMATT_FUEL', fuelLogs), [fuelLogs]);
+
+
+    // Crop Handlers
+    const handlePlantField = (fieldId: string, cropId: string, date: string) => {
+        const crop = crops.find(c => c.id === cropId);
+        if (!crop) return;
+
+        const expectedHarvest = new Date(new Date(date).getTime() + (crop.daysToMaturity * 24 * 60 * 60 * 1000)).toISOString().split('T')[0];
+
+        const newCycle: CropCycle = {
+            id: `cycle-${Date.now()}`,
+            fieldId,
+            cropId,
+            plantingDate: date,
+            expectedHarvestDate: expectedHarvest,
+            status: 'Active'
+        };
+
+        setCropCycles([...cropCycles, newCycle]);
+        setFields(fields.map(f => f.id === fieldId ? { ...f, status: 'Planted', currentCropId: newCycle.id } : f));
+    };
+
+    const handleUpdateFieldStatus = (fieldId: string, status: 'Fallow' | 'Preparation') => {
+        setFields(fields.map(f => f.id === fieldId ? { ...f, status } : f));
+    };
+
+    const handleHarvestCrop = (cycleId: string, date: string, quantity: number, quality: string) => {
+        // 1. Update Cycle
+        setCropCycles(cropCycles.map(c => c.id === cycleId ? {
+            ...c,
+            status: 'Harvested',
+            harvestDate: date,
+            yieldAmount: quantity,
+            yieldQuality: quality
+        } : c));
+
+        // 2. Free Field
+        const cycle = cropCycles.find(c => c.id === cycleId);
+        if (cycle) {
+            setFields(fields.map(f => f.id === cycle.fieldId ? { ...f, status: 'Fallow', currentCropId: undefined } : f));
+        }
+
+        // 3. Record Finance Income (Estimated)
+        // In a real app we'd ask for price, for now assuming typical price
+        handleSaveTransaction({
+            date,
+            type: 'Income',
+            category: 'Crop Sales',
+            amount: quantity * 100, // Dummy pricing logic
+            description: `Harvest: ${quantity} tons (Quality: ${quality})`,
+            status: 'Projected'
+        });
+    };
+
     // Persistence Effects - Auto Save when state changes
     useEffect(() => saveData(STORAGE_KEYS.PIGS, pigs), [pigs]);
     useEffect(() => saveData(STORAGE_KEYS.TASKS, tasks), [tasks]);
@@ -192,7 +278,8 @@ const App: React.FC = () => {
     const [operationsSubView, setOperationsSubView] = useState<'None' | 'FeedLogger' | 'FeedFormulator'>('None');
 
     // Finance Navigation State
-    const [financeSubView, setFinanceSubView] = useState<'None' | 'Logger' | 'Batch' | 'Calculator' | 'Forecast' | 'Budget' | 'Loans' | 'CostAnalysis' | 'Ratios'>('None');
+    // Finance Navigation State
+    const [financeSubView, setFinanceSubView] = useState<'None' | 'Logger' | 'Batch' | 'Calculator' | 'Forecast' | 'Budget' | 'Loans' | 'CostAnalysis' | 'Ratios' | 'CostCenters'>('None');
 
     // Intelligent Core Navigation State
     const [intelligentSubView, setIntelligentSubView] = useState<'None' | 'Breeding' | 'Optimizer' | 'Critical' | 'Chat'>('None');
@@ -376,6 +463,21 @@ const App: React.FC = () => {
         setMedicalInventory(medicalInventory.filter(i => i.id !== id));
     };
 
+    const handleSaveHealthRecord = (record: HealthRecord) => {
+        setHealthRecords(prev => [record, ...prev]);
+
+        // Auto-deduct from Inventory
+        if (record.medicalItemId && record.quantityUsed) {
+            setMedicalInventory(prev => prev.map(item => {
+                if (item.id === record.medicalItemId) {
+                    return { ...item, quantity: Math.max(0, item.quantity - (record.quantityUsed || 0)) };
+                }
+                return item;
+            }));
+        }
+    };
+
+
     // POS Handlers
     const handleSaleComplete = (items: CartItem[], total: number, paymentMethod: string) => {
         const description = `POS Sale: ${items.map(i => `${i.name} (x${i.quantity})`).join(', ')}`;
@@ -430,6 +532,57 @@ const App: React.FC = () => {
         }
     };
 
+
+    const handleLogCropActivity = (activity: CropActivity) => {
+        setCropActivities(prev => [...prev, activity]);
+
+        // If cost exists, log expense automatically
+        if (activity.cost > 0) {
+            handleSaveTransaction({
+                date: activity.date,
+                type: 'Expense',
+                category: 'Crop Input',
+                amount: activity.cost,
+                description: `${activity.type}: ${activity.description}`,
+                status: 'Paid'
+            });
+        }
+    };
+
+
+    // Machinery Handlers
+    const handleAddAsset = (asset: Asset) => {
+        setAssets([...assets, asset]);
+    };
+
+    const handleLogMaintenance = (log: MaintenanceLog) => {
+        setMaintenanceLogs([...maintenanceLogs, log]);
+
+        // Auto Expense
+        handleSaveTransaction({
+            date: log.date,
+            type: 'Expense',
+            category: 'Maintenance',
+            amount: log.cost,
+            description: `Maintenance: ${log.type} on Asset`, // Could lookup name if needed
+            status: 'Paid'
+        });
+    };
+
+    const handleLogFuel = (log: FuelLog) => {
+        setFuelLogs([...fuelLogs, log]);
+
+        // Auto Expense
+        handleSaveTransaction({
+            date: log.date,
+            type: 'Expense',
+            category: 'Fuel',
+            amount: log.cost,
+            description: `Fuel: ${log.quantity}L`,
+            status: 'Paid'
+        });
+    };
+
     const handleFabClick = () => {
         setCurrentView(ViewState.Pigs);
         setIsAddingPig(true);
@@ -450,6 +603,9 @@ const App: React.FC = () => {
                     tasks={tasks}
                     financeRecords={financeRecords}
                     feeds={feeds}
+                    fields={fields}
+                    cropCycles={cropCycles}
+                    assets={assets}
                     onViewChange={handleNavClick}
                 />;
 
@@ -489,22 +645,28 @@ const App: React.FC = () => {
                     return <FeedFormulator onCancel={() => setOperationsSubView('None')} />;
                 }
                 return <Operations
+                    pigs={pigs}
                     feeds={feeds}
                     healthRecords={healthRecords}
                     tasks={tasks}
                     initialTab={operationsInitialTab}
                     pigFilter={operationsPigFilter}
                     onOpenFeedLogger={() => setOperationsSubView('FeedLogger')}
-
                     onOpenFeedFormulator={() => setOperationsSubView('FeedFormulator')}
                     medicalItems={medicalInventory}
                     onSaveMedicalItem={handleSaveMedicalItem}
                     onDeleteMedicalItem={handleDeleteMedicalItem}
+                    onSaveHealthRecord={handleSaveHealthRecord}
                 />;
 
             case ViewState.Finance:
                 if (financeSubView === 'Logger') {
-                    return <FinanceLogger onSave={handleSaveTransaction} onCancel={() => setFinanceSubView('None')} />;
+                    return <FinanceLogger
+                        onSave={handleSaveTransaction}
+                        onCancel={() => setFinanceSubView('None')}
+                        fields={fields}
+                        assets={assets}
+                    />;
                 }
                 if (financeSubView === 'Batch') {
                     return <BatchProfitability records={financeRecords} onCancel={() => setFinanceSubView('None')} />;
@@ -524,6 +686,9 @@ const App: React.FC = () => {
                 if (financeSubView === 'CostAnalysis') {
                     return <CostAnalysis onCancel={() => setFinanceSubView('None')} />;
                 }
+                if (financeSubView === 'CostCenters') {
+                    return <CostCenters financeRecords={financeRecords} fields={fields} assets={assets} onCancel={() => setFinanceSubView('None')} />;
+                }
                 if (financeSubView === 'Ratios') {
                     return <FinancialRatios financeRecords={financeRecords} pigs={pigs} feeds={feeds} loans={loans} onCancel={() => setFinanceSubView('None')} />;
                 }
@@ -537,6 +702,7 @@ const App: React.FC = () => {
                     onOpenLoans={() => setFinanceSubView('Loans')}
                     onOpenCostAnalysis={() => setFinanceSubView('CostAnalysis')}
                     onOpenRatios={() => setFinanceSubView('Ratios')}
+                    onOpenCostCenters={() => setFinanceSubView('CostCenters')}
                 />;
 
             case ViewState.AI_Tools:
@@ -574,6 +740,28 @@ const App: React.FC = () => {
                     onCancel={() => handleNavClick(ViewState.Dashboard)}
                 />;
 
+            case ViewState.Crops:
+                return <CropManager
+                    fields={fields}
+                    crops={crops}
+                    cycles={cropCycles}
+                    activities={cropActivities}
+                    onPlantField={handlePlantField}
+                    onHarvest={handleHarvestCrop}
+                    onUpdateFieldStatus={handleUpdateFieldStatus}
+                    onLogActivity={handleLogCropActivity}
+                />;
+
+            case ViewState.Machinery:
+                return <MachineryManager
+                    assets={assets}
+                    maintenanceLogs={maintenanceLogs}
+                    fuelLogs={fuelLogs}
+                    onAddAsset={handleAddAsset}
+                    onLogMaintenance={handleLogMaintenance}
+                    onLogFuel={handleLogFuel}
+                />;
+
             case ViewState.Settings:
                 if (settingsSubView === 'EmailSetup') {
                     return <EmailAlertsSetup config={notificationConfig} onSave={handleSaveNotificationConfig} onCancel={() => setSettingsSubView('None')} />;
@@ -587,7 +775,15 @@ const App: React.FC = () => {
                     onOpenEmailSetup={() => setSettingsSubView('EmailSetup')}
                 />;
             default:
-                return <Dashboard pigs={pigs} tasks={tasks} financeRecords={financeRecords} feeds={feeds} onViewChange={handleNavClick} />;
+                return <Dashboard
+                    pigs={pigs}
+                    tasks={tasks}
+                    financeRecords={financeRecords}
+                    feeds={feeds}
+                    fields={fields}
+                    cropCycles={cropCycles}
+                    onViewChange={handleNavClick}
+                />;
         }
     };
 
