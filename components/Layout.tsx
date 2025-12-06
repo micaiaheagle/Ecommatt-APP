@@ -56,6 +56,8 @@ const Layout: React.FC<LayoutProps> = ({
     { id: ViewState.Dashboard, icon: 'fa-tachometer-alt', label: 'Dashboard', roles: [] },
     { id: ViewState.Pigs, icon: 'fa-database', label: 'Pig Database', roles: ['Farm Manager', 'Herdsman', 'Veterinarian'] },
     { id: ViewState.Operations, icon: 'fa-clipboard-list', label: 'Tasks & Ops', roles: ['Farm Manager', 'Herdsman', 'Veterinarian', 'General Worker'] },
+    { id: ViewState.Calendar, icon: 'fa-calendar-alt', label: 'Calendar', roles: ['Farm Manager', 'Herdsman', 'Veterinarian'] },
+    { id: ViewState.POS, icon: 'fa-cash-register', label: 'Farm POS', roles: ['Farm Manager', 'General Worker'] },
     { id: ViewState.Finance, icon: 'fa-chart-pie', label: 'Financials', roles: ['Farm Manager'] },
     { id: ViewState.AI_Tools, icon: 'fa-brain', label: 'Intelligent Core', roles: ['Farm Manager', 'Veterinarian'] },
     { id: ViewState.Settings, icon: 'fa-cog', label: 'Settings', roles: ['Farm Manager'] },
@@ -92,8 +94,8 @@ const Layout: React.FC<LayoutProps> = ({
               key={item.id}
               onClick={() => handleNavClick(item.id)}
               className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg font-bold transition-colors ${currentView === item.id
-                  ? 'bg-ecomattGreen text-black'
-                  : 'text-gray-400 hover:bg-gray-900 hover:text-white'
+                ? 'bg-ecomattGreen text-black'
+                : 'text-gray-400 hover:bg-gray-900 hover:text-white'
                 }`}
             >
               <i className={`fas ${item.icon} w-5 text-center`}></i> {item.label}

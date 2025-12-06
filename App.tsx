@@ -8,6 +8,8 @@ import PigProfile from './components/PigProfile';
 import Operations from './components/Operations';
 import FeedLogger from './components/FeedLogger';
 import FeedFormulator from './components/FeedFormulator';
+import CalendarView from './components/CalendarView';
+import PointOfSale from './components/PointOfSale';
 import Finance from './components/Finance';
 import FinanceLogger from './components/FinanceLogger';
 import BatchProfitability from './components/BatchProfitability';
@@ -29,7 +31,7 @@ import Onboarding from './components/Onboarding';
 import Signup from './components/Signup';
 import Verification from './components/Verification';
 import { sendVerificationEmail, sendWelcomeEmail } from './services/emailService';
-import { Pig, Task, PigStatus, PigStage, FeedInventory, HealthRecord, FinanceRecord, BudgetRecord, LoanRecord, ViewState, User, UserRole, TimelineEvent, NotificationConfig } from './types';
+import { Pig, Task, PigStatus, PigStage, FeedInventory, HealthRecord, FinanceRecord, BudgetRecord, LoanRecord, ViewState, User, UserRole, TimelineEvent, NotificationConfig, MedicalItem, Product, CartItem } from './types';
 import { loadData, saveData, STORAGE_KEYS } from './services/storageService';
 
 // Mock Data (Used as initial seed only)
@@ -126,10 +128,10 @@ const INITIAL_USERS: User[] = [
 ];
 
 const ROLE_PERMISSIONS: Record<UserRole, ViewState[]> = {
-    'Farm Manager': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Finance, ViewState.AI_Tools, ViewState.Settings],
-    'Herdsman': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations],
-    'General Worker': [ViewState.Dashboard, ViewState.Operations],
-    'Veterinarian': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.AI_Tools]
+    'Farm Manager': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Calendar, ViewState.POS, ViewState.Finance, ViewState.AI_Tools, ViewState.Settings],
+    'Herdsman': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Calendar],
+    'General Worker': [ViewState.Dashboard, ViewState.Operations, ViewState.Calendar, ViewState.POS],
+    'Veterinarian': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Calendar, ViewState.AI_Tools]
 };
 
 const App: React.FC = () => {
@@ -152,7 +154,19 @@ const App: React.FC = () => {
     const [budgets, setBudgets] = useState<BudgetRecord[]>(() => loadData('ECOMATT_BUDGET_DB', SEED_BUDGETS));
     const [loans, setLoans] = useState<LoanRecord[]>(() => loadData('ECOMATT_LOANS_DB', SEED_LOANS));
     const [users, setUsers] = useState<User[]>(() => loadData(STORAGE_KEYS.USERS, INITIAL_USERS));
+
+
     const [notificationConfig, setNotificationConfig] = useState<NotificationConfig>(() => loadData(STORAGE_KEYS.NOTIFICATIONS, { emails: [], alerts: { mortality: true, feed: true, tasks: false, finance: false } }));
+    const [medicalInventory, setMedicalInventory] = useState<MedicalItem[]>(() => loadData(STORAGE_KEYS.MEDICAL, []));
+
+    // Seed Products
+    const [products] = useState<Product[]>([
+        { id: 'p1', name: 'Pork Chops', category: 'Pork', price: 6.50, unit: 'kg', inStock: true },
+        { id: 'p2', name: 'Pork Belly', category: 'Pork', price: 8.00, unit: 'kg', inStock: true },
+        { id: 'p3', name: 'Sausages (Traditional)', category: 'Pork', price: 5.00, unit: 'kg', inStock: true },
+        { id: 'p4', name: 'Piglet (Weaner)', category: 'Live Animal', price: 45.00, unit: 'unit', inStock: true },
+        { id: 'p5', name: 'Pig Manure (Compost)', category: 'Manure', price: 2.00, unit: 'bag', inStock: true },
+    ]);
 
     // Persistence Effects - Auto Save when state changes
     useEffect(() => saveData(STORAGE_KEYS.PIGS, pigs), [pigs]);
@@ -163,7 +177,9 @@ const App: React.FC = () => {
     useEffect(() => saveData('ECOMATT_BUDGET_DB', budgets), [budgets]);
     useEffect(() => saveData('ECOMATT_LOANS_DB', loans), [loans]);
     useEffect(() => saveData(STORAGE_KEYS.USERS, users), [users]);
+
     useEffect(() => saveData(STORAGE_KEYS.NOTIFICATIONS, notificationConfig), [notificationConfig]);
+    useEffect(() => saveData(STORAGE_KEYS.MEDICAL, medicalInventory), [medicalInventory]);
 
     // Navigation State for Pig Module
     const [selectedPig, setSelectedPig] = useState<Pig | null>(null);
@@ -344,6 +360,33 @@ const App: React.FC = () => {
         };
         setFinanceRecords([...financeRecords, newRecord]);
         setFinanceSubView('None');
+
+    };
+
+    // Medical Inventory Handlers
+    const handleSaveMedicalItem = (item: MedicalItem) => {
+        if (medicalInventory.some(i => i.id === item.id)) {
+            setMedicalInventory(medicalInventory.map(i => i.id === item.id ? item : i));
+        } else {
+            setMedicalInventory([...medicalInventory, item]);
+        }
+    };
+
+    const handleDeleteMedicalItem = (id: string) => {
+        setMedicalInventory(medicalInventory.filter(i => i.id !== id));
+    };
+
+    // POS Handlers
+    const handleSaleComplete = (items: CartItem[], total: number, paymentMethod: string) => {
+        const description = `POS Sale: ${items.map(i => `${i.name} (x${i.quantity})`).join(', ')}`;
+        handleSaveTransaction({
+            date: new Date().toISOString().split('T')[0],
+            type: 'Income',
+            category: 'Sales',
+            amount: total,
+            description,
+            status: 'Paid'
+        });
     };
 
     // GLOBAL QUICK ACTIONS HANDLER
@@ -452,7 +495,11 @@ const App: React.FC = () => {
                     initialTab={operationsInitialTab}
                     pigFilter={operationsPigFilter}
                     onOpenFeedLogger={() => setOperationsSubView('FeedLogger')}
+
                     onOpenFeedFormulator={() => setOperationsSubView('FeedFormulator')}
+                    medicalItems={medicalInventory}
+                    onSaveMedicalItem={handleSaveMedicalItem}
+                    onDeleteMedicalItem={handleDeleteMedicalItem}
                 />;
 
             case ViewState.Finance:
@@ -510,6 +557,21 @@ const App: React.FC = () => {
                     onOpenOptimizer={() => setIntelligentSubView('Optimizer')}
                     onOpenCritical={() => setIntelligentSubView('Critical')}
                     onOpenChat={() => setIntelligentSubView('Chat')}
+                />;
+
+            case ViewState.Calendar:
+                return <CalendarView
+                    pigs={pigs}
+                    tasks={tasks}
+                    financeRecords={financeRecords}
+                    onNavigate={handleNavClick}
+                />;
+
+            case ViewState.POS:
+                return <PointOfSale
+                    products={products}
+                    onCompleteSale={handleSaleComplete}
+                    onCancel={() => handleNavClick(ViewState.Dashboard)}
                 />;
 
             case ViewState.Settings:

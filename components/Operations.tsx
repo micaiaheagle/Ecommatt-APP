@@ -1,16 +1,20 @@
 
 import React, { useState, useEffect } from 'react';
-import { FeedInventory, HealthRecord, Task } from '../types';
+import { FeedInventory, HealthRecord, Task, MedicalItem } from '../types';
 import { exportToPDF, exportToExcel } from '../services/exportService';
+import MedicalInventoryManager from './MedicalInventoryManager';
 
 interface OperationsProps {
     feeds: FeedInventory[];
     healthRecords: HealthRecord[];
     tasks: Task[];
-    initialTab?: 'Tasks' | 'Feed' | 'Health';
+    initialTab?: 'Tasks' | 'Feed' | 'Health' | 'Pharmacy';
     pigFilter?: string;
     onOpenFeedLogger: () => void;
     onOpenFeedFormulator: () => void;
+    medicalItems: MedicalItem[];
+    onSaveMedicalItem: (item: MedicalItem) => void;
+    onDeleteMedicalItem: (id: string) => void;
 }
 
 const Operations: React.FC<OperationsProps> = ({
@@ -20,9 +24,12 @@ const Operations: React.FC<OperationsProps> = ({
     initialTab,
     pigFilter,
     onOpenFeedLogger,
-    onOpenFeedFormulator
+    onOpenFeedFormulator,
+    medicalItems,
+    onSaveMedicalItem,
+    onDeleteMedicalItem
 }) => {
-    const [activeTab, setActiveTab] = useState<'Tasks' | 'Feed' | 'Health'>('Tasks');
+    const [activeTab, setActiveTab] = useState<'Tasks' | 'Feed' | 'Health' | 'Pharmacy'>('Tasks');
     const [sortBy, setSortBy] = useState<'dueDate' | 'priority'>('dueDate');
 
     useEffect(() => {
@@ -64,13 +71,13 @@ const Operations: React.FC<OperationsProps> = ({
             </div>
 
             <div className="flex bg-white p-1 rounded-xl mb-6 shadow-sm border border-gray-100">
-                {['Tasks', 'Feed', 'Health'].map(tab => (
+                {['Tasks', 'Feed', 'Health', 'Pharmacy'].map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab as any)}
                         className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === tab
-                                ? 'bg-ecomattBlack text-white shadow-md'
-                                : 'text-gray-500 hover:bg-gray-50'
+                            ? 'bg-ecomattBlack text-white shadow-md'
+                            : 'text-gray-500 hover:bg-gray-50'
                             }`}
                     >
                         {tab}
@@ -267,6 +274,16 @@ const Operations: React.FC<OperationsProps> = ({
                         <i className="fas fa-plus"></i> Record Treatment
                     </button>
                 </>
+            )}
+
+            {/* Pharmacy View */}
+            {activeTab === 'Pharmacy' && (
+                <MedicalInventoryManager
+                    items={medicalItems}
+                    onSave={onSaveMedicalItem}
+                    onDelete={onDeleteMedicalItem}
+                    onCancel={() => setActiveTab('Tasks')}
+                />
             )}
 
         </div>
