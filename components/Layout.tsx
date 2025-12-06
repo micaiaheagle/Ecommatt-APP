@@ -60,6 +60,7 @@ const Layout: React.FC<LayoutProps> = ({
     { id: ViewState.Calendar, icon: 'fa-calendar-alt', label: 'Calendar', roles: ['Farm Manager', 'Herdsman', 'Veterinarian'] },
     { id: ViewState.POS, icon: 'fa-cash-register', label: 'Farm POS', roles: ['Farm Manager', 'General Worker'] },
     { id: ViewState.Machinery, icon: 'fa-tractor', label: 'Machinery', roles: ['Farm Manager', 'Herdsman'] },
+    { id: ViewState.Staff, icon: 'fa-users', label: 'Staff & Labor', roles: ['Farm Manager'] },
     { id: ViewState.Finance, icon: 'fa-chart-pie', label: 'Financials', roles: ['Farm Manager'] },
     { id: ViewState.AI_Tools, icon: 'fa-brain', label: 'Intelligent Core', roles: ['Farm Manager', 'Veterinarian'] },
     { id: ViewState.Settings, icon: 'fa-cog', label: 'Settings', roles: ['Farm Manager'] },

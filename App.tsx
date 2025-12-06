@@ -13,6 +13,7 @@ import PointOfSale from './components/PointOfSale';
 import CropManager from './components/CropManager';
 import MachineryManager from './components/MachineryManager';
 import CostCenters from './components/CostCenters';
+import StaffManager from './components/StaffManager';
 import Finance from './components/Finance';
 import FinanceLogger from './components/FinanceLogger';
 import BatchProfitability from './components/BatchProfitability';
@@ -34,7 +35,7 @@ import Onboarding from './components/Onboarding';
 import Signup from './components/Signup';
 import Verification from './components/Verification';
 import { sendVerificationEmail, sendWelcomeEmail } from './services/emailService';
-import { Pig, Task, PigStatus, PigStage, FeedInventory, HealthRecord, FinanceRecord, BudgetRecord, LoanRecord, ViewState, User, UserRole, TimelineEvent, NotificationConfig, MedicalItem, Product, CartItem, Field, Crop, CropCycle, CropActivity, Asset, MaintenanceLog, FuelLog } from './types';
+import { Pig, Task, PigStatus, PigStage, FeedInventory, HealthRecord, FinanceRecord, BudgetRecord, LoanRecord, ViewState, User, UserRole, TimelineEvent, NotificationConfig, MedicalItem, Product, CartItem, Field, Crop, CropCycle, CropActivity, Asset, MaintenanceLog, FuelLog, TimesheetLog } from './types';
 import { loadData, saveData, STORAGE_KEYS } from './services/storageService';
 
 // Mock Data (Used as initial seed only)
@@ -131,7 +132,7 @@ const INITIAL_USERS: User[] = [
 ];
 
 const ROLE_PERMISSIONS: Record<UserRole, ViewState[]> = {
-    'Farm Manager': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Calendar, ViewState.POS, ViewState.Finance, ViewState.AI_Tools, ViewState.Settings, ViewState.Crops, ViewState.Machinery],
+    'Farm Manager': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Calendar, ViewState.POS, ViewState.Finance, ViewState.AI_Tools, ViewState.Settings, ViewState.Crops, ViewState.Machinery, ViewState.Staff],
     'Herdsman': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Calendar, ViewState.Crops, ViewState.Machinery],
     'General Worker': [ViewState.Dashboard, ViewState.Operations, ViewState.Calendar, ViewState.POS, ViewState.Crops],
     'Veterinarian': [ViewState.Dashboard, ViewState.Operations, ViewState.Pigs, ViewState.Calendar, ViewState.AI_Tools]
@@ -192,6 +193,7 @@ const App: React.FC = () => {
     const [assets, setAssets] = useState<Asset[]>(() => loadData('ECOMATT_ASSETS', []));
     const [maintenanceLogs, setMaintenanceLogs] = useState<MaintenanceLog[]>(() => loadData('ECOMATT_MAINTENANCE', []));
     const [fuelLogs, setFuelLogs] = useState<FuelLog[]>(() => loadData('ECOMATT_FUEL', []));
+    const [timesheets, setTimesheets] = useState<TimesheetLog[]>(() => loadData('ECOMATT_TIMESHEETS', []));
 
 
     // Save Effects
@@ -266,6 +268,7 @@ const App: React.FC = () => {
 
     useEffect(() => saveData(STORAGE_KEYS.NOTIFICATIONS, notificationConfig), [notificationConfig]);
     useEffect(() => saveData(STORAGE_KEYS.MEDICAL, medicalInventory), [medicalInventory]);
+    useEffect(() => saveData('ECOMATT_TIMESHEETS', timesheets), [timesheets]);
 
     // Navigation State for Pig Module
     const [selectedPig, setSelectedPig] = useState<Pig | null>(null);
@@ -583,6 +586,10 @@ const App: React.FC = () => {
         });
     };
 
+    const handleLogTime = (log: TimesheetLog) => {
+        setTimesheets([...timesheets, log]);
+    };
+
     const handleFabClick = () => {
         setCurrentView(ViewState.Pigs);
         setIsAddingPig(true);
@@ -760,6 +767,15 @@ const App: React.FC = () => {
                     onAddAsset={handleAddAsset}
                     onLogMaintenance={handleLogMaintenance}
                     onLogFuel={handleLogFuel}
+                />;
+
+            case ViewState.Staff:
+                return <StaffManager
+                    users={users}
+                    currentUser={currentUser}
+                    timesheets={timesheets}
+                    tasks={tasks}
+                    onLogTime={handleLogTime}
                 />;
 
             case ViewState.Settings:

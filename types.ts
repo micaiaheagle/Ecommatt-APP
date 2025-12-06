@@ -165,7 +165,8 @@ export enum ViewState {
   Calendar = 'Calendar',
   POS = 'POS',
   Crops = 'Crops',
-  Machinery = 'Machinery'
+  Machinery = 'Machinery',
+  Staff = 'Staff'
 }
 
 
