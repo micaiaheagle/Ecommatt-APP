@@ -32,7 +32,7 @@ Based on industry standards and [FarmerERP Features](https://farmererp.com/featu
 
 ### 4. Field/Plot Management
 -   **Field Mapping**: Define land areas (e.g., "Field A - Maize"). **New**: Visual overlays & crop assignment by soil type.
--   **Soil Sampling Logs**: Record soil test results (pH, Nitrogen, **EC levels**) to optimize fertilization.
+-   **Soil Health**: Log soil test results (pH, Nitrogen, **EC levels**) to optimize yield.
 -   **Fertility Mgmt**: AI-driven fertilizer recommendations based on soil data.
 -   **Crop Cycles**: Track "Seasons" (e.g., Summer Maize 2025).
 
@@ -93,3 +93,65 @@ Based on industry standards and [FarmerERP Features](https://farmererp.com/featu
 -   **Geofencing for Disease Control**: Use GPS to track movement between "Clean" and "Dirty" zones. Alert staff if they cross zones without logging a sanitation break.
 -   **Regulatory Reporting**: Automated generation of government-compliant movement permits and veterinary health certificates.
 -   **Environmental Monitoring Integration**: Connect to IoT sensors (temperature, humidity, ammonia levels) in the pens for real-time environmental alerts instead of manual checks.
+-   **Visitors Log**: Check-in visitors digitally for contact tracing.
+-   **Knowledge Hub**: Store SOPs and Manuals for easy staff access.
+-   **Help Centre**: Centralized support and troubleshooting guides.
+
+### 15. Veterinary & Medical Management Suite
+**Goal**: Real farms require strict tracking of medicines (antibiotics, vaccines) to ensure compliance with withdrawal periods and to manage costs.
+-   **Medical Cabinet (Inventory)**: Track stock of drugs, expiry dates, and batch numbers.
+-   **Dosage Calculator**: An integrated tool to calculate exact injection amounts based on pig weight and medicine concentration.
+
+### 16. Smart SOP & Workflow Engine (The "Chitsano Autopilot")
+**Why**: Skills shortages are real. You need the system to tell workers exactly what to do, not just record what they did.
+**The Tools**:
+-   **Digital Job Cards**: Instead of a generic "Checkup", the app generates a checklist: "1. Check Water Nipples, 2. Check Temperature, 3. Look for Scours".
+-   **Automated Protocols**: If a user logs "Sow Farrowed", the system automatically creates tasks for "Iron Injection (Day 3)", "Castration (Day 7)", and "Weaning (Day 28)" on the calendar.
+-   **QR Scan Verification**: Workers must scan a code on the pen door to prove they physically visited the location to complete the task.
+
+---
+
+## 🚀 Future Roadmap & Strategic Enhancements
+
+### 17. Ag-FinTech & Business Intelligence
+-   **Cash Flow Forecasting**: Predict bank balance 3-6 months ahead based on flock growth tables and crop harvest dates.
+-   **Breakeven Analysis**: Real-time calculator showing "Current cost per kg vs. Market Price" to know exactly when you start making profit.
+-   **Loan Readiness Pack**: One-click generation of reports formatted specifically for agricultural loan applications (Income Statement, Asset Register).
+
+### 18. Workforce Performance & Gamification
+-   **Performance Gamification**: Leaderboards for "Lowest Mortality Rate" or "Highest Picker Efficiency" to incentivize staff.
+-   **Biometric Attendance**: Integration with cheap fingerprint scanners or facial recognition on the mobile app to prevent "buddy punching".
+-   **Piece-Rate Calculations**: Auto-calculate wages based on output (e.g., "Paid per crate picked") rather than just hours worked.
+
+### 19. Precision Agriculture (Field Mgmt Upgrade)
+-   **Satellite/NDVI Imagery**: Integration with free open-source satellite data (like Sentinel-2) to show "Vegetation Health" heatmaps of fields every 5 days.
+-   **Variable Rate Maps**: Generate files for modern tractors to apply fertilizer only where needed (saving input costs).
+
+### 20. The "Connected Farm" Ecosystem (IoT Upgrade)
+-   **Water Quality Monitoring**: IoT sensors for pH and TDS in poultry drinking lines.
+-   **Silo Levels**: Laser/Ultrasonic sensors to auto-order feed when silos hit 10% capacity.
+-   **Cold Chain Monitoring**: Sensors in the delivery trucks to prove to buyers that meat/veg stayed cold during transport.
+
+### 21. CRM & Direct Sales
+**Why**: Many farms sell directly to local butcheries, supermarkets, or individuals.
+-   **Order Management**: Track orders from "Received" to "Delivered" to "Paid".
+-   **Customer Portal**: A simple webpage where wholesale clients can log in and see what's available for harvest next week.
+-   **Invoicing & Aging**: Track who owes money (Debtors) and send auto-reminders via SMS/WhatsApp.
+
+### 22. Sustainability & ESG Reporting (Green Farming)
+**Why**: Critical for export compliance and accessing "Green Financing" or carbon credits.
+-   **Carbon Footprint Tracker**: Estimate emission based on fuel and feed usage.
+-   **Water Efficiency Ratio**: Liters of water used per kg of food produced.
+-   **Waste-to-Energy Logs**: Track biogas generation from pig manure.
+
+### 23. Knowledge & Community Layer
+-   **"Ask an Agronomist"**: In-app chat feature to pay for a quick consultation with a verified vet or crop specialist.
+-   **Marketplace Integration**: Compare prices of seed/feed from different suppliers directly in the app.
+
+### 24. Maintenance & Internet-of-Heavy-Things
+-   **Parts Inventory**: Track spare belts, filters, and oil types for every specific machine model.
+-   **Breakdown Ticket System**: Workers snap a photo of a broken pipe; it assigns a task to the maintenance manager with high priority.
+
+### 25. Processing & Value Addition Module
+-   **Recipe Management**: "100kg Tomatoes + 2kg Salt = 100 Bottles Sauce".
+-   **Batch Traceability**: Link a specific bottle of sauce back to the specific field the tomatoes came from.

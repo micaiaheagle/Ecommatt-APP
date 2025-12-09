@@ -65,15 +65,7 @@ export interface Pig {
   lastFed?: string; // New Field
 }
 
-export interface Task {
-  id: string;
-  title: string;
-  dueDate: string;
-  priority: 'Low' | 'Medium' | 'High';
-  status: 'Pending' | 'Completed';
-  assignedTo?: string;
-  type: string;
-}
+
 
 export interface FeedInventory {
   id: string;
@@ -168,7 +160,68 @@ export enum ViewState {
   POS = 'POS',
   Crops = 'Crops',
   Machinery = 'Machinery',
-  Staff = 'Staff'
+  Staff = 'Staff',
+  Biosecurity = 'Biosecurity',
+  Automation = 'Automation'
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  type: 'General' | 'Feeding' | 'Cleaning' | 'Health' | 'Maintenance' | 'Crops';
+  status: 'Pending' | 'In Progress' | 'Completed';
+  priority: 'Low' | 'Medium' | 'High';
+  dueDate: string;
+  assignedTo?: string; // User ID
+  description?: string;
+  relatedEntityId?: string; // e.g., Pig ID, Field ID
+  // Enhanced Fields
+  checklist?: { id: string; text: string; completed: boolean; }[];
+  verificationMethod?: 'None' | 'QR_Scan' | 'Photo' | 'GPS';
+  targetQrCode?: string;
+}
+
+export interface TaskTemplate {
+  id: string;
+  title: string;
+  type: Task['type'];
+  priority: Task['priority'];
+  daysAfterTrigger: number;
+  description?: string;
+  checklist?: string[]; // Array of strings for template
+  verificationMethod?: Task['verificationMethod'];
+}
+
+export interface Protocol {
+  id: string;
+  name: string;
+  description?: string;
+  triggerType: 'Manual' | 'Event';
+  triggerEvent?: string; // e.g. 'Sow_Farrowed'
+  templates: TaskTemplate[];
+  active: boolean;
+}
+export interface VisitorLogEntry {
+  id: string;
+  name: string;
+  company?: string;
+  contact: string;
+  purpose: string;
+  checkInTime: string; // ISO String
+  checkOutTime?: string; // ISO String optional
+  date: string;
+  status: 'Checked In' | 'Checked Out';
+}
+
+export interface KnowledgeDoc {
+  id: string;
+  title: string;
+  category: 'SOPs' | 'Manuals' | 'Health' | 'HR' | 'Other';
+  type: 'PDF' | 'DOCX' | 'XLSX' | 'TXT';
+  size: string;
+  uploadDate: string;
+  addedBy: string;
+  url?: string; // For mock download
 }
 
 

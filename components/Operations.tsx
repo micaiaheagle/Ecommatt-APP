@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { FeedInventory, HealthRecord, Task, MedicalItem, Pig } from '../types';
 import { exportToPDF, exportToExcel } from '../services/exportService';
 import MedicalInventoryManager from './MedicalInventoryManager';
+import JobCardExecution from './JobCardExecution';
 
 interface OperationsProps {
     pigs: Pig[];
@@ -18,6 +19,7 @@ interface OperationsProps {
     onDeleteMedicalItem: (id: string) => void;
     onSaveHealthRecord: (record: HealthRecord) => void;
     onLogManure?: (amount: number, date: string) => void;
+    onUpdateTask?: (task: Task) => void;
 }
 
 const Operations: React.FC<OperationsProps> = ({
@@ -33,7 +35,8 @@ const Operations: React.FC<OperationsProps> = ({
     onSaveMedicalItem,
     onDeleteMedicalItem,
     onSaveHealthRecord,
-    onLogManure
+    onLogManure,
+    onUpdateTask
 }) => {
     const [activeTab, setActiveTab] = useState<'Tasks' | 'Feed' | 'Health' | 'Pharmacy' | 'Manure'>('Tasks');
     const [sortBy, setSortBy] = useState<'dueDate' | 'priority'>('dueDate');
@@ -48,6 +51,25 @@ const Operations: React.FC<OperationsProps> = ({
         date: new Date().toISOString().split('T')[0],
         type: 'Treatment'
     });
+
+    const [executingTask, setExecutingTask] = useState<Task | null>(null);
+
+    // Task Execution Logic
+    const handleTaskClick = (task: Task) => {
+        // If task has checklist or verification, open Job Card
+        if ((task.checklist && task.checklist.length > 0) || (task.verificationMethod && task.verificationMethod !== 'None')) {
+            setExecutingTask(task);
+        } else {
+            // Simple tasks can be toggled (Optional: Implement simple toggle logic here if needed, currently just opens detailed if exists)
+            // For now, let's treat all clicks as "Open Details" if we want, or just simple complete.
+            // Assumption: Smart SOP tasks always have checklist/verification.
+        }
+    };
+
+    const handleTaskComplete = (completedTask: Task) => {
+        if (onUpdateTask) onUpdateTask(completedTask);
+        setExecutingTask(null);
+    };
 
 
     useEffect(() => {
@@ -140,6 +162,17 @@ const Operations: React.FC<OperationsProps> = ({
                                         <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded mt-2 inline-block font-bold">High Priority</span>
                                     )}
                                 </div>
+
+                                {(task.checklist?.length || 0) > 0 && (
+                                    <div className="flex-none flex items-center">
+                                        <button
+                                            onClick={() => handleTaskClick(task)}
+                                            className="bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-blue-700 transition shadow-sm border border-blue-700"
+                                        >
+                                            Start Job
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )) : (
                             <div className="text-center py-8 text-gray-400 text-sm">
@@ -528,6 +561,14 @@ const Operations: React.FC<OperationsProps> = ({
                 </div>
             )}
 
+            {/* Job Card Execution Modal */}
+            {executingTask && (
+                <JobCardExecution
+                    task={executingTask}
+                    onComplete={handleTaskComplete}
+                    onCancel={() => setExecutingTask(null)}
+                />
+            )}
         </div>
     );
 };

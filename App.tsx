@@ -34,8 +34,10 @@ import EmailAlertsSetup from './components/EmailAlertsSetup';
 import Onboarding from './components/Onboarding';
 import Signup from './components/Signup';
 import Verification from './components/Verification';
+import BiosecurityFeatures from './components/BiosecurityFeatures';
+import AutomationManager from './components/AutomationManager';
 import { sendVerificationEmail, sendWelcomeEmail } from './services/emailService';
-import { Pig, Task, PigStatus, PigStage, FeedInventory, HealthRecord, FinanceRecord, BudgetRecord, LoanRecord, ViewState, User, UserRole, TimelineEvent, NotificationConfig, MedicalItem, Product, CartItem, Field, Crop, CropCycle, CropActivity, Asset, MaintenanceLog, FuelLog, TimesheetLog } from './types';
+import { Pig, Task, PigStatus, PigStage, FeedInventory, HealthRecord, FinanceRecord, BudgetRecord, LoanRecord, ViewState, User, UserRole, TimelineEvent, NotificationConfig, MedicalItem, Product, CartItem, Field, Crop, CropCycle, CropActivity, Asset, MaintenanceLog, FuelLog, TimesheetLog, VisitorLogEntry, KnowledgeDoc, Protocol } from './types';
 import { loadData, saveData, STORAGE_KEYS } from './services/storageService';
 
 // Mock Data (Used as initial seed only)
@@ -65,20 +67,16 @@ const SEED_PIGS: Pig[] = [
         ]
     },
     { id: '2', tagId: 'EF-9001', breed: 'Duroc', dob: '2023-02-20', gender: 'Male', stage: PigStage.Boar, status: PigStatus.Active, penLocation: 'Pen 1A', weight: 210, sireId: 'D-100', damId: 'D-055', lastFed: 'Today 07:45 AM' },
-    { id: '3', tagId: 'EF-003', breed: 'Landrace', dob: '2023-06-10', gender: 'Female', stage: PigStage.Grower, status: PigStatus.Sick, penLocation: 'Isolation', weight: 65, notes: 'Coughing', lastFed: 'Today 09:00 AM' },
-    { id: '4', tagId: 'EF-004', breed: 'Large White', dob: '2023-07-01', gender: 'Male', stage: PigStage.Weaner, status: PigStatus.Active, penLocation: 'Pen C2', weight: 25, lastFed: 'Yesterday 04:00 PM' },
-    { id: '5', tagId: 'EF-005', breed: 'Large White', dob: '2023-10-01', gender: 'Female', stage: PigStage.Piglet, status: PigStatus.Active, penLocation: 'Pen F1', weight: 12, lastFed: 'Today 10:00 AM' },
-    { id: '6', tagId: 'EF-006', breed: 'Duroc', dob: '2023-10-01', gender: 'Male', stage: PigStage.Piglet, status: PigStatus.Active, penLocation: 'Pen F1', weight: 13, lastFed: 'Today 10:00 AM' },
     { id: '7', tagId: 'EF-007', breed: 'Large White', dob: '2025-05-20', gender: 'Female', stage: PigStage.Finisher, status: PigStatus.Active, penLocation: 'Pen F2', weight: 85, lastFed: 'Today 10:00 AM' },
     { id: '8', tagId: 'EF-008', breed: 'Large White', dob: '2025-05-20', gender: 'Male', stage: PigStage.Finisher, status: PigStatus.Active, penLocation: 'Pen F2', weight: 88, lastFed: 'Today 10:00 AM' },
 ];
 
 const SEED_TASKS: Task[] = [
-    { id: 't1', title: 'Administer Iron', dueDate: today, priority: 'High', status: 'Pending', type: 'Medical' },
-    { id: 't2', title: 'Pregnancy Scan', dueDate: yesterday, priority: 'Low', status: 'Completed', type: 'Repro' },
-    { id: 't3', title: 'Order Grower Pellets', dueDate: tomorrow, priority: 'Medium', status: 'Pending', type: 'Procurement' },
-    { id: 't4', title: 'Pen Cleaning Routine', dueDate: today, priority: 'Medium', status: 'Pending', type: 'Hygiene' },
-    { id: 't5', title: 'Market Weight Check', dueDate: tomorrow, priority: 'High', status: 'Pending', type: 'Sales' },
+    { id: 't1', title: 'Administer Iron', dueDate: today, priority: 'High', status: 'Pending', type: 'Health', description: 'Batch #204 needs Iron Dextran' },
+    { id: 't2', title: 'Pregnancy Scan', dueDate: yesterday, priority: 'Low', status: 'Completed', type: 'Health', description: 'Check sow 104' },
+    { id: 't3', title: 'Order Grower Pellets', dueDate: tomorrow, priority: 'Medium', status: 'Pending', type: 'General', description: 'Low stock' },
+    { id: 't4', title: 'Pen Cleaning Routine', dueDate: today, priority: 'Medium', status: 'Pending', type: 'Cleaning', description: 'Pressure wash' },
+    { id: 't5', title: 'Market Weight Check', dueDate: tomorrow, priority: 'High', status: 'Pending', type: 'General', description: 'Sort finishers' },
 ];
 
 const SEED_FEEDS: FeedInventory[] = [
@@ -132,11 +130,32 @@ const INITIAL_USERS: User[] = [
 ];
 
 const ROLE_PERMISSIONS: Record<UserRole, ViewState[]> = {
-    'Farm Manager': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Calendar, ViewState.POS, ViewState.Finance, ViewState.AI_Tools, ViewState.Settings, ViewState.Crops, ViewState.Machinery, ViewState.Staff],
+    'Farm Manager': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Calendar, ViewState.POS, ViewState.Finance, ViewState.AI_Tools, ViewState.Settings, ViewState.Crops, ViewState.Machinery, ViewState.Staff, ViewState.Biosecurity],
     'Herdsman': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Calendar, ViewState.Crops, ViewState.Machinery],
-    'General Worker': [ViewState.Dashboard, ViewState.Operations, ViewState.Calendar, ViewState.POS, ViewState.Crops],
-    'Veterinarian': [ViewState.Dashboard, ViewState.Operations, ViewState.Pigs, ViewState.Calendar, ViewState.AI_Tools]
+    'General Worker': [ViewState.Dashboard, ViewState.Operations, ViewState.Calendar, ViewState.POS, ViewState.Crops, ViewState.Biosecurity],
+    'Veterinarian': [ViewState.Dashboard, ViewState.Operations, ViewState.Pigs, ViewState.Calendar, ViewState.AI_Tools, ViewState.Biosecurity, ViewState.Automation]
 };
+
+const SEED_PROTOCOLS: Protocol[] = [
+    {
+        id: 'p1',
+        name: 'New Piglet Batch Protocol',
+        triggerType: 'Event',
+        triggerEvent: 'Sow_Farrowed',
+        active: true,
+        templates: [
+            { id: 't1', title: 'Iron Injection', type: 'Health', priority: 'High', daysAfterTrigger: 3, checklist: ['Prepare Iron Dextran', 'Inject 1ml/piglet'], verificationMethod: 'None' },
+            { id: 't2', title: 'Tail Docking', type: 'Health', priority: 'Medium', daysAfterTrigger: 4, checklist: ['Sanitize Cutter', 'Dock Tails', 'Apply Iodine'], verificationMethod: 'None' }
+        ]
+    }
+];
+
+const SEED_DOCS: KnowledgeDoc[] = [
+    { id: '1', title: 'Biosecurity Protocol v2.4', category: 'SOPs', type: 'PDF', size: '2.4 MB', uploadDate: '2025-11-20', addedBy: 'Admin' },
+    { id: '2', title: 'Visitor Entry Policy', category: 'SOPs', type: 'PDF', size: '1.1 MB', uploadDate: '2025-11-15', addedBy: 'Admin' },
+    { id: '3', title: 'Tractor JD-550 Service Manual', category: 'Manuals', type: 'PDF', size: '15 MB', uploadDate: '2025-05-10', addedBy: 'Manager' },
+    { id: '4', title: 'Vaccination Schedule 2025', category: 'Health', type: 'XLSX', size: '0.4 MB', uploadDate: '2025-12-01', addedBy: 'Vet' }
+];
 
 const App: React.FC = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -199,6 +218,11 @@ const App: React.FC = () => {
     // Manure State
     const [manureStock, setManureStock] = useState<number>(() => loadData('ECOMATT_MANURE_STOCK', 0));
 
+    // Biosecurity & Automation State
+    const [visitorLogs, setVisitorLogs] = useState<VisitorLogEntry[]>(() => loadData('ECOMATT_VISITORS', []));
+    const [knowledgeDocs, setKnowledgeDocs] = useState<KnowledgeDoc[]>(() => loadData('ECOMATT_DOCS', SEED_DOCS));
+    const [protocols, setProtocols] = useState<Protocol[]>(() => loadData('ECOMATT_PROTOCOLS', SEED_PROTOCOLS));
+
 
 
     // Save Effects
@@ -208,6 +232,9 @@ const App: React.FC = () => {
     useEffect(() => saveData('ECOMATT_MAINTENANCE', maintenanceLogs), [maintenanceLogs]);
     useEffect(() => saveData('ECOMATT_FUEL', fuelLogs), [fuelLogs]);
     useEffect(() => saveData('ECOMATT_MANURE_STOCK', manureStock), [manureStock]);
+    useEffect(() => saveData('ECOMATT_VISITORS', visitorLogs), [visitorLogs]);
+    useEffect(() => saveData('ECOMATT_DOCS', knowledgeDocs), [knowledgeDocs]);
+    useEffect(() => saveData('ECOMATT_PROTOCOLS', protocols), [protocols]);
 
 
 
@@ -387,11 +414,49 @@ const App: React.FC = () => {
         await sendWelcomeEmail(newUser.email, newUser.name);
     };
 
+    // Automation Trigger Helper
+    const checkAutomationTriggers = (eventName: string, context: any) => {
+        const activeProtocols = protocols.filter(p => p.active && p.triggerType === 'Event' && p.triggerEvent === eventName);
+
+        activeProtocols.forEach(protocol => {
+            const newTasks = protocol.templates.map(template => {
+                const dueDate = new Date();
+                dueDate.setDate(dueDate.getDate() + template.daysAfterTrigger);
+
+                return {
+                    id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    title: template.title,
+                    type: template.type,
+                    status: 'Pending' as const,
+                    priority: template.priority,
+                    dueDate: dueDate.toISOString().split('T')[0],
+                    description: `Auto-generated by protocol: ${protocol.name}. ${template.description || ''}`,
+                    checklist: template.checklist?.map((item, idx) => ({ id: `cl-${idx}`, text: item, completed: false })),
+                    verificationMethod: template.verificationMethod
+                };
+            });
+
+            if (newTasks.length > 0) {
+                setTasks(prev => [...newTasks, ...prev]);
+                alert(`⚡ Automation: Generated ${newTasks.length} tasks from "${protocol.name}"`);
+            }
+        });
+    };
+
     // Pig Management Handlers
     const handleSaveNewPig = (newPig: Pig) => {
         setPigs([...pigs, newPig]);
         setIsAddingPig(false);
+
+        // Trigger Automation
+        // Example: If adding a Piglet, we assume a farrowing event might have occurred or we just trigger 'New_Pig_Added'
+        // For the specific user requirement "Sow Farrowed", this usually implies a batch of piglets.
+        // We will trigger 'Sow_Farrowed' if the stage is Piglet, just for demonstration of the "Autopilot".
+        if (newPig.stage === PigStage.Piglet) {
+            checkAutomationTriggers('Sow_Farrowed', { pigId: newPig.id });
+        }
     };
+
 
     const handleDeletePig = (id: string) => {
         setPigs(pigs.filter(p => p.id !== id));
@@ -402,6 +467,10 @@ const App: React.FC = () => {
         setPigs(pigs.map(p => p.id === updatedPig.id ? updatedPig : p));
         setSelectedPig(updatedPig);
         setIsEditingPig(false);
+    };
+
+    const handleUpdateTask = (updatedTask: Task) => {
+        setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
     };
 
     const handleNavClick = (view: ViewState) => {
@@ -628,6 +697,40 @@ const App: React.FC = () => {
         setTimesheets([...timesheets, log]);
     };
 
+    // Biosecurity Handlers
+    const handleCheckInVisitor = (entry: VisitorLogEntry) => {
+        setVisitorLogs([entry, ...visitorLogs]);
+    };
+
+    const handleCheckOutVisitor = (id: string, time: string) => {
+        setVisitorLogs(visitorLogs.map(v => v.id === id ? { ...v, checkOutTime: time, status: 'Checked Out' } : v));
+    };
+
+    const handleAddDocument = (doc: KnowledgeDoc) => {
+        setKnowledgeDocs([...knowledgeDocs, doc]);
+    };
+
+    const handleDeleteDocument = (id: string) => {
+        setKnowledgeDocs(knowledgeDocs.filter(d => d.id !== id));
+    };
+
+    // Automation Handlers
+    const handleSaveProtocol = (protocol: Protocol) => {
+        if (protocols.find(p => p.id === protocol.id)) {
+            setProtocols(protocols.map(p => p.id === protocol.id ? protocol : p));
+        } else {
+            setProtocols([...protocols, protocol]);
+        }
+    };
+
+    const handleToggleProtocol = (id: string) => {
+        setProtocols(protocols.map(p => p.id === id ? { ...p, active: !p.active } : p));
+    };
+
+    const handleDeleteProtocol = (id: string) => {
+        setProtocols(protocols.filter(p => p.id !== id));
+    };
+
     const handleFabClick = () => {
         setCurrentView(ViewState.Pigs);
         setIsAddingPig(true);
@@ -703,6 +806,7 @@ const App: React.FC = () => {
                     onDeleteMedicalItem={handleDeleteMedicalItem}
                     onSaveHealthRecord={handleSaveHealthRecord}
                     onLogManure={handleLogManure}
+                    onUpdateTask={handleUpdateTask}
                 />;
 
             case ViewState.Finance:
@@ -823,6 +927,25 @@ const App: React.FC = () => {
                     timesheets={timesheets}
                     tasks={tasks}
                     onLogTime={handleLogTime}
+                />;
+
+            case ViewState.Biosecurity:
+                return <BiosecurityFeatures
+                    visitorLogs={visitorLogs}
+                    onCheckInVisitor={handleCheckInVisitor}
+                    onCheckOutVisitor={handleCheckOutVisitor}
+                    knowledgeDocs={knowledgeDocs}
+                    onAddDocument={handleAddDocument}
+                    onDeleteDocument={handleDeleteDocument}
+                    currentUser={currentUser}
+                />;
+
+            case ViewState.Automation:
+                return <AutomationManager
+                    protocols={protocols}
+                    onSaveProtocol={handleSaveProtocol}
+                    onToggleProtocol={handleToggleProtocol}
+                    onDeleteProtocol={handleDeleteProtocol}
                 />;
 
             case ViewState.Settings:

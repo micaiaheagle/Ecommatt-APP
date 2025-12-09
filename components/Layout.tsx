@@ -63,6 +63,8 @@ const Layout: React.FC<LayoutProps> = ({
     { id: ViewState.Staff, icon: 'fa-users', label: 'Staff & Labor', roles: ['Farm Manager'] },
     { id: ViewState.Finance, icon: 'fa-chart-pie', label: 'Financials', roles: ['Farm Manager'] },
     { id: ViewState.AI_Tools, icon: 'fa-brain', label: 'Chitsano AI', roles: ['Farm Manager', 'Veterinarian'] },
+    { id: ViewState.Biosecurity, icon: 'fa-shield-virus', label: 'Biosecurity', roles: ['Farm Manager', 'Veterinarian', 'General Worker'] },
+    { id: ViewState.Automation, icon: 'fa-robot', label: 'Automation', roles: ['Veterinarian'] },
     { id: ViewState.Settings, icon: 'fa-cog', label: 'Settings', roles: ['Farm Manager'] },
   ];
 
