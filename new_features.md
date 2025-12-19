@@ -155,3 +155,23 @@ Based on industry standards and [FarmerERP Features](https://farmererp.com/featu
 ### 25. Processing & Value Addition Module
 -   **Recipe Management**: "100kg Tomatoes + 2kg Salt = 100 Bottles Sauce".
 -   **Batch Traceability**: Link a specific bottle of sauce back to the specific field the tomatoes came from.
+
+## 🧬 26. High-Precision Piggery (Vet-Driven Optimization)
+**Goal**: Address management-related mortality and feeding inefficiencies identified in the Dr. Gusha technical report.
+
+### 1. Smart Feeding Calculator (Precision Nutrition)
+-   **Dynamic Lactation Calculation**: A tool for workers to input the number of nursing piglets; the app auto-calculates the exact ration (e.g., `2.0kg + 0.45kg per piglet = 6.5kg/day`).
+-   **Weaner "Stomach Protection" Schedule**: Implements a strict 4-meal-per-day timer (8am, 11am, 2pm, 4pm) with push notifications to prevent overfeeding and scouring.
+-   **Formulation Library**: Direct access to Dr. Gusha's prescribed rations (Maize/Soy/Wheat Bran mixes) for different pig classes.
+
+### 2. "First-72-Hour" Farrowing Watch
+-   **Crushing Prevention Protocol**: High-priority tasks for the first 3 days post-farrowing to verify "Creep Heat Active", "Rails Secure", and "Sow Temperament".
+-   **Fostering Assistant**: AI suggestion tool to identify weak piglets in large litters (15+) for fostering to stronger sows with smaller litters.
+
+### 3. Reproductive Efficiency Tracker
+-   **BCS (Body Condition Score) Log**: Photo-based logging of sow condition (Target: 3.0-3.5) to ensure they are ready for service 5-7 days post-weaning.
+-   **Vaccination Alarms**: Automated reminders for "Farrowsure" and other critical reproductive vaccines.
+
+### 4. Environmental Monitoring (IoT)
+-   **Creep Zone Heat Alerts**: Integration with temperature sensors in farrowing pens to ensure the 30–32°C target range for piglets is maintained.
+-   **Draft Detection**: Checklist reminders to check for ventilation gaps during winter or rainy seasons.

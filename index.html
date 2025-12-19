@@ -1,73 +1,109 @@
-
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-    
-    <!-- Cache Busting Headers v11.8 -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
-    
-    <meta name="theme-color" content="#27cd00" />
-    <title>Ecomatt Farm Manager</title>
-    <meta name="description" content="Ecomatt Farm Management System" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Updated FontAwesome with CrossOrigin to fix missing icons -->
-    <link 
-      rel="stylesheet" 
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
-      integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" 
-      crossorigin="anonymous" 
-      referrerpolicy="no-referrer" 
-    />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              ecomattBlack: '#010101',
-              ecomattYellow: '#f1b103',
-              ecomattGreen: '#27cd00',
-              grayBg: '#f3f4f6',
-            },
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-            },
-            boxShadow: {
-              'phone': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-            }
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+
+  <!-- Cache Busting Headers v11.8 -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <meta name="theme-color" content="#27cd00" />
+  <title>Ecomatt Farm Manager</title>
+  <meta name="description" content="Ecomatt Farm Management System" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Updated FontAwesome with CrossOrigin to fix missing icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ecomattBlack: '#010101',
+            ecomattYellow: '#f1b103',
+            ecomattGreen: '#27cd00',
+            grayBg: '#f3f4f6',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          boxShadow: {
+            'phone': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           }
         }
       }
-    </script>
-    <style>
-      /* Custom scrollbar for webkit */
-      ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #f1f1f1; 
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #ccc; 
-        border-radius: 3px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #999; 
-      }
-      body {
-        -webkit-tap-highlight-color: transparent;
-        background-color: #f3f4f6;
-      }
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
-    <link rel="icon" type="image/png" href="https://placehold.co/192x192/27cd00/ffffff/png?text=Ecomatt" />
-<script type="importmap">
+    }
+  </script>
+  <style>
+    /* Custom scrollbar for webkit */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(39, 205, 0, 0.2);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(39, 205, 0, 0.5);
+    }
+
+    /* Sidebar Specific Scrollbar */
+    .sidebar-scroll::-webkit-scrollbar-thumb {
+      background: rgba(39, 205, 0, 0.1);
+    }
+
+    .sidebar-scroll:hover::-webkit-scrollbar-thumb {
+      background: rgba(39, 205, 0, 0.3);
+    }
+
+    /* Modern Glassmorphism */
+    .glass-nav {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    /* Sliding Active Indicator */
+    .nav-indicator {
+      position: absolute;
+      left: 0;
+      width: 4px;
+      background: #27cd00;
+      border-radius: 0 4px 4px 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 15px rgba(39, 205, 0, 0.5);
+    }
+
+    body {
+      -webkit-tap-highlight-color: transparent;
+      background-color: #f3f4f6;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+  <link rel="icon" type="image/png" href="https://placehold.co/192x192/27cd00/ffffff/png?text=Ecomatt" />
+  <script type="importmap">
 {
   "imports": {
     "react": "https://aistudiocdn.com/react@^19.2.0",
@@ -83,8 +119,10 @@
 }
 </script>
 </head>
-  <body class="bg-grayBg text-gray-900 font-sans antialiased">
-    <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
-  </body>
+
+<body class="bg-grayBg text-gray-900 font-sans antialiased">
+  <div id="root"></div>
+  <script type="module" src="./index.tsx"></script>
+</body>
+
 </html>

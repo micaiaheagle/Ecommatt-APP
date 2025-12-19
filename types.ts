@@ -63,6 +63,7 @@ export interface Pig {
   // Extended Data
   timeline?: TimelineEvent[];
   lastFed?: string; // New Field
+  nursingCount?: number; // Added for Dr. Gusha ration formula
 }
 
 
@@ -87,6 +88,7 @@ export interface FinanceRecord {
   status?: 'Paid' | 'Scheduled' | 'Projected'; // Added for Cash Flow Forecasting
   enterprise?: 'General' | 'Piggery' | 'Poultry' | 'Crops' | 'Machinery'; // Added for Cost Centers
   allocationId?: string; // ID for specific Field, Asset, or Batch
+  currency?: Currency; // Added for Multi-currency support
 }
 
 export interface BudgetRecord {
@@ -113,12 +115,16 @@ export interface HealthRecord {
   id: string;
   pigId: string;
   date: string;
-  type: 'Vaccination' | 'Treatment' | 'Checkup';
+  type: 'Vaccination' | 'Treatment' | 'Checkup' | 'Mortality' | 'Deworming';
   description: string;
   medication?: string;
   administeredBy: string;
   medicalItemId?: string;
   quantityUsed?: number;
+  // Clinical Data
+  causeOfDeath?: 'Crushed' | 'Scouring' | 'Weak' | 'Disease' | 'Unknown';
+  temperature?: number;
+  bodyConditionScore?: number; // 1 to 5 scale
 }
 
 // Notification Settings
@@ -138,6 +144,14 @@ export enum LogSeverity {
   Info = 'Info',
   Warning = 'Warning',
   Critical = 'Critical'
+}
+
+export type Currency = 'USD' | 'ZiG' | 'ZAR';
+
+export interface ExchangeRate {
+  pair: 'USD/ZiG';
+  rate: number;
+  lastUpdated: string;
 }
 
 export interface LiveOpLog {
@@ -162,7 +176,17 @@ export enum ViewState {
   Machinery = 'Machinery',
   Staff = 'Staff',
   Biosecurity = 'Biosecurity',
-  Automation = 'Automation'
+  Automation = 'Automation',
+  CRM = 'CRM',
+  PrecisionFeeding = 'PrecisionFeeding',
+  FarrowingWatch = 'FarrowingWatch',
+  Vet = 'Vet',
+  PrecisionAg = 'PrecisionAg',
+  Workforce = 'Workforce',
+  Logistics = 'Logistics',
+  Genetics = 'Genetics',
+  Energy = 'Energy',
+  Procurement = 'Procurement'
 }
 
 export interface Task {
@@ -211,7 +235,61 @@ export interface VisitorLogEntry {
   checkOutTime?: string; // ISO String optional
   date: string;
   status: 'Checked In' | 'Checked Out';
+  // Risk Assessment (Dr. Gusha Report)
+  visitedOtherFarm: boolean;
+  sanitized: boolean;
+  riskLevel: 'Low' | 'Medium' | 'High';
+  notes?: string;
 }
+
+export interface BiosecurityZone {
+  id: string;
+  name: string;
+  riskCategory: 'Red' | 'Yellow' | 'Green';
+  lastDisinfected: string;
+  requiredSOPId?: string;
+}
+
+export interface ComplianceDoc {
+  id: string;
+  type: 'Movement Permit' | 'Vet Certificate' | 'Health Report';
+  issueDate: string;
+  expiryDate?: string;
+  issuedBy: string;
+  status: 'Valid' | 'Expired' | 'Pending';
+  fileUrl?: string;
+}
+
+export interface AttendanceLog {
+  id: string;
+  userId: string;
+  date: string;
+  checkInTime: string;
+  checkOutTime?: string;
+  location?: { lat: number; lng: number; };
+  status: 'On Site' | 'Out';
+  method: 'Manual' | 'GPS' | 'Biometric';
+}
+
+export interface PerformanceScore {
+  id: string;
+  userId: string;
+  category: 'Mortality Control' | 'Harvest Efficiency' | 'Task Completion';
+  score: number; // 0-100
+  period: string; // e.g., '2025-W48'
+}
+
+export interface PieceRateEarning {
+  id: string;
+  userId: string;
+  date: string;
+  taskType: string;
+  quantity: number;
+  unit: string;
+  ratePerUnit: number;
+  totalAmount: number;
+}
+
 
 export interface KnowledgeDoc {
   id: string;
@@ -291,6 +369,27 @@ export interface Field {
   soilType?: string;
   status: 'Planted' | 'Fallow' | 'Preparation';
   currentCropId?: string;
+  satelliteScans?: SatelliteScan[];
+  lastNDVI?: number;
+}
+
+export interface SatelliteScan {
+  id: string;
+  date: string;
+  imageUrl: string;
+  ndviScore: number; // 0 to 1
+  healthReport: string;
+  alerts: string[];
+}
+
+export interface PrecisionMap {
+  id: string;
+  fieldId: string;
+  type: 'Fertilizer' | 'Pest Control' | 'Seeding';
+  prescriptionDate: string;
+  resolutionMeters: number;
+  dataPoints: { x: number, y: number, value: number, unit: string }[];
+  status: 'Draft' | 'Sent to Tractor' | 'Applied';
 }
 
 export interface Crop {
@@ -349,3 +448,131 @@ export interface TimesheetLog {
   relatedId?: string; // Links to Field/Asset/Pig
 }
 
+
+// CRM & Direct Sales Types
+export interface Customer {
+  id: string;
+  name: string;
+  type: 'Wholesale' | 'Retail' | 'Restaurant' | 'Individual';
+  contact: string;
+  email?: string;
+  address?: string;
+  balance: number; // Current amount owed
+  creditLimit?: number;
+  lastOrderDate?: string;
+}
+
+export interface Order {
+  id: string;
+  customerId: string;
+  date: string;
+  status: 'Pending' | 'Confirmed' | 'Delivered' | 'Cancelled';
+  items: CartItem[];
+  totalAmount: number;
+  paymentStatus: 'Unpaid' | 'Partial' | 'Paid';
+  deliveryDate?: string;
+  notes?: string;
+  invoiceId?: string; // Linked Invoice
+}
+
+export interface Invoice {
+  id: string;
+  orderId: string;
+  customerId: string;
+  issueDate: string;
+  dueDate: string;
+  totalAmount: number;
+  paidAmount: number;
+  status: 'Draft' | 'Sent' | 'Paid' | 'Overdue';
+}
+
+export interface LogisticsRoute {
+  id: string;
+  driverName: string;
+  vehicleId: string;
+  stops: {
+    locationName: string;
+    type: 'Pickup' | 'Dropoff' | 'Abattoir';
+    status: 'Pending' | 'Completed' | 'Skipped';
+    arrivalTime?: string;
+  }[];
+  status: 'En Route' | 'Completed' | 'Idle' | 'Maintenance';
+  currentLat: number;
+  currentLng: number;
+  eta: string;
+}
+
+export interface WholesaleProduct {
+  id: string;
+  name: string;
+  category: 'Pork' | 'Grain' | 'Vegetables';
+  availableQty: number;
+  unit: string;
+  pricePerUnit: number;
+  expectedHarvestDate?: string;
+  qualityGrade: 'A' | 'B' | 'C';
+}
+
+export interface InventoryScan {
+  id: string;
+  itemId: string; // Feed ID or Med ID
+  type: 'Inbound' | 'Usage' | 'Stocktake';
+  quantity: number;
+  timestamp: string;
+  scannedBy: string;
+  location: string;
+}
+
+export interface EnergyAsset {
+  id: string;
+  name: string;
+  type: 'Critical' | 'Non-Essential';
+  powerDrawKw: number;
+  status: 'Active' | 'Shed';
+}
+
+export interface SolarSystemStatus {
+  batteryLevel: number; // 0-100
+  generationKw: number;
+  currentLoadKw: number;
+  isGridDown: boolean;
+  assets: EnergyAsset[];
+}
+
+export interface SupplierQuote {
+  id: string;
+  supplierName: string;
+  itemName: string;
+  price: number;
+  currency: Currency;
+  date: string;
+  validUntil: string;
+  notes?: string;
+}
+
+export interface MarketRate {
+  pair: string; // e.g., 'USD/ZAR'
+  rate: number;
+  trend: 'up' | 'down' | 'stable';
+}
+
+export interface PenMovement {
+  id: string;
+  userId: string;
+  userName: string;
+  penId: string;
+  penName: string;
+  timestamp: string;
+  type: 'In' | 'Out';
+  sanitized: boolean;
+}
+
+export interface InfectionAlert {
+  id: string;
+  penId: string;
+  penName: string;
+  disease: string;
+  severity: 'Critical' | 'Warning';
+  detectedAt: string;
+  status: 'Active' | 'Contained';
+}

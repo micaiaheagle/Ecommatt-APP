@@ -1,0 +1,71 @@
+import React from 'react';
+import { ViewState } from '../types';
+import { ArrowLeft, Menu, Bell, User } from 'lucide-react';
+
+interface MobileHeaderProps {
+    currentView: ViewState;
+    currentSubView?: string | null;
+    onBack: () => void;
+    showBack: boolean;
+    onOpenSidebar: () => void;
+    onOpenNotifications: () => void;
+    currentUser: any;
+}
+
+const MobileHeader: React.FC<MobileHeaderProps> = ({
+    currentView,
+    currentSubView,
+    onBack,
+    showBack,
+    onOpenSidebar,
+    onOpenNotifications,
+    currentUser
+}) => {
+    return (
+        <header className="md:hidden h-16 bg-ecomattBlack border-b border-white/5 flex items-center justify-between px-4 sticky top-0 z-50">
+            <div className="flex items-center gap-3">
+                {showBack ? (
+                    <button
+                        onClick={onBack}
+                        className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-white active:scale-90 transition"
+                    >
+                        <ArrowLeft size={20} />
+                    </button>
+                ) : (
+                    <button
+                        onClick={onOpenSidebar}
+                        className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-white active:scale-90 transition"
+                    >
+                        <Menu size={20} />
+                    </button>
+                )}
+
+                <div>
+                    <h1 className="text-sm font-black text-white tracking-tight leading-none">
+                        {showBack ? (currentSubView || currentView) : 'Ecomatt Farm'}
+                    </h1>
+                    {!showBack && (
+                        <p className="text-[8px] text-ecomattGreen font-bold uppercase tracking-widest mt-0.5">
+                            Online • {currentUser?.role}
+                        </p>
+                    )}
+                </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+                <button
+                    onClick={onOpenNotifications}
+                    className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 relative"
+                >
+                    <Bell size={18} />
+                    <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-ecomattBlack"></span>
+                </button>
+                <div className="w-10 h-10 bg-ecomattGreen/20 border border-ecomattGreen/30 rounded-xl flex items-center justify-center text-ecomattGreen text-xs font-black">
+                    {currentUser?.name?.charAt(0) || 'U'}
+                </div>
+            </div>
+        </header>
+    );
+};
+
+export default MobileHeader;

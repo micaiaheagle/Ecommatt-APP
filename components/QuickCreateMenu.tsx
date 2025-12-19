@@ -144,6 +144,8 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
                   <MobileGridItem icon="fa-arrow-down" label="Income" action="add_income" colorClass="bg-green-100" iconColor="text-green-700" />
                   <MobileGridItem icon="fa-arrow-up" label="Expense" action="add_expense" colorClass="bg-red-100" iconColor="text-red-600" />
                   <MobileGridItem icon="fa-file-invoice" label="Invoice" action="create_invoice" colorClass="bg-gray-100" iconColor="text-gray-600" />
+                  <MobileGridItem icon="fa-user-tag" label="Customer" action="add_customer" colorClass="bg-orange-50" iconColor="text-orange-600" />
+                  <MobileGridItem icon="fa-shopping-cart" label="Order" action="add_order" colorClass="bg-orange-50" iconColor="text-orange-600" />
                 </div>
               </div>
             </div>
@@ -182,6 +184,8 @@ const QuickCreateMenu: React.FC<QuickCreateMenuProps> = ({ onAction }) => {
                   <DesktopListItem icon="fa-arrow-down" label="Record Income" action="add_income" />
                   <DesktopListItem icon="fa-arrow-up" label="Record Expense" action="add_expense" />
                   <DesktopListItem icon="fa-file-invoice-dollar" label="Create Invoice" action="create_invoice" />
+                  <DesktopListItem icon="fa-user-tag" label="New Customer" action="add_customer" />
+                  <DesktopListItem icon="fa-shopping-cart" label="New Order" action="add_order" />
                 </ul>
               </div>
 

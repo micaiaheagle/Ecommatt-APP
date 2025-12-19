@@ -210,6 +210,10 @@ const Dashboard: React.FC<DashboardProps> = ({ pigs, tasks, financeRecords, feed
                     <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center group-hover:bg-gray-800 group-hover:text-white transition-colors"><i className="fas fa-dollar-sign text-lg"></i></div>
                     <span className="text-xs font-bold text-gray-700">Finance</span>
                 </button>
+                <button onClick={() => onViewChange(ViewState.CRM)} className="flex flex-col items-center justify-center gap-3 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition hover:border-purple-400 group h-32">
+                    <div className="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-500 group-hover:text-white transition-colors"><i className="fas fa-users text-lg"></i></div>
+                    <span className="text-xs font-bold text-gray-700">CRM & Sales</span>
+                </button>
             </div>
 
             {/* 3. Operational Overview (Crops & Machinery) */}

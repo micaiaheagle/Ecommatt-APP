@@ -9,7 +9,6 @@ import Operations from './components/Operations';
 import FeedLogger from './components/FeedLogger';
 import FeedFormulator from './components/FeedFormulator';
 import CalendarView from './components/CalendarView';
-import PointOfSale from './components/PointOfSale';
 import CropManager from './components/CropManager';
 import MachineryManager from './components/MachineryManager';
 import CostCenters from './components/CostCenters';
@@ -23,6 +22,8 @@ import BudgetAnalysis from './components/BudgetAnalysis';
 import LoanManagement from './components/LoanManagement';
 import CostAnalysis from './components/CostAnalysis';
 import FinancialRatios from './components/FinancialRatios';
+import TaxCalculator from './components/TaxCalculator';
+import VetMedicalSuite from './components/VetMedicalSuite';
 import IntelligentCore from './components/IntelligentCore';
 import BreedingAI from './components/BreedingAI';
 import SlaughterOptimizer from './components/SlaughterOptimizer';
@@ -35,9 +36,22 @@ import Onboarding from './components/Onboarding';
 import Signup from './components/Signup';
 import Verification from './components/Verification';
 import BiosecurityFeatures from './components/BiosecurityFeatures';
+import PrecisionAgSuite from './components/PrecisionAgSuite';
+import WorkforceHub from './components/WorkforceHub';
 import AutomationManager from './components/AutomationManager';
+import LogisticsOptimizer from './components/LogisticsOptimizer';
+import WholesalePortal from './components/WholesalePortal';
+import InventoryQRScanner from './components/InventoryQRScanner';
+import LineageExplorer from './components/LineageExplorer';
+import EnergyDashboard from './components/EnergyDashboard';
+import ProcurementAdvisor from './components/ProcurementAdvisor';
 import { sendVerificationEmail, sendWelcomeEmail } from './services/emailService';
-import { Pig, Task, PigStatus, PigStage, FeedInventory, HealthRecord, FinanceRecord, BudgetRecord, LoanRecord, ViewState, User, UserRole, TimelineEvent, NotificationConfig, MedicalItem, Product, CartItem, Field, Crop, CropCycle, CropActivity, Asset, MaintenanceLog, FuelLog, TimesheetLog, VisitorLogEntry, KnowledgeDoc, Protocol } from './types';
+import CRM from './components/CRM';
+import ZimIntelligence from './components/ZimIntelligence';
+import FarmPOS from './components/FarmPOS';
+import PrecisionFeeding from './components/PrecisionFeeding';
+import FarrowingWatch from './components/FarrowingWatch';
+import { Pig, Task, PigStatus, PigStage, FeedInventory, HealthRecord, FinanceRecord, BudgetRecord, LoanRecord, ViewState, User, UserRole, TimelineEvent, NotificationConfig, MedicalItem, Product, CartItem, Field, Crop, CropCycle, CropActivity, Asset, MaintenanceLog, FuelLog, TimesheetLog, AttendanceLog, PerformanceScore, PieceRateEarning, VisitorLogEntry, KnowledgeDoc, Protocol, Customer, Order, Invoice, ExchangeRate, Currency, LogisticsRoute, WholesaleProduct, InventoryScan, SolarSystemStatus, SupplierQuote, PenMovement, InfectionAlert } from './types';
 import { loadData, saveData, STORAGE_KEYS } from './services/storageService';
 
 // Mock Data (Used as initial seed only)
@@ -130,11 +144,17 @@ const INITIAL_USERS: User[] = [
 ];
 
 const ROLE_PERMISSIONS: Record<UserRole, ViewState[]> = {
-    'Farm Manager': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Calendar, ViewState.POS, ViewState.Finance, ViewState.AI_Tools, ViewState.Settings, ViewState.Crops, ViewState.Machinery, ViewState.Staff, ViewState.Biosecurity],
-    'Herdsman': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Calendar, ViewState.Crops, ViewState.Machinery],
-    'General Worker': [ViewState.Dashboard, ViewState.Operations, ViewState.Calendar, ViewState.POS, ViewState.Crops, ViewState.Biosecurity],
-    'Veterinarian': [ViewState.Dashboard, ViewState.Operations, ViewState.Pigs, ViewState.Calendar, ViewState.AI_Tools, ViewState.Biosecurity, ViewState.Automation]
+    'Farm Manager': [ViewState.Dashboard, ViewState.Pigs, ViewState.Vet, ViewState.Operations, ViewState.Calendar, ViewState.POS, ViewState.Finance, ViewState.AI_Tools, ViewState.Settings, ViewState.Crops, ViewState.Machinery, ViewState.Staff, ViewState.Biosecurity, ViewState.CRM, ViewState.PrecisionFeeding, ViewState.FarrowingWatch, ViewState.PrecisionAg, ViewState.Workforce, ViewState.Genetics, ViewState.Energy, ViewState.Procurement],
+    'Herdsman': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Calendar, ViewState.Crops, ViewState.Machinery, ViewState.PrecisionFeeding, ViewState.FarrowingWatch, ViewState.PrecisionAg, ViewState.Workforce, ViewState.Energy],
+    'General Worker': [ViewState.Dashboard, ViewState.Operations, ViewState.Calendar, ViewState.POS, ViewState.Crops, ViewState.Biosecurity, ViewState.Workforce],
+    'Veterinarian': [ViewState.Dashboard, ViewState.Operations, ViewState.Pigs, ViewState.Vet, ViewState.Calendar, ViewState.AI_Tools, ViewState.Biosecurity, ViewState.Automation, ViewState.PrecisionFeeding, ViewState.FarrowingWatch, ViewState.PrecisionAg, ViewState.Workforce, ViewState.Genetics, ViewState.Energy, ViewState.Procurement]
 };
+
+const SEED_VISITORS: VisitorLogEntry[] = [
+    { id: 'v1', name: 'Dr. Gusha', company: 'Vet Services', contact: '+263 771 000 000', purpose: 'Vet', checkInTime: '09:00 AM', date: today, status: 'Checked In', visitedOtherFarm: true, sanitized: true, riskLevel: 'High', notes: 'Monthly audit' },
+    { id: 'v2', name: 'John Supplier', company: 'FeedCo', contact: '+263 772 000 000', purpose: 'Delivery', checkInTime: '10:30 AM', date: today, status: 'Checked In', visitedOtherFarm: false, sanitized: true, riskLevel: 'Low' },
+    { id: 'v3', name: 'Local Buyer', contact: '+263 773 000 000', purpose: 'Other', checkInTime: 'Yesterday 02:00 PM', checkOutTime: '03:00 PM', date: yesterday, status: 'Checked Out', visitedOtherFarm: false, sanitized: false, riskLevel: 'Low' }
+];
 
 const SEED_PROTOCOLS: Protocol[] = [
     {
@@ -157,10 +177,34 @@ const SEED_DOCS: KnowledgeDoc[] = [
     { id: '4', title: 'Vaccination Schedule 2025', category: 'Health', type: 'XLSX', size: '0.4 MB', uploadDate: '2025-12-01', addedBy: 'Vet' }
 ];
 
+
+const SEED_CUSTOMERS: Customer[] = [
+    { id: 'c1', name: 'Downtown Butchery', type: 'Wholesale', contact: '0771234567', balance: 450, email: 'orders@downtown.co.zw' },
+    { id: 'c2', name: 'Mama Sarah Kitchen', type: 'Restaurant', contact: '0779876543', balance: 0, email: 'sarah@kitchen.co.zw' },
+    { id: 'c3', name: 'John Doe (Local)', type: 'Individual', contact: '0712345678', balance: 30 }
+];
+
+const SEED_ORDERS: Order[] = [
+    { id: 'o1', customerId: 'c1', date: '2025-12-01', status: 'Delivered', items: [{ id: 'p1', name: 'Pork Chops', price: 6.50, unit: 'kg', category: 'Pork', quantity: 100 }], totalAmount: 650, paymentStatus: 'Partial', invoiceId: 'inv1' },
+    { id: 'o2', customerId: 'c2', date: '2025-12-15', status: 'Confirmed', items: [{ id: 'p3', name: 'Sausages', price: 5.00, unit: 'kg', category: 'Pork', quantity: 20 }], totalAmount: 100, paymentStatus: 'Unpaid' }
+];
+
+const SEED_INVOICES: Invoice[] = [
+    { id: 'inv1', orderId: 'o1', customerId: 'c1', issueDate: '2025-12-01', dueDate: '2025-12-15', totalAmount: 650, paidAmount: 200, status: 'Overdue' }
+];
+
 const App: React.FC = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [currentView, setCurrentView] = useState<ViewState>(ViewState.Dashboard);
+    const [subView, setSubView] = useState<string | null>(null);
+
+    // Zimbabwe Strategy State
+    const [exchangeRate, setExchangeRate] = useState<ExchangeRate>({
+        pair: 'USD/ZiG',
+        rate: 28.5,
+        lastUpdated: new Date().toLocaleTimeString()
+    });
 
     // Auth Flow State
     const [isSigningUp, setIsSigningUp] = useState(false);
@@ -193,9 +237,21 @@ const App: React.FC = () => {
 
     // Crop State
     const [fields, setFields] = useState<Field[]>(() => loadData('ECOMATT_FIELDS', [
-        { id: 'f1', name: 'Lower Field', size: 2.5, soilType: 'Loam', location: 'South Valley', status: 'Fallow' },
-        { id: 'f2', name: 'Upper Terrace', size: 1.2, soilType: 'Clay-Loam', location: 'North Ridge', status: 'Preparation' },
-        { id: 'f3', name: 'Greenhouse A', size: 0.1, soilType: 'Potting Mix', location: 'Near Barn', status: 'Fallow' }
+        {
+            id: 'f1',
+            name: 'Lower Field',
+            size: 2.5,
+            soilType: 'Loam',
+            location: 'South Valley',
+            status: 'Planted',
+            lastNDVI: 0.74,
+            satelliteScans: [
+                { id: 's1', date: today, imageUrl: '', ndviScore: 0.74, healthReport: 'Good growth', alerts: [] },
+                { id: 's2', date: yesterday, imageUrl: '', ndviScore: 0.68, healthReport: 'Steady', alerts: [] }
+            ]
+        },
+        { id: 'f2', name: 'Upper Terrace', size: 1.2, soilType: 'Clay-Loam', location: 'North Ridge', status: 'Preparation', lastNDVI: 0.4 },
+        { id: 'f3', name: 'Greenhouse A', size: 0.1, soilType: 'Potting Mix', location: 'Near Barn', status: 'Fallow', lastNDVI: 0.5 }
     ]));
 
     const [crops] = useState<Crop[]>([
@@ -207,6 +263,22 @@ const App: React.FC = () => {
 
     const [cropCycles, setCropCycles] = useState<CropCycle[]>(() => loadData('ECOMATT_CYCLES', []));
     const [cropActivities, setCropActivities] = useState<CropActivity[]>(() => loadData('ECOMATT_CROP_ACTIVITIES', []));
+    const [precisionSelectedFieldId, setPrecisionSelectedFieldId] = useState<string | null>(null);
+
+    const [attendanceLogs, setAttendanceLogs] = useState<AttendanceLog[]>(() => loadData('ECOMATT_ATTENDANCE', [
+        { id: 'att1', userId: 'u1', date: yesterday, checkInTime: '07:05 AM', checkOutTime: '04:30 PM', status: 'Out', method: 'GPS' },
+        { id: 'att2', userId: 'u1', date: today, checkInTime: '08:15 AM', status: 'On Site', method: 'Biometric' }
+    ]));
+
+    const [performanceScores, setPerformanceScores] = useState<PerformanceScore[]>(() => loadData('ECOMATT_PERFORMANCE', [
+        { id: 'ps1', userId: 'u1', category: 'Mortality Control', score: 92, period: '2025-W48' },
+        { id: 'ps2', userId: 'u2', category: 'Mortality Control', score: 85, period: '2025-W48' },
+        { id: 'ps3', userId: 'u3', category: 'Harvest Efficiency', score: 78, period: '2025-W48' }
+    ]));
+
+    const [pieceRateEarnings, setPieceRateEarnings] = useState<PieceRateEarning[]>(() => loadData('ECOMATT_PIECERATE', [
+        { id: 'pr1', userId: 'u1', date: yesterday, taskType: 'Maize Picking', quantity: 45, unit: 'crates', ratePerUnit: 0.5, totalAmount: 22.5 }
+    ]));
 
     // Machinery State
     const [assets, setAssets] = useState<Asset[]>(() => loadData('ECOMATT_ASSETS', []));
@@ -219,11 +291,79 @@ const App: React.FC = () => {
     const [manureStock, setManureStock] = useState<number>(() => loadData('ECOMATT_MANURE_STOCK', 0));
 
     // Biosecurity & Automation State
-    const [visitorLogs, setVisitorLogs] = useState<VisitorLogEntry[]>(() => loadData('ECOMATT_VISITORS', []));
+    const [visitorLogs, setVisitorLogs] = useState<VisitorLogEntry[]>(() => loadData('ECOMATT_VISITORS', SEED_VISITORS));
     const [knowledgeDocs, setKnowledgeDocs] = useState<KnowledgeDoc[]>(() => loadData('ECOMATT_DOCS', SEED_DOCS));
     const [protocols, setProtocols] = useState<Protocol[]>(() => loadData('ECOMATT_PROTOCOLS', SEED_PROTOCOLS));
 
+    // CRM State
+    const [customers, setCustomers] = useState<Customer[]>(() => loadData('ECOMATT_CUSTOMERS', SEED_CUSTOMERS));
+    const [orders, setOrders] = useState<Order[]>(() => loadData('ECOMATT_ORDERS', SEED_ORDERS));
+    const [invoices, setInvoices] = useState<Invoice[]>(() => loadData('ECOMATT_INVOICES', SEED_INVOICES));
 
+    // Logistics & Supply Chain State
+    const [logisticsRoutes, setLogisticsRoutes] = useState<LogisticsRoute[]>(() => loadData('ECOMATT_ROUTES', [
+        {
+            id: 'R-101',
+            driverName: 'Blessing Moyo',
+            vehicleId: 'A-01',
+            status: 'En Route',
+            stops: [
+                { locationName: 'Main Silo Complex', type: 'Pickup', status: 'Completed', arrivalTime: '08:00 AM' },
+                { locationName: 'Harare Abattoir', type: 'Abattoir', status: 'Pending' },
+                { locationName: 'Central Meat Wholesale', type: 'Dropoff', status: 'Pending' }
+            ],
+            currentLat: -17.8252,
+            currentLng: 31.0335,
+            eta: '11:45 AM'
+        }
+    ]));
+
+    // Biosecurity Tracing State
+    const [penMovements, setPenMovements] = useState<PenMovement[]>(() => loadData('ECOMATT_MOVEMENTS', [
+        { id: 'm1', userId: 'u2', userName: 'Mike Herdsman', penId: 'z1', penName: 'Farrowing House', timestamp: yesterday + 'T08:30:00', type: 'In', sanitized: true },
+        { id: 'm2', userId: 'u2', userName: 'Mike Herdsman', penId: 'z1', penName: 'Farrowing House', timestamp: yesterday + 'T09:15:00', type: 'Out', sanitized: true },
+        { id: 'm3', userId: 'u2', userName: 'Mike Herdsman', penId: 'z2', penName: 'Weaner Deck', timestamp: yesterday + 'T10:00:00', type: 'In', sanitized: false },
+        { id: 'm4', userId: 'u4', userName: 'Sarah Vet', penId: 'z1', penName: 'Farrowing House', timestamp: today + 'T07:00:00', type: 'In', sanitized: true }
+    ]));
+
+    const [infectionAlerts, setInfectionAlerts] = useState<InfectionAlert[]>(() => loadData('ECOMATT_INFECTION_ALERTS', [
+        { id: 'a1', penId: 'z1', penName: 'Farrowing House', disease: 'Swine Fever (Suspected)', severity: 'Critical', detectedAt: today, status: 'Active' }
+    ]));
+
+    const [wholesaleProducts] = useState<WholesaleProduct[]>([
+        { id: 'wp1', name: 'Premium Pork (Sides)', category: 'Pork', availableQty: 120, unit: 'kg', pricePerUnit: 4.5, qualityGrade: 'A' },
+        { id: 'wp2', name: 'Bulk White Maize', category: 'Grain', availableQty: 5000, unit: 'kg', pricePerUnit: 0.38, qualityGrade: 'B', expectedHarvestDate: '2025-12-28' },
+        { id: 'wp3', name: 'Fresh Sugar Beans', category: 'Grain', availableQty: 850, unit: 'kg', pricePerUnit: 1.2, qualityGrade: 'A' }
+    ]);
+
+    const [inventoryScans, setInventoryScans] = useState<InventoryScan[]>(() => loadData('ECOMATT_SCANS', []));
+
+    // Multi-Currency & Procurement State
+    const [supplierQuotes] = useState<SupplierQuote[]>(() => loadData('ECOMATT_QUOTES', [
+        { id: 'q1', supplierName: 'AgriSupply S.A.', itemName: 'Grower Pellets', price: 2800, currency: 'ZAR', date: today, validUntil: tomorrow, notes: 'Includes bulk discount' },
+        { id: 'q2', supplierName: 'Zimbabwe Feed Co.', itemName: 'Grower Pellets', price: 4500, currency: 'ZiG', date: today, validUntil: tomorrow },
+        { id: 'q3', supplierName: 'Global Vet Supplies', itemName: 'Sow Meal', price: 150, currency: 'USD', date: today, validUntil: tomorrow },
+        { id: 'q4', supplierName: 'Local Mill', itemName: 'Sow Meal', price: 4200, currency: 'ZiG', date: today, validUntil: tomorrow }
+    ]));
+
+    const [marketRates] = useState<Record<string, number>>({
+        'ZiG': 28.5,
+        'ZAR': 19.2
+    });
+
+    const [solarStatus, setSolarStatus] = useState<SolarSystemStatus>(() => loadData('ECOMATT_SOLAR', {
+        batteryLevel: 84.5,
+        generationKw: 12.4,
+        currentLoadKw: 4.8,
+        isGridDown: false,
+        assets: [
+            { id: 'ea1', name: 'Primary Water Pump', type: 'Critical', powerDrawKw: 1.2, status: 'Active' },
+            { id: 'ea2', name: 'Pen Cooling Fans', type: 'Non-Essential', powerDrawKw: 0.8, status: 'Active' },
+            { id: 'ea3', name: 'Security Perimeter Lighting', type: 'Critical', powerDrawKw: 0.4, status: 'Active' },
+            { id: 'ea4', name: 'Staff Quarters AC', type: 'Non-Essential', powerDrawKw: 1.5, status: 'Active' },
+            { id: 'ea5', name: 'Feed Mixer', type: 'Non-Essential', powerDrawKw: 0.9, status: 'Active' }
+        ]
+    }));
 
     // Save Effects
     useEffect(() => saveData('ECOMATT_FIELDS', fields), [fields]);
@@ -235,6 +375,12 @@ const App: React.FC = () => {
     useEffect(() => saveData('ECOMATT_VISITORS', visitorLogs), [visitorLogs]);
     useEffect(() => saveData('ECOMATT_DOCS', knowledgeDocs), [knowledgeDocs]);
     useEffect(() => saveData('ECOMATT_PROTOCOLS', protocols), [protocols]);
+    useEffect(() => saveData('ECOMATT_MOVEMENTS', penMovements), [penMovements]);
+    useEffect(() => saveData('ECOMATT_INFECTION_ALERTS', infectionAlerts), [infectionAlerts]);
+
+    useEffect(() => saveData('ECOMATT_CUSTOMERS', customers), [customers]);
+    useEffect(() => saveData('ECOMATT_ORDERS', orders), [orders]);
+    useEffect(() => saveData('ECOMATT_INVOICES', invoices), [invoices]);
 
 
 
@@ -336,13 +482,13 @@ const App: React.FC = () => {
     const [isEditingPig, setIsEditingPig] = useState(false);
 
     // Operations Navigation State
-    const [operationsInitialTab, setOperationsInitialTab] = useState<'Tasks' | 'Feed' | 'Health' | undefined>(undefined);
+    const [operationsInitialTab, setOperationsInitialTab] = useState<'Tasks' | 'Feed' | 'Pharmacy' | undefined>(undefined);
     const [operationsPigFilter, setOperationsPigFilter] = useState<string | undefined>(undefined);
     const [operationsSubView, setOperationsSubView] = useState<'None' | 'FeedLogger' | 'FeedFormulator'>('None');
 
     // Finance Navigation State
     // Finance Navigation State
-    const [financeSubView, setFinanceSubView] = useState<'None' | 'Logger' | 'Batch' | 'Calculator' | 'Forecast' | 'Budget' | 'Loans' | 'CostAnalysis' | 'Ratios' | 'CostCenters'>('None');
+    const [financeSubView, setFinanceSubView] = useState<'None' | 'Logger' | 'Batch' | 'Calculator' | 'Forecast' | 'Budget' | 'Loans' | 'CostAnalysis' | 'Ratios' | 'CostCenters' | 'Tax'>('None');
 
     // Intelligent Core Navigation State
     const [intelligentSubView, setIntelligentSubView] = useState<'None' | 'Breeding' | 'Optimizer' | 'Critical' | 'Chat'>('None');
@@ -473,26 +619,50 @@ const App: React.FC = () => {
         setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
     };
 
-    const handleNavClick = (view: ViewState) => {
+    const handleNavClick = (view: ViewState, subViewStr?: string) => {
         setCurrentView(view);
-        // Reset sub-views when changing main module
-        if (view !== ViewState.Pigs) {
+        setSubView(subViewStr || null);
+
+        // Reset or Set sub-views when changing main module
+        if (view === ViewState.Pigs) {
+            if (!subView) {
+                setSelectedPig(null);
+                setIsAddingPig(false);
+                setIsEditingPig(false);
+            }
+        } else {
             setSelectedPig(null);
             setIsAddingPig(false);
             setIsEditingPig(false);
         }
-        if (view !== ViewState.Operations) {
+
+        if (view === ViewState.Operations) {
+            setOperationsSubView(subView as any || 'None');
+            if (subView === 'Tasks') setOperationsInitialTab('Tasks');
+            if (subView === 'Feed') setOperationsInitialTab('Feed');
+            if (subView === 'Pharmacy') setOperationsInitialTab('Pharmacy');
+            if (subView === 'Health') setCurrentView(ViewState.Vet);
+        } else {
             setOperationsInitialTab(undefined);
             setOperationsPigFilter(undefined);
             setOperationsSubView('None');
         }
-        if (view !== ViewState.Finance) {
+
+        if (view === ViewState.Finance) {
+            setFinanceSubView(subView as any || 'None');
+        } else {
             setFinanceSubView('None');
         }
-        if (view !== ViewState.AI_Tools) {
+
+        if (view === ViewState.AI_Tools) {
+            setIntelligentSubView(subView as any || 'None');
+        } else {
             setIntelligentSubView('None');
         }
-        if (view !== ViewState.Settings) {
+
+        if (view === ViewState.Settings) {
+            setSettingsSubView(subView as any || 'None');
+        } else {
             setSettingsSubView('None');
         }
     };
@@ -502,8 +672,7 @@ const App: React.FC = () => {
         if (selectedPig) {
             setOperationsPigFilter(selectedPig.tagId);
         }
-        setOperationsInitialTab('Health');
-        setCurrentView(ViewState.Operations);
+        setCurrentView(ViewState.Vet);
     };
 
     const handleLogout = () => {
@@ -617,8 +786,7 @@ const App: React.FC = () => {
                 break;
 
             case 'log_health':
-                setCurrentView(ViewState.Operations);
-                setOperationsInitialTab('Health');
+                setCurrentView(ViewState.Vet);
                 break;
 
             case 'add_task':
@@ -634,6 +802,16 @@ const App: React.FC = () => {
 
             case 'add_user':
                 setCurrentView(ViewState.Settings);
+                break;
+
+            case 'add_customer':
+                setCurrentView(ViewState.CRM);
+                // We'd need to trigger the tab/form here, but basic nav is a start
+                break;
+
+            case 'add_order':
+                setCurrentView(ViewState.CRM);
+                // We'd need to trigger the tab/form here
                 break;
 
             default:
@@ -736,6 +914,80 @@ const App: React.FC = () => {
         setIsAddingPig(true);
     };
 
+    // CRM Handlers
+    const handleAddOrder = (order: Order) => {
+        setOrders([...orders, order]);
+        // Update Customer Balance
+        const customer = customers.find(c => c.id === order.customerId);
+        if (customer) {
+            setCustomers(customers.map(c => c.id === customer.id ? { ...c, balance: c.balance + order.totalAmount, lastOrderDate: order.date } : c));
+        }
+    };
+
+    const handleAddCustomer = (customer: Customer) => {
+        setCustomers([...customers, customer]);
+    };
+
+    const handleUpdateOrder = (order: Order) => {
+        setOrders(orders.map(o => o.id === order.id ? order : o));
+    };
+
+    const handleGenerateInvoice = (order: Order) => {
+        const invoice: Invoice = {
+            id: `inv-${Date.now()}`,
+            orderId: order.id,
+            customerId: order.customerId,
+            issueDate: new Date().toISOString().split('T')[0],
+            dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 14 days due
+            totalAmount: order.totalAmount,
+            paidAmount: 0,
+            status: 'Sent'
+        };
+        setInvoices([...invoices, invoice]);
+
+        // Auto-Link to Order
+        setOrders(orders.map(o => o.id === order.id ? { ...o, invoiceId: invoice.id } : o));
+
+        // Auto Expense Log (Revenue Recognition) could happen here or on Payment
+        handleSaveTransaction({
+            date: invoice.issueDate,
+            type: 'Income',
+            category: 'Sales',
+            amount: invoice.totalAmount,
+            description: `Invoice ${invoice.id} for Order ${order.id}`,
+            status: 'Projected'
+        });
+
+        alert(`Invoice Generated: ${invoice.id}`);
+    };
+
+
+    const handleToggleEnergyAsset = (id: string) => {
+        setSolarStatus(prev => {
+            const updatedAssets = prev.assets.map(a =>
+                a.id === id ? { ...a, status: a.status === 'Active' ? 'Shed' as any : 'Active' as any } : a
+            );
+            const newLoad = updatedAssets.reduce((sum, a) => sum + (a.status === 'Active' ? a.powerDrawKw : 0), 0);
+            const updated = { ...prev, assets: updatedAssets, currentLoadKw: newLoad };
+            saveData('ECOMATT_SOLAR', updated);
+            return updated;
+        });
+    };
+
+    const handleLogMovement = (movement: Partial<PenMovement>) => {
+        const newMovement: PenMovement = {
+            id: `move-${Date.now()}`,
+            userId: currentUser?.id || 'unknown',
+            userName: currentUser?.name || 'Unknown User',
+            penId: movement.penId || 'unknown',
+            penName: movement.penName || 'Unknown Pen',
+            timestamp: new Date().toISOString(),
+            type: movement.type || 'In',
+            sanitized: movement.sanitized || false,
+        };
+        setPenMovements(prev => [newMovement, ...prev]);
+    };
+
     const renderContent = () => {
         if (!currentUser) return null;
         const allowedViews = ROLE_PERMISSIONS[currentUser.role] || [];
@@ -801,6 +1053,7 @@ const App: React.FC = () => {
                     pigFilter={operationsPigFilter}
                     onOpenFeedLogger={() => setOperationsSubView('FeedLogger')}
                     onOpenFeedFormulator={() => setOperationsSubView('FeedFormulator')}
+                    onOpenVetSuite={() => handleNavClick(ViewState.Vet)}
                     medicalItems={medicalInventory}
                     onSaveMedicalItem={handleSaveMedicalItem}
                     onDeleteMedicalItem={handleDeleteMedicalItem}
@@ -842,8 +1095,13 @@ const App: React.FC = () => {
                 if (financeSubView === 'Ratios') {
                     return <FinancialRatios financeRecords={financeRecords} pigs={pigs} feeds={feeds} loans={loans} onCancel={() => setFinanceSubView('None')} />;
                 }
+                if (financeSubView === 'Tax') {
+                    const monthlyIncome = financeRecords.filter(r => r.type === 'Income').reduce((a, b) => a + b.amount, 0);
+                    return <TaxCalculator monthlyRevenue={monthlyIncome} onCancel={() => setFinanceSubView('None')} />;
+                }
                 return <Finance
                     records={financeRecords}
+                    exchangeRate={exchangeRate}
                     onOpenLogger={() => setFinanceSubView('Logger')}
                     onOpenBatch={() => setFinanceSubView('Batch')}
                     onOpenCalculator={() => setFinanceSubView('Calculator')}
@@ -853,7 +1111,20 @@ const App: React.FC = () => {
                     onOpenCostAnalysis={() => setFinanceSubView('CostAnalysis')}
                     onOpenRatios={() => setFinanceSubView('Ratios')}
                     onOpenCostCenters={() => setFinanceSubView('CostCenters')}
+                    onOpenTax={() => setFinanceSubView('Tax')}
                 />;
+
+            case ViewState.Vet:
+                return (
+                    <VetMedicalSuite
+                        pigs={pigs}
+                        healthRecords={healthRecords}
+                        medicalItems={medicalInventory}
+                        onSaveRecord={handleSaveHealthRecord}
+                        onCancel={() => handleNavClick(ViewState.Operations, 'Health')}
+                    />
+                );
+
 
             case ViewState.AI_Tools:
                 if (intelligentSubView === 'Chat') {
@@ -891,12 +1162,6 @@ const App: React.FC = () => {
                     onNavigate={handleNavClick}
                 />;
 
-            case ViewState.POS:
-                return <PointOfSale
-                    products={products}
-                    onCompleteSale={handleSaleComplete}
-                    onCancel={() => handleNavClick(ViewState.Dashboard)}
-                />;
 
             case ViewState.Crops:
                 return <CropManager
@@ -908,6 +1173,10 @@ const App: React.FC = () => {
                     onHarvest={handleHarvestCrop}
                     onUpdateFieldStatus={handleUpdateFieldStatus}
                     onLogActivity={handleLogCropActivity}
+                    onNavigateToPrecision={(fieldId) => {
+                        setPrecisionSelectedFieldId(fieldId);
+                        handleNavClick(ViewState.PrecisionAg);
+                    }}
                 />;
 
             case ViewState.Machinery:
@@ -938,6 +1207,10 @@ const App: React.FC = () => {
                     onAddDocument={handleAddDocument}
                     onDeleteDocument={handleDeleteDocument}
                     currentUser={currentUser}
+                    movements={penMovements}
+                    alerts={infectionAlerts}
+                    users={users}
+                    onLogMovement={handleLogMovement}
                 />;
 
             case ViewState.Automation:
@@ -960,6 +1233,115 @@ const App: React.FC = () => {
                     onLogout={handleLogout}
                     onOpenEmailSetup={() => setSettingsSubView('EmailSetup')}
                 />;
+            case ViewState.CRM:
+                if (subView === 'Wholesale') {
+                    return (
+                        <WholesalePortal
+                            products={wholesaleProducts}
+                            customers={customers}
+                            onPlaceOrder={(order) => { /* Logic */ }}
+                            onBack={() => setSubView(null)}
+                        />
+                    );
+                }
+                if (subView === 'Zimbabwe') {
+                    return <ZimIntelligence exchangeRate={exchangeRate} onUpdateRate={(r) => setExchangeRate({ ...exchangeRate, rate: r, lastUpdated: new Date().toLocaleTimeString() })} onBack={() => handleNavClick(ViewState.CRM)} />;
+                }
+                return (
+                    <CRM
+                        customers={customers}
+                        orders={orders}
+                        invoices={invoices}
+                        products={products}
+                        onAddOrder={handleAddOrder}
+                        onUpdateOrder={handleUpdateOrder}
+                        onAddCustomer={handleAddCustomer}
+                        onGenerateInvoice={handleGenerateInvoice}
+                        onBack={() => handleNavClick(ViewState.Dashboard)}
+                    />
+                );
+
+            case ViewState.Operations:
+                if (subView === 'Scanner') {
+                    return (
+                        <InventoryQRScanner
+                            feeds={feeds}
+                            medicalItems={medicalInventory}
+                            onLogScan={(scan) => {
+                                if (scan.type === 'Usage') {
+                                    setFeeds(feeds.map(f => f.id === scan.itemId ? { ...f, quantityKg: f.quantityKg - scan.quantity } : f));
+                                } else if (scan.type === 'Inbound') {
+                                    setFeeds(feeds.map(f => f.id === scan.itemId ? { ...f, quantityKg: f.quantityKg + scan.quantity } : f));
+                                }
+                                const updated = [scan, ...inventoryScans];
+                                setInventoryScans(updated);
+                                saveData('ECOMATT_SCANS', updated);
+                            }}
+                            onBack={() => setSubView(null)}
+                        />
+                    );
+                }
+                return (
+                    <Operations
+                        pigs={pigs}
+                        feeds={feeds}
+                        healthRecords={healthRecords}
+                        tasks={tasks}
+                        medicalItems={medicalInventory}
+                        onOpenFeedLogger={() => setOperationsSubView('FeedForm' as any)}
+                        onOpenFeedFormulator={() => setOperationsSubView('FeedFormulator' as any)}
+                        onOpenVetSuite={() => handleNavClick(ViewState.Vet)}
+                        onSaveMedicalItem={handleSaveMedicalItem}
+                        onDeleteMedicalItem={handleDeleteMedicalItem}
+                        onSaveHealthRecord={handleSaveHealthRecord}
+                        onUpdateTask={handleUpdateTask}
+                        onLogManure={(amount) => {
+                            setManureStock(manureStock + amount);
+                        }}
+                        onOpenScanner={() => setSubView('Scanner')}
+                    />
+                );
+            case ViewState.Logistics:
+                return (
+                    <LogisticsOptimizer
+                        routes={logisticsRoutes}
+                        assets={assets}
+                        onUpdateRoute={(route) => {
+                            const updated = logisticsRoutes.map(r => r.id === route.id ? route : r);
+                            setLogisticsRoutes(updated);
+                            saveData('ECOMATT_ROUTES', updated);
+                        }}
+                        onBack={() => handleNavClick(ViewState.Dashboard)}
+                    />
+                );
+
+            case ViewState.Genetics:
+                return (
+                    <LineageExplorer
+                        pigs={pigs}
+                        onBack={() => handleNavClick(ViewState.Dashboard)}
+                    />
+                );
+
+            case ViewState.Energy:
+                return (
+                    <EnergyDashboard
+                        status={solarStatus}
+                        onToggleAsset={handleToggleEnergyAsset}
+                        onBack={() => handleNavClick(ViewState.Dashboard)}
+                    />
+                );
+
+            case ViewState.Procurement:
+                return (
+                    <ProcurementAdvisor
+                        quotes={supplierQuotes}
+                        exchangeRates={marketRates}
+                        onBack={() => handleNavClick(ViewState.Finance)}
+                    />
+                );
+            case ViewState.FarrowingWatch:
+                return <FarrowingWatch pigs={pigs} onBack={() => handleNavClick(ViewState.Operations)} />;
             default:
                 return <Dashboard
                     pigs={pigs}
@@ -1028,12 +1410,19 @@ const App: React.FC = () => {
             showBack = true;
             onBack = () => setSettingsSubView('None');
         }
+    } else if ([ViewState.Energy, ViewState.Genetics, ViewState.Logistics, ViewState.CRM, ViewState.Biosecurity].includes(currentView)) {
+        showBack = true;
+        onBack = () => handleNavClick(ViewState.Dashboard);
+    } else if (currentView === ViewState.Procurement) {
+        showBack = true;
+        onBack = () => handleNavClick(ViewState.Finance);
     }
 
     return (
         <>
             <Layout
                 currentView={currentView}
+                currentSubView={subView}
                 setView={handleNavClick}
                 onAddClick={handleFabClick}
                 onQuickAction={handleQuickAction}

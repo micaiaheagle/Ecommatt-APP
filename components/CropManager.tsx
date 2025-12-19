@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Field, Crop, CropCycle, HarvestLog, CropActivity } from '../types';
-import { Sprout, Tractor, Calendar as CalendarIcon, Droplets, Map, Plus, ClipboardList, CheckCircle, Clock, DollarSign } from 'lucide-react';
+import { Sprout, Tractor, Calendar as CalendarIcon, Droplets, Map, Plus, ClipboardList, CheckCircle, Clock, DollarSign, Satellite } from 'lucide-react';
 
 interface CropManagerProps {
     fields: Field[];
@@ -12,9 +12,10 @@ interface CropManagerProps {
     onHarvest: (cycleId: string, date: string, quantity: number, quality: string, destination: 'Market' | 'FeedInventory', feedType?: string) => void;
     onUpdateFieldStatus: (fieldId: string, status: 'Fallow' | 'Preparation') => void;
     onLogActivity: (activity: CropActivity) => void;
+    onNavigateToPrecision?: (fieldId: string) => void;
 }
 
-const CropManager: React.FC<CropManagerProps> = ({ fields, crops, cycles, activities, onPlantField, onHarvest, onUpdateFieldStatus, onLogActivity }) => {
+const CropManager: React.FC<CropManagerProps> = ({ fields, crops, cycles, activities, onPlantField, onHarvest, onUpdateFieldStatus, onLogActivity, onNavigateToPrecision }) => {
     const [activeTab, setActiveTab] = useState<'Overview' | 'Fields' | 'Harvests'>('Overview');
 
     // View Details State
@@ -187,8 +188,16 @@ const CropManager: React.FC<CropManagerProps> = ({ fields, crops, cycles, activi
                         <button
                             onClick={(e) => { e.stopPropagation(); setIsLoggingActivity(field.id); }}
                             className="px-3 bg-blue-50 text-blue-600 text-xs font-bold py-2 rounded-lg hover:bg-blue-100 transition"
+                            title="Log Activity"
                         >
                             <ClipboardList size={14} />
+                        </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onNavigateToPrecision?.(field.id); }}
+                            className="px-3 bg-green-50 text-ecomattGreen text-xs font-bold py-2 rounded-lg hover:bg-green-100 transition"
+                            title="Precision Analysis"
+                        >
+                            <Satellite size={14} />
                         </button>
                     </div>
                 </div>
