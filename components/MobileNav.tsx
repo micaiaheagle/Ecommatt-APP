@@ -27,7 +27,7 @@ const MobileNav: React.FC<MobileNavProps> = ({ currentView, currentSubView, setV
     ];
 
     return (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 pb-safe">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40 pb-safe shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
             <div className="flex justify-around items-center h-16">
                 {navItems.map((item, idx) => {
                     const isActive = currentView === item.id && (item.subView === (currentSubView || undefined));
@@ -35,22 +35,26 @@ const MobileNav: React.FC<MobileNavProps> = ({ currentView, currentSubView, setV
                         <button
                             key={idx}
                             onClick={() => setView(item.id, item.subView)}
-                            className={`flex flex-col items-center justify-center p-1 w-full transition-all ${isActive
-                                ? 'text-ecomattGreen scale-110'
+                            className={`flex flex-col items-center justify-center p-1 w-full transition-all active:scale-95 ${isActive
+                                ? 'text-ecomattGreen scale-105'
                                 : 'text-gray-400'
                                 }`}
                         >
-                            {item.icon}
-                            <span className="text-[9px] font-black mt-1 uppercase tracking-tighter">{item.label}</span>
+                            <div className={`p-1 rounded-lg transition-colors ${isActive ? 'bg-ecomattGreen/10' : ''}`}>
+                                {item.icon}
+                            </div>
+                            <span className={`text-[10px] font-black mt-1 uppercase tracking-tighter ${isActive ? 'text-ecomattGreen' : 'text-gray-400'}`}>{item.label}</span>
                         </button>
                     );
                 })}
                 <button
                     onClick={onOpenMore}
-                    className="flex flex-col items-center justify-center p-1 w-full text-gray-400"
+                    className="flex flex-col items-center justify-center p-1 w-full text-gray-400 active:scale-95 transition-all"
                 >
-                    <MoreHorizontal size={20} />
-                    <span className="text-[9px] font-black mt-1 uppercase tracking-tighter">More</span>
+                    <div className="p-1">
+                        <MoreHorizontal size={20} />
+                    </div>
+                    <span className="text-[10px] font-black mt-1 uppercase tracking-tighter">More</span>
                 </button>
             </div>
         </nav>

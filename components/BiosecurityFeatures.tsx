@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { VisitorLogEntry, KnowledgeDoc, User, BiosecurityZone, ComplianceDoc } from '../types';
-import VisitorsLog from './VisitorsLog';
+import { VisitorLogEntry, KnowledgeDoc, User, BiosecurityZone, ComplianceDoc, PenMovement, InfectionAlert } from '../types'; import VisitorsLog from './VisitorsLog';
 import KnowledgeHub from './KnowledgeHub';
 import HelpCentre from './HelpCentre';
 import ContactTracing from './ContactTracing';
@@ -52,45 +51,45 @@ const BiosecurityFeatures: React.FC<BiosecurityFeaturesProps> = ({
     ];
 
     return (
-        <div className="p-8 max-w-7xl mx-auto space-y-8 bg-gray-50/30 min-h-screen">
-            <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-8 bg-gray-50/30 min-h-screen">
+            <header className="mb-6 md:mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-6">
                 <div>
-                    <h2 className="text-4xl font-black text-ecomattBlack tracking-tighter flex items-center gap-4">
-                        <div className="w-14 h-14 bg-ecomattGreen text-white rounded-2xl flex items-center justify-center shadow-lg shadow-green-200">
-                            <i className="fas fa-shield-virus"></i>
+                    <h2 className="text-2xl md:text-4xl font-black text-ecomattBlack tracking-tighter flex items-center gap-3 md:gap-4">
+                        <div className="w-10 h-10 md:w-14 md:h-14 bg-ecomattGreen text-white rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg shadow-green-200">
+                            <i className="fas fa-shield-virus text-lg md:text-xl"></i>
                         </div>
                         Active Site Defense
                     </h2>
-                    <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mt-3 ml-1">Dr. Gusha Compliance & Biosecurity Center</p>
+                    <p className="text-gray-400 font-bold text-[9px] md:text-xs uppercase tracking-widest mt-2 md:mt-3 ml-1">Dr. Gusha Compliance & Biosecurity Center</p>
                 </div>
 
-                <div className="flex bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
-                    <div className="px-4 py-2 border-r border-gray-100 text-center">
-                        <div className="text-xl font-black text-red-500">2</div>
-                        <div className="text-[10px] font-black text-gray-400 uppercase">Critical Zones</div>
+                <div className="flex bg-white p-1.5 md:p-2 rounded-xl md:rounded-2xl shadow-sm border border-gray-100 w-full md:w-auto">
+                    <div className="flex-1 md:flex-none px-3 md:px-4 py-1.5 md:py-2 border-r border-gray-100 text-center">
+                        <div className="text-lg md:text-xl font-black text-red-500">2</div>
+                        <div className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-tighter">Critical Zones</div>
                     </div>
-                    <div className="px-4 py-2 text-center">
-                        <div className="text-xl font-black text-green-500">3</div>
-                        <div className="text-[10px] font-black text-gray-400 uppercase">Valid Permits</div>
+                    <div className="flex-1 md:flex-none px-3 md:px-4 py-1.5 md:py-2 text-center">
+                        <div className="text-lg md:text-xl font-black text-green-500">3</div>
+                        <div className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-tighter">Valid Permits</div>
                     </div>
                 </div>
             </header>
 
-            {/* Modern Tab Navigation */}
-            <div className="flex flex-wrap gap-2">
+            {/* Modern Tab Navigation - Horizontal Scroll on Mobile */}
+            <div className="flex flex-nowrap md:flex-wrap gap-2 overflow-x-auto pb-4 md:pb-0 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
                 {[
-                    { id: 'Visitors', label: 'Access Log', icon: 'fa-user-lock' },
-                    { id: 'Zones', label: 'Zone Guard', icon: 'fa-map-marked-alt' },
-                    { id: 'Compliance', label: 'Compliance Vault', icon: 'fa-file-signature' },
-                    { id: 'Tracing', label: 'Contact Tracing', icon: 'fa-shoe-prints' },
-                    { id: 'Knowledge', label: 'SOP Hub', icon: 'fa-book-open' },
-                    { id: 'Help', label: 'Security Support', icon: 'fa-headset' },
+                    { id: 'Visitors', label: 'Access', icon: 'fa-user-lock' },
+                    { id: 'Zones', label: 'Zones', icon: 'fa-map-marked-alt' },
+                    { id: 'Compliance', label: 'Vault', icon: 'fa-file-signature' },
+                    { id: 'Tracing', label: 'Tracing', icon: 'fa-shoe-prints' },
+                    { id: 'Knowledge', label: 'SOPs', icon: 'fa-book-open' },
+                    { id: 'Help', label: 'Support', icon: 'fa-headset' },
                 ].map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as Tab)}
-                        className={`px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 flex items-center gap-3 shadow-sm border ${activeTab === tab.id
-                            ? 'bg-ecomattBlack text-white border-ecomattBlack shadow-xl shadow-gray-200 scale-105'
+                        className={`px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all duration-300 flex items-center gap-2 md:gap-3 shadow-sm border whitespace-nowrap ${activeTab === tab.id
+                            ? 'bg-ecomattBlack text-white border-ecomattBlack shadow-lg md:shadow-xl shadow-gray-200 scale-105'
                             : 'bg-white text-gray-400 border-gray-100 hover:text-gray-900 hover:bg-gray-50'
                             }`}
                     >
@@ -107,34 +106,34 @@ const BiosecurityFeatures: React.FC<BiosecurityFeaturesProps> = ({
                 )}
 
                 {activeTab === 'Zones' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                         {zones.map(zone => (
-                            <div key={zone.id} className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
-                                <div className="flex justify-between items-start mb-6">
-                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl shadow-inner ${zone.riskCategory === 'Red' ? 'bg-red-50 text-red-500' :
+                            <div key={zone.id} className="bg-white rounded-3xl md:rounded-[2.5rem] p-5 md:p-8 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
+                                <div className="flex justify-between items-start mb-4 md:mb-6">
+                                    <div className={`w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center text-lg md:text-xl shadow-inner ${zone.riskCategory === 'Red' ? 'bg-red-50 text-red-500' :
                                         zone.riskCategory === 'Yellow' ? 'bg-amber-50 text-amber-500' : 'bg-green-50 text-green-500'
                                         }`}>
                                         <i className={`fas ${zone.riskCategory === 'Red' ? 'fa-biohazard' : 'fa-door-closed'}`}></i>
                                     </div>
-                                    <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter ${zone.riskCategory === 'Red' ? 'bg-red-100 text-red-700' :
+                                    <span className={`text-[9px] md:text-[10px] font-black px-2 md:px-3 py-1 rounded-full uppercase tracking-tighter ${zone.riskCategory === 'Red' ? 'bg-red-100 text-red-700' :
                                         zone.riskCategory === 'Yellow' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
                                         }`}>
                                         {zone.riskCategory} Zone
                                     </span>
                                 </div>
-                                <h4 className="text-xl font-black text-gray-900 tracking-tight mb-2">{zone.name}</h4>
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase">
+                                <h4 className="text-lg md:text-xl font-black text-gray-900 tracking-tight mb-2">{zone.name}</h4>
+                                <div className="space-y-3 md:space-y-4">
+                                    <div className="flex justify-between items-center text-[9px] md:text-[10px] font-bold text-gray-400 uppercase">
                                         <span>Last Disinfection</span>
                                         <span className="text-gray-900">{zone.lastDisinfected}</span>
                                     </div>
-                                    <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                                    <div className="w-full bg-gray-100 h-1 rounded-full overflow-hidden">
                                         <div className={`h-full rounded-full ${zone.riskCategory === 'Red' ? 'bg-red-500' :
                                             zone.riskCategory === 'Yellow' ? 'bg-amber-500' : 'bg-green-500'
                                             }`} style={{ width: zone.riskCategory === 'Red' ? '100%' : zone.riskCategory === 'Yellow' ? '60%' : '30%' }}></div>
                                     </div>
                                 </div>
-                                <button className="w-full mt-8 bg-gray-50 text-gray-400 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-ecomattBlack hover:text-white transition-all">
+                                <button className="w-full mt-6 md:mt-8 bg-gray-50 text-gray-400 py-3 rounded-xl md:rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-ecomattBlack hover:text-white transition-all">
                                     Refresh Sanitation
                                 </button>
                             </div>

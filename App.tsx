@@ -621,11 +621,12 @@ const App: React.FC = () => {
 
     const handleNavClick = (view: ViewState, subViewStr?: string) => {
         setCurrentView(view);
-        setSubView(subViewStr || null);
+        const activeSubView = subViewStr || null;
+        setSubView(activeSubView);
 
         // Reset or Set sub-views when changing main module
         if (view === ViewState.Pigs) {
-            if (!subView) {
+            if (!activeSubView) {
                 setSelectedPig(null);
                 setIsAddingPig(false);
                 setIsEditingPig(false);
@@ -637,11 +638,11 @@ const App: React.FC = () => {
         }
 
         if (view === ViewState.Operations) {
-            setOperationsSubView(subView as any || 'None');
-            if (subView === 'Tasks') setOperationsInitialTab('Tasks');
-            if (subView === 'Feed') setOperationsInitialTab('Feed');
-            if (subView === 'Pharmacy') setOperationsInitialTab('Pharmacy');
-            if (subView === 'Health') setCurrentView(ViewState.Vet);
+            setOperationsSubView(activeSubView as any || 'None');
+            if (activeSubView === 'Tasks') setOperationsInitialTab('Tasks');
+            if (activeSubView === 'Feed') setOperationsInitialTab('Feed');
+            if (activeSubView === 'Pharmacy') setOperationsInitialTab('Pharmacy');
+            if (activeSubView === 'Health') setCurrentView(ViewState.Vet);
         } else {
             setOperationsInitialTab(undefined);
             setOperationsPigFilter(undefined);
@@ -649,19 +650,19 @@ const App: React.FC = () => {
         }
 
         if (view === ViewState.Finance) {
-            setFinanceSubView(subView as any || 'None');
+            setFinanceSubView(activeSubView as any || 'None');
         } else {
             setFinanceSubView('None');
         }
 
         if (view === ViewState.AI_Tools) {
-            setIntelligentSubView(subView as any || 'None');
+            setIntelligentSubView(activeSubView as any || 'None');
         } else {
             setIntelligentSubView('None');
         }
 
         if (view === ViewState.Settings) {
-            setSettingsSubView(subView as any || 'None');
+            setSettingsSubView(activeSubView as any || 'None');
         } else {
             setSettingsSubView('None');
         }

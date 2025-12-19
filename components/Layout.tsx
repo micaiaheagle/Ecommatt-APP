@@ -216,30 +216,36 @@ const Layout: React.FC<LayoutProps> = ({
               </button>
             </div>
 
-            <div className="p-4 space-y-6 pb-24">
+            <div className="p-4 space-y-8 pb-32">
               {NAV_CATEGORIES.map((category, idx) => {
                 const accessibleItems = category.items.filter(item => canAccess(item.roles));
                 if (accessibleItems.length === 0) return null;
                 return (
-                  <div key={idx} className="space-y-3">
-                    <h3 className="text-[10px] font-black text-ecomattGreen uppercase tracking-[0.2em] px-2">{category.label}</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      {accessibleItems.map(item => (
-                        <button
-                          key={item.id + (item.subView || '')}
-                          onClick={() => {
-                            handleNavClick(item.id, item.subView);
-                            setMobileSidebarOpen(false);
-                          }}
-                          className={`flex items-center gap-3 p-3 rounded-2xl text-[10px] font-black uppercase text-left transition-all ${currentView === item.id && (item.subView === (currentSubView || undefined))
-                            ? 'bg-ecomattGreen text-white shadow-lg shadow-green-900/40'
-                            : 'bg-white/5 text-gray-400'
-                            }`}
-                        >
-                          <i className={`fas ${item.icon} text-sm opacity-60`}></i>
-                          <span className="truncate">{item.label}</span>
-                        </button>
-                      ))}
+                  <div key={idx} className="space-y-4">
+                    <h3 className="text-[11px] font-black text-ecomattGreen uppercase tracking-[0.3em] px-2 opacity-80">{category.label}</h3>
+                    <div className="space-y-2">
+                      {accessibleItems.map(item => {
+                        const isActive = currentView === item.id && (item.subView === (currentSubView || undefined));
+                        return (
+                          <button
+                            key={item.id + (item.subView || '')}
+                            onClick={() => {
+                              handleNavClick(item.id, item.subView);
+                              setMobileSidebarOpen(false);
+                            }}
+                            className={`flex items-center gap-4 w-full p-4 rounded-2xl text-[12px] font-black uppercase text-left transition-all active:scale-[0.98] ${isActive
+                              ? 'bg-ecomattGreen text-white shadow-lg shadow-green-900/40'
+                              : 'bg-white/5 text-gray-300 hover:bg-white/10'
+                              }`}
+                          >
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isActive ? 'bg-white/20' : 'bg-white/5'}`}>
+                              <i className={`fas ${item.icon} text-sm`}></i>
+                            </div>
+                            <span className="flex-1 font-bold">{item.label}</span>
+                            {isActive && <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 );

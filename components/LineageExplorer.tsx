@@ -160,10 +160,26 @@ const LineageExplorer: React.FC<LineageExplorerProps> = ({ pigs, onBack, onSelec
                 </div>
             </div>
 
-            <div className="flex-1 flex overflow-hidden">
-                {/* Sidebar - Pig List */}
-                <div className="w-80 border-r border-white/5 bg-slate-900/30 overflow-y-auto">
-                    {filteredPigs.map(pig => (
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+
+                {/* Mobile Search - Fixed at top of content when sidebar is hidden */}
+                <div className="md:hidden p-4 border-b border-white/5 bg-slate-900/50 backdrop-blur-md">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Search pigs..."
+                            className="bg-slate-800 border-none rounded-xl pl-9 pr-4 py-2.5 text-xs focus:ring-2 focus:ring-primary w-full text-white"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                {/* Sidebar - Pig List (Full width on mobile if no pig selected) */}
+                <div className={`${selectedPigId ? 'hidden md:block' : 'block'} w-full md:w-80 border-r border-white/5 bg-slate-900/30 overflow-y-auto`}>
+                    {filteredPigs.length > 0 ? filteredPigs.map(pig => (
                         <div
                             key={pig.id}
                             onClick={() => setSelectedPigId(pig.id)}
@@ -172,98 +188,107 @@ const LineageExplorer: React.FC<LineageExplorerProps> = ({ pigs, onBack, onSelec
                         >
                             <div className="flex justify-between items-start mb-1">
                                 <span className="font-bold text-slate-200">{pig.tagId}</span>
-                                <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${pig.gender === 'Male' ? 'bg-blue-500/10 text-blue-400' : 'bg-pink-500/10 text-pink-400'
+                                <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-black ${pig.gender === 'Male' ? 'bg-blue-500/10 text-blue-400' : 'bg-pink-500/10 text-pink-400'
                                     }`}>
                                     {pig.gender}
                                 </span>
                             </div>
-                            <div className="text-xs text-slate-500">{pig.breed} • {pig.stage}</div>
+                            <div className="text-[11px] text-slate-400 font-medium">{pig.breed} • {pig.stage}</div>
                         </div>
-                    ))}
+                    )) : (
+                        <div className="p-8 text-center text-slate-600 font-bold uppercase text-[10px] tracking-widest">No pigs found</div>
+                    )}
                 </div>
 
-                {/* Main Content - Tree Visualization */}
-                <div className="flex-1 overflow-auto p-12 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-slate-950">
+                {/* Tree Visualization (Full width on mobile when a pig IS selected) */}
+                <div className={`${selectedPigId ? 'block' : 'hidden md:block'} flex-1 overflow-auto p-4 md:p-12 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-slate-950 relative`}>
+
+                    {/* Mobile Back Button to List */}
+                    {selectedPigId && (
+                        <button
+                            onClick={() => setSelectedPigId(null)}
+                            className="md:hidden mb-6 flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest bg-primary/10 px-4 py-2 rounded-xl"
+                        >
+                            <ArrowLeft size={14} /> Back to List
+                        </button>
+                    )}
+
                     {selectedPig ? (
                         <div className="max-w-4xl mx-auto">
                             {/* Inbreeding Warning Card */}
                             {calculateInbreedingRisk(selectedPig) && (
-                                <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-4 animate-pulse">
-                                    <div className="p-3 bg-red-500/20 rounded-full">
+                                <div className="mb-6 md:mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-4 animate-pulse">
+                                    <div className="p-2 md:p-3 bg-red-500/20 rounded-full">
                                         <AlertTriangle className="text-red-400" size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-red-400">Genomic Overlap Detected</h3>
-                                        <p className="text-sm text-red-400/70">Potential inbreeding risk identified in ancestors. Check sire and dam lines for shared heritage.</p>
+                                        <h3 className="font-black text-red-500 text-xs md:text-sm uppercase tracking-tight">Genomic Overlap</h3>
+                                        <p className="text-[10px] md:text-xs text-red-400/80 font-bold">Inbreeding risk found in ancestry line.</p>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Tree Grid */}
-                            <div className="flex flex-col items-center gap-16">
+                            {/* Tree Grid - Responsive Vertical Logic */}
+                            <div className="flex flex-col items-center gap-8 md:gap-16">
 
-                                {/* Generation 3 (Grandparents) */}
-                                <div className="grid grid-cols-4 gap-8 w-full">
-                                    <div className="flex flex-col gap-4">
+                                {/* Generation 3 (Grandparents) - Stacked on Mobile */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 w-full">
+                                    <div className="flex flex-col gap-3 md:gap-4">
                                         {renderNode(pigs.find(p => p.tagId === (pigs.find(s => s.tagId === selectedPig.sireId || s.id === selectedPig.sireId)?.sireId)), 'Paternal G-Sire')}
                                         {renderNode(pigs.find(p => p.tagId === (pigs.find(s => s.tagId === selectedPig.sireId || s.id === selectedPig.sireId)?.damId)), 'Paternal G-Dam')}
                                     </div>
-                                    <div className="flex flex-col gap-4">
+                                    <div className="flex flex-col gap-3 md:gap-4 md:col-start-4">
                                         {renderNode(pigs.find(p => p.tagId === (pigs.find(s => s.tagId === selectedPig.damId || s.id === selectedPig.damId)?.sireId)), 'Maternal G-Sire')}
                                         {renderNode(pigs.find(p => p.tagId === (pigs.find(s => s.tagId === selectedPig.damId || s.id === selectedPig.damId)?.damId)), 'Maternal G-Dam')}
                                     </div>
                                 </div>
 
-                                {/* Connectors */}
-                                <div className="flex gap-[300px] text-slate-700">
-                                    <div className="h-8 w-px bg-current" />
-                                    <div className="h-8 w-px bg-current" />
-                                </div>
-
                                 {/* Generation 2 (Parents) */}
-                                <div className="flex gap-48 relative">
+                                <div className="flex flex-col md:flex-row gap-8 md:gap-48 relative">
                                     {/* Sire */}
-                                    <div className="flex flex-col items-center">
+                                    <div className="flex flex-col items-center relative">
+                                        <div className="hidden md:block absolute -top-8 w-px h-8 bg-slate-700"></div>
                                         {renderNode(pigs.find(p => p.tagId === selectedPig.sireId || p.id === selectedPig.sireId), 'Sire')}
-                                        <div className="h-8 w-px bg-slate-700 mt-2" />
+                                        <div className="h-6 md:h-8 w-px bg-slate-700 mt-2" />
                                     </div>
                                     {/* Dam */}
-                                    <div className="flex flex-col items-center">
+                                    <div className="flex flex-col items-center relative">
+                                        <div className="hidden md:block absolute -top-8 w-px h-8 bg-slate-700"></div>
                                         {renderNode(pigs.find(p => p.tagId === selectedPig.damId || p.id === selectedPig.damId), 'Dam')}
-                                        <div className="h-8 w-px bg-slate-700 mt-2" />
+                                        <div className="h-6 md:h-8 w-px bg-slate-700 mt-2" />
                                     </div>
                                 </div>
 
                                 {/* Generation 1 (Target) */}
-                                <div className="relative group">
+                                <div className="relative group w-full max-w-[280px] md:max-w-none">
                                     <div className="absolute -inset-1 bg-gradient-to-r from-primary to-cyan-500 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                                    <div className="relative p-6 bg-slate-900 border-2 border-primary rounded-2xl shadow-2xl min-w-[240px]">
+                                    <div className="relative p-5 md:p-6 bg-slate-900 border-2 border-primary rounded-2xl shadow-2xl">
                                         <div className="flex items-center justify-between mb-4">
                                             <div className="p-2 bg-primary/20 rounded-lg">
                                                 <Dna className="text-primary" size={24} />
                                             </div>
-                                            <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Genetic Core</span>
+                                            <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest">Genetic Core</span>
                                         </div>
                                         <div className="space-y-1">
-                                            <h2 className="text-2xl font-black text-white">{selectedPig.tagId}</h2>
-                                            <div className="flex items-center gap-2 text-primary font-bold text-sm">
+                                            <h2 className="text-xl md:text-2xl font-black text-white">{selectedPig.tagId}</h2>
+                                            <div className="flex items-center gap-2 text-primary font-bold text-xs md:text-sm">
                                                 <span>{selectedPig.breed}</span>
                                                 <div className="w-1 h-1 rounded-full bg-slate-700" />
                                                 <span>{selectedPig.stage}</span>
                                             </div>
                                         </div>
 
-                                        <div className="mt-6 pt-6 border-t border-white/5 grid grid-cols-2 gap-4">
+                                        <div className="mt-5 md:mt-6 pt-5 md:pt-6 border-t border-white/5 grid grid-cols-2 gap-4">
                                             <div className="flex flex-col gap-1">
-                                                <span className="text-[10px] text-slate-500 uppercase font-bold">Litter Weight</span>
-                                                <div className="flex items-center gap-1 text-emerald-400 font-bold">
+                                                <span className="text-[9px] text-slate-500 uppercase font-bold">Litter Weight</span>
+                                                <div className="flex items-center gap-1 text-emerald-400 font-bold text-xs md:text-sm">
                                                     <TrendingUp size={14} />
                                                     <span>{selectedPig.weight}kg</span>
                                                 </div>
                                             </div>
                                             <div className="flex flex-col gap-1">
-                                                <span className="text-[10px] text-slate-500 uppercase font-bold">Efficiency</span>
-                                                <div className="flex items-center gap-1 text-cyan-400 font-bold">
+                                                <span className="text-[9px] text-slate-500 uppercase font-bold">Efficiency</span>
+                                                <div className="flex items-center gap-1 text-cyan-400 font-bold text-xs md:text-sm">
                                                     <Award size={14} />
                                                     <span>PPR 4.2</span>
                                                 </div>
@@ -275,12 +300,12 @@ const LineageExplorer: React.FC<LineageExplorerProps> = ({ pigs, onBack, onSelec
                             </div>
                         </div>
                     ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-slate-600">
-                            <div className="p-8 bg-slate-900/50 rounded-full border border-white/5 mb-6">
+                        <div className="h-full flex flex-col items-center justify-center text-slate-600 text-center px-6">
+                            <div className="p-6 md:p-8 bg-slate-900/50 rounded-full border border-white/5 mb-6">
                                 <Binary size={64} className="opacity-20 translate-y-2 animate-pulse" />
                             </div>
-                            <h3 className="text-xl font-bold text-slate-400">Select an animal to explore its heritage</h3>
-                            <p className="max-w-xs text-center mt-2 text-sm">Ancestry data is pulled directly from the breeding logs and sire records.</p>
+                            <h3 className="text-lg md:text-xl font-bold text-slate-400">Ancestry heritage visualization</h3>
+                            <p className="max-w-xs mt-2 text-xs md:text-sm font-medium text-slate-500 italic">Select an animal from the list to explore its biogenetic lineage</p>
                         </div>
                     )}
                 </div>

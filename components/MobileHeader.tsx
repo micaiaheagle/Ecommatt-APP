@@ -40,13 +40,13 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
                     </button>
                 )}
 
-                <div>
-                    <h1 className="text-sm font-black text-white tracking-tight leading-none">
+                <div className="flex-1 min-w-0">
+                    <h1 className="text-base font-black text-white tracking-tight leading-tight truncate">
                         {showBack ? (currentSubView || currentView) : 'Ecomatt Farm'}
                     </h1>
                     {!showBack && (
-                        <p className="text-[8px] text-ecomattGreen font-bold uppercase tracking-widest mt-0.5">
-                            Online • {currentUser?.role}
+                        <p className="text-[10px] text-ecomattGreen font-bold uppercase tracking-wider mt-0.5 truncate">
+                            ● {currentUser?.role}
                         </p>
                     )}
                 </div>
