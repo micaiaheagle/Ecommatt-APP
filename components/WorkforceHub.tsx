@@ -237,14 +237,14 @@ const WorkforceHub: React.FC<WorkforceHubProps> = ({
                                                     <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Metod: {log.method}</div>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-8">
+                                            <div className="flex gap-4 shrink-0 sm:gap-8 ml-4">
                                                 <div className="text-right">
-                                                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">In</div>
-                                                    <div className="text-xs font-black">{log.checkInTime}</div>
+                                                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">In</div>
+                                                    <div className="text-xs font-black whitespace-nowrap">{log.checkInTime}</div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Out</div>
-                                                    <div className="text-xs font-black">{log.checkOutTime || 'Active'}</div>
+                                                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Out</div>
+                                                    <div className="text-xs font-black whitespace-nowrap">{log.checkOutTime || 'Active'}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -307,9 +307,9 @@ const WorkforceHub: React.FC<WorkforceHubProps> = ({
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="text-right">
-                                                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{earning.date}</div>
-                                                <div className="text-lg font-black text-ecomattBlack">${earning.totalAmount.toFixed(2)}</div>
+                                            <div className="text-right shrink-0 ml-4">
+                                                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 whitespace-nowrap">{earning.date}</div>
+                                                <div className="text-lg font-black text-ecomattBlack whitespace-nowrap">${earning.totalAmount.toFixed(2)}</div>
                                             </div>
                                         </div>
                                     ))}

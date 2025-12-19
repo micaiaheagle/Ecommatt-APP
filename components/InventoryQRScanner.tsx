@@ -196,8 +196,8 @@ const InventoryQRScanner: React.FC<InventoryQRScannerProps> = ({
                                                 <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest">{scan.timestamp} • {scan.type}</p>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className={`text-sm font-black ${scan.type === 'Usage' ? 'text-red-400' : 'text-ecomattGreen'}`}>{scan.type === 'Usage' ? '-' : '+'}{scan.quantity}</p>
+                                        <div className="text-right shrink-0 ml-4">
+                                            <p className={`text-sm font-black whitespace-nowrap ${scan.type === 'Usage' ? 'text-red-400' : 'text-ecomattGreen'}`}>{scan.type === 'Usage' ? '-' : '+'}{scan.quantity}</p>
                                         </div>
                                     </div>
                                 );

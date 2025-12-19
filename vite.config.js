@@ -23,12 +23,12 @@ export default defineConfig({
         theme_color: '#27cd00',
         icons: [
           {
-            src: 'https://placehold.co/192x192/27cd00/ffffff/png?text=Ecomatt',
+            src: 'ecomatt_logo.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'https://placehold.co/512x512/27cd00/ffffff/png?text=Ecomatt',
+            src: 'ecomatt_logo.png',
             sizes: '512x512',
             type: 'image/png'
           }
@@ -39,24 +39,24 @@ export default defineConfig({
         skipWaiting: true,
         clientsClaim: true,
         runtimeCaching: [
-            {
-                urlPattern: /^https:\/\/cdn\.tailwindcss\.com\/.*/i,
-                handler: 'CacheFirst',
-                options: {
-                  cacheName: 'tailwind-cdn-v5',
-                  expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
-                  cacheableResponse: { statuses: [0, 200] }
-                }
-            },
-            {
-                urlPattern: /^https:\/\/cdnjs\.cloudflare\.com\/.*/i,
-                handler: 'CacheFirst',
-                options: {
-                  cacheName: 'font-awesome-v5',
-                  expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
-                  cacheableResponse: { statuses: [0, 200] }
-                }
+          {
+            urlPattern: /^https:\/\/cdn\.tailwindcss\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'tailwind-cdn-v5',
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] }
             }
+          },
+          {
+            urlPattern: /^https:\/\/cdnjs\.cloudflare\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'font-awesome-v5',
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          }
         ]
       }
     })

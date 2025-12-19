@@ -96,13 +96,13 @@ const CRM: React.FC<CRMProps> = ({ customers, orders, invoices, products, onAddO
                                                     }`}>
                                                     <i className={`fas ${order.status === 'Delivered' ? 'fa-check' : 'fa-truck-loading'} text-[10px]`}></i>
                                                 </div>
-                                                <div className="pb-6 w-full">
-                                                    <div className="flex justify-between items-start">
-                                                        <div>
-                                                            <p className="text-sm font-black text-slate-900 uppercase">{cust?.name}</p>
-                                                            <p className="text-xs text-slate-500 font-bold uppercase tracking-tight">{order.status} Order: ${order.totalAmount}</p>
+                                                <div className="pb-6 w-full flex-1 min-w-0">
+                                                    <div className="flex justify-between items-start gap-4">
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-black text-slate-900 uppercase truncate">{cust?.name}</p>
+                                                            <p className="text-xs text-slate-500 font-bold uppercase tracking-tight truncate">{order.status} Order: ${order.totalAmount}</p>
                                                         </div>
-                                                        <span className="text-[9px] font-black text-slate-400 uppercase bg-slate-900/5 px-2 py-1 rounded-md">{order.date}</span>
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase bg-slate-900/5 px-2 py-1 rounded-md shrink-0 whitespace-nowrap">{order.date}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -161,14 +161,14 @@ const CRM: React.FC<CRMProps> = ({ customers, orders, invoices, products, onAddO
                                             <p className={`text-[10px] font-bold uppercase tracking-widest ${selectedCustomerId === c.id ? 'text-white/60' : 'text-slate-400'}`}>{c.type}</p>
                                         </div>
                                     </div>
-                                    <div className="flex justify-between items-end">
-                                        <div className="space-y-1">
+                                    <div className="flex justify-between items-end gap-4 min-w-0 w-full">
+                                        <div className="space-y-1 flex-1 min-w-0">
                                             <p className={`text-[9px] font-black uppercase ${selectedCustomerId === c.id ? 'text-white/40' : 'text-slate-400'}`}>Contact</p>
-                                            <p className="text-xs font-bold leading-none">{c.contact}</p>
+                                            <p className="text-xs font-bold leading-none truncate">{c.contact}</p>
                                         </div>
-                                        <div className="text-right">
+                                        <div className="text-right shrink-0">
                                             <p className={`text-[9px] font-black uppercase ${selectedCustomerId === c.id ? 'text-white/40' : 'text-slate-400'}`}>Balance</p>
-                                            <p className={`text-sm font-black ${c.balance > 1000 ? 'text-red-400' : 'text-ecomattGreen'}`}>${c.balance.toLocaleString()}</p>
+                                            <p className={`text-sm font-black whitespace-nowrap ${c.balance > 1000 ? 'text-red-400' : 'text-ecomattGreen'}`}>${c.balance.toLocaleString()}</p>
                                         </div>
                                     </div>
                                 </button>
@@ -214,11 +214,11 @@ const CRM: React.FC<CRMProps> = ({ customers, orders, invoices, products, onAddO
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Recent Activity</p>
                                     {customerOrders.length > 0 ? customerOrders.slice(0, 3).map(order => (
                                         <div key={order.id} className="flex justify-between items-center p-3 border-b border-slate-900/5 hover:bg-slate-900/5 transition-colors rounded-lg">
-                                            <div>
-                                                <p className="text-xs font-black text-slate-900 uppercase">Order #{order.id.slice(-4)}</p>
-                                                <p className="text-[10px] text-slate-500 font-bold uppercase">{order.status}</p>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-black text-slate-900 uppercase truncate">Order #{order.id.slice(-4)}</p>
+                                                <p className="text-[10px] text-slate-500 font-bold uppercase truncate">{order.status}</p>
                                             </div>
-                                            <p className="text-xs font-black text-slate-900">${order.totalAmount}</p>
+                                            <p className="text-xs font-black text-slate-900 shrink-0 ml-4">/${order.totalAmount}</p>
                                         </div>
                                     )) : <p className="text-xs text-slate-400 italic">No recent transactions recorded.</p>}
                                 </div>

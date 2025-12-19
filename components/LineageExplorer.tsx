@@ -105,7 +105,7 @@ const LineageExplorer: React.FC<LineageExplorerProps> = ({ pigs, onBack, onSelec
     const renderNode = (pig: Pig | undefined, label: string) => {
         if (!pig) {
             return (
-                <div className="p-3 border-2 border-dashed border-slate-700 rounded-lg bg-slate-800/50 text-slate-500 text-xs flex items-center justify-center min-w-[140px]">
+                <div className="p-3 border-2 border-dashed border-slate-700 rounded-lg bg-slate-800/50 text-slate-500 text-[10px] md:text-xs flex items-center justify-center min-w-[120px] md:min-w-[140px]">
                     Unknown {label}
                 </div>
             );
@@ -114,7 +114,7 @@ const LineageExplorer: React.FC<LineageExplorerProps> = ({ pigs, onBack, onSelec
         return (
             <div
                 onClick={() => setSelectedPigId(pig.id)}
-                className={`p-3 border-2 rounded-lg cursor-pointer transition-all hover:scale-105 min-w-[160px] ${selectedPigId === pig.id ? 'border-primary bg-primary/10' : 'border-slate-700 bg-slate-800'
+                className={`p-3 border-2 rounded-lg cursor-pointer transition-all hover:scale-105 min-w-[120px] md:min-w-[160px] ${selectedPigId === pig.id ? 'border-primary bg-primary/10' : 'border-slate-700 bg-slate-800'
                     }`}
             >
                 <div className="flex items-center gap-2 mb-1">
@@ -201,7 +201,7 @@ const LineageExplorer: React.FC<LineageExplorerProps> = ({ pigs, onBack, onSelec
                 </div>
 
                 {/* Tree Visualization (Full width on mobile when a pig IS selected) */}
-                <div className={`${selectedPigId ? 'block' : 'hidden md:block'} flex-1 overflow-auto p-4 md:p-12 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-slate-950 relative`}>
+                <div className={`${selectedPigId ? 'block' : 'hidden md:block'} flex-1 overflow-auto p-4 md:p-12 pb-32 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-slate-950 relative`}>
 
                     {/* Mobile Back Button to List */}
                     {selectedPigId && (
@@ -232,7 +232,7 @@ const LineageExplorer: React.FC<LineageExplorerProps> = ({ pigs, onBack, onSelec
                             <div className="flex flex-col items-center gap-8 md:gap-16">
 
                                 {/* Generation 3 (Grandparents) - Stacked on Mobile */}
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 w-full">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-8 w-full">
                                     <div className="flex flex-col gap-3 md:gap-4">
                                         {renderNode(pigs.find(p => p.tagId === (pigs.find(s => s.tagId === selectedPig.sireId || s.id === selectedPig.sireId)?.sireId)), 'Paternal G-Sire')}
                                         {renderNode(pigs.find(p => p.tagId === (pigs.find(s => s.tagId === selectedPig.sireId || s.id === selectedPig.sireId)?.damId)), 'Paternal G-Dam')}

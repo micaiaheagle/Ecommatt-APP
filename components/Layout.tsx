@@ -259,8 +259,8 @@ const Layout: React.FC<LayoutProps> = ({
       <div className="hidden md:flex w-72 bg-ecomattBlack text-white flex-col h-screen sticky top-0 z-30 shadow-2xl">
         {/* Brand */}
         <div className="p-6 flex items-center gap-3 border-b border-gray-800 shrink-0">
-          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center border-2 border-ecomattGreen">
-            <i className="fas fa-leaf text-ecomattGreen text-lg"></i>
+          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden p-1 shadow-sm">
+            <img src="ecomatt_logo_text.png" alt="Logo" className="w-full h-full object-contain" />
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-tight uppercase">Ecomatt<span className="text-ecomattGreen">Farm</span></h1>

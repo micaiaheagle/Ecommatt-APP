@@ -94,10 +94,10 @@ const ZimIntelligence: React.FC<ZimIntelligenceProps> = ({ exchangeRate, onUpdat
                                             <h5 className="text-sm font-black text-slate-900 uppercase">{item.product}</h5>
                                         </div>
                                     </div>
-                                    <div className="text-right flex items-center gap-4">
+                                    <div className="text-right flex items-center gap-4 shrink-0">
                                         <div className="text-right">
-                                            <p className="text-sm font-black text-slate-900 uppercase">{item.price}</p>
-                                            <p className={`text-[9px] font-black uppercase ${item.color}`}>{item.trend === 'up' ? '↗ Climbing' : item.trend === 'down' ? '↘ Falling' : '→ Stable'}</p>
+                                            <p className="text-sm font-black text-slate-900 uppercase whitespace-nowrap">{item.price}</p>
+                                            <p className={`text-[9px] font-black uppercase whitespace-nowrap ${item.color}`}>{item.trend === 'up' ? '↗ Climbing' : item.trend === 'down' ? '↘ Falling' : '→ Stable'}</p>
                                         </div>
                                         <i className="fas fa-chevron-right text-slate-200 text-xs"></i>
                                     </div>

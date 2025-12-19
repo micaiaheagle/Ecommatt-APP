@@ -40,15 +40,22 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
                     </button>
                 )}
 
-                <div className="flex-1 min-w-0">
-                    <h1 className="text-base font-black text-white tracking-tight leading-tight truncate">
-                        {showBack ? (currentSubView || currentView) : 'Ecomatt Farm'}
-                    </h1>
+                <div className="flex-1 min-w-0 flex items-center gap-2">
                     {!showBack && (
-                        <p className="text-[10px] text-ecomattGreen font-bold uppercase tracking-wider mt-0.5 truncate">
-                            ● {currentUser?.role}
-                        </p>
+                        <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center overflow-hidden p-1 shrink-0 shadow-inner">
+                            <img src="ecomatt_logo_text.png" alt="Logo" className="w-full h-full object-contain" />
+                        </div>
                     )}
+                    <div className="flex-1 min-w-0">
+                        <h1 className="text-base font-black text-white tracking-tight leading-tight truncate">
+                            {showBack ? (currentSubView || currentView) : 'Ecomatt Farm'}
+                        </h1>
+                        {!showBack && (
+                            <p className="text-[10px] text-ecomattGreen font-bold uppercase tracking-wider mt-0.5 truncate">
+                                ● {currentUser?.role}
+                            </p>
+                        )}
+                    </div>
                 </div>
             </div>
 

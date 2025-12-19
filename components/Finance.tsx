@@ -240,7 +240,7 @@ const Finance: React.FC<FinanceProps> = ({
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="min-w-0">
+                                    <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2">
                                             <p className="text-sm font-black text-gray-900 truncate uppercase tracking-tight">{rec.description}</p>
                                             <span className={`text-[8px] px-1.5 py-0.5 rounded-md font-bold text-white`} style={{ backgroundColor: enterpriseColors[rec.enterprise || 'General'] }}>
@@ -255,11 +255,11 @@ const Finance: React.FC<FinanceProps> = ({
                                         </div>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className={`font-black text-lg ${rec.type === 'Income' ? 'text-ecomattGreen' : 'text-gray-900'}`}>
+                                <div className="text-right shrink-0 ml-4">
+                                    <p className={`font-black text-lg whitespace-nowrap ${rec.type === 'Income' ? 'text-ecomattGreen' : 'text-gray-900'}`}>
                                         {rec.type === 'Income' ? '+' : '-'}{currencySymbol}{convert(rec.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </p>
-                                    <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">
+                                    <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter whitespace-nowrap">
                                         {rec.currency || 'USD'} Transaction
                                     </p>
                                 </div>

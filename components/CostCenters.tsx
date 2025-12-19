@@ -99,15 +99,15 @@ const CostCenters: React.FC<CostCentersProps> = ({ financeRecords, fields, asset
                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${rec.type === 'Income' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-500'}`}>
                                             <i className={`fas ${rec.type === 'Income' ? 'fa-arrow-down' : 'fa-arrow-up'} text-xs`}></i>
                                         </div>
-                                        <div>
-                                            <p className="text-xs font-bold text-gray-900">{rec.description}</p>
-                                            <p className="text-[10px] text-gray-400">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-bold text-gray-900 truncate">{rec.description}</p>
+                                            <p className="text-[10px] text-gray-400 truncate">
                                                 {rec.category} • {rec.date}
                                                 {allocationName && <span className="ml-1 bg-gray-100 px-1 rounded text-gray-600">{allocationName}</span>}
                                             </p>
                                         </div>
                                     </div>
-                                    <span className={`text-sm font-bold ${rec.type === 'Income' ? 'text-green-600' : 'text-gray-900'}`}>
+                                    <span className={`text-sm font-bold shrink-0 ml-4 whitespace-nowrap ${rec.type === 'Income' ? 'text-green-600' : 'text-gray-900'}`}>
                                         {rec.type === 'Income' ? '+' : '-'}${rec.amount.toLocaleString()}
                                     </span>
                                 </div>

@@ -25,8 +25,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSignupClick, error }) => {
     <div className="min-h-screen bg-black flex flex-col justify-center px-8 relative animate-in fade-in duration-700">
       {/* Logo Section */}
       <div className="text-center mb-8">
-        <div className="w-20 h-20 bg-white border-4 border-ecomattGreen rounded-full flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_rgba(39,205,0,0.3)]">
-          <i className="fas fa-leaf text-ecomattGreen text-3xl"></i>
+        <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-4 p-2 shadow-[0_0_30px_rgba(255,255,255,0.2)] overflow-hidden">
+          <img src="ecomatt_logo_text.png" alt="Ecomatt Logo" className="w-full h-full object-contain" />
         </div>
         <h1 className="text-3xl font-bold text-white tracking-tight">Ecomatt Farm</h1>
         <p className="text-sm text-gray-400 mt-2">Intelligent Management System</p>

@@ -92,9 +92,9 @@ const ProcurementAdvisor: React.FC<ProcurementAdvisorProps> = ({
                                     <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-xs uppercase">US</div>
                                     <span className="font-bold text-slate-200">USD / ZiG</span>
                                 </div>
-                                <div className="text-right">
-                                    <div className="text-lg font-black text-white">{exchangeRates['ZiG']}</div>
-                                    <div className="text-[10px] text-red-400 flex items-center gap-1 justify-end font-bold">
+                                <div className="text-right shrink-0 ml-4">
+                                    <div className="text-lg font-black text-white whitespace-nowrap">{exchangeRates['ZiG']}</div>
+                                    <div className="text-[10px] text-red-400 flex items-center gap-1 justify-end font-bold whitespace-nowrap">
                                         <TrendingUp size={10} /> +0.2%
                                     </div>
                                 </div>
@@ -104,9 +104,9 @@ const ProcurementAdvisor: React.FC<ProcurementAdvisorProps> = ({
                                     <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-xs uppercase">ZA</div>
                                     <span className="font-bold text-slate-200">USD / ZAR</span>
                                 </div>
-                                <div className="text-right">
-                                    <div className="text-lg font-black text-white">{exchangeRates['ZAR'] || 19.2}</div>
-                                    <div className="text-[10px] text-emerald-400 flex items-center gap-1 justify-end font-bold">
+                                <div className="text-right shrink-0 ml-4">
+                                    <div className="text-lg font-black text-white whitespace-nowrap">{exchangeRates['ZAR'] || 19.2}</div>
+                                    <div className="text-[10px] text-emerald-400 flex items-center gap-1 justify-end font-bold whitespace-nowrap">
                                         <TrendingDown size={10} /> -0.4%
                                     </div>
                                 </div>
@@ -254,9 +254,9 @@ const ProcurementAdvisor: React.FC<ProcurementAdvisorProps> = ({
                                             <div className="text-[10px] font-black text-slate-500 uppercase mb-1">{log.date}</div>
                                             <div className="text-sm font-black text-white">{log.item}</div>
                                         </div>
-                                        <div className="text-right">
-                                            <div className="text-sm font-black text-emerald-400">{log.save}</div>
-                                            <div className="text-[9px] font-black text-slate-500 uppercase">Total Saved</div>
+                                        <div className="text-right shrink-0 ml-4">
+                                            <div className="text-sm font-black text-emerald-400 whitespace-nowrap">{log.save}</div>
+                                            <div className="text-[9px] font-black text-slate-500 uppercase whitespace-nowrap">Total Saved</div>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between pt-3 border-t border-white/5">
