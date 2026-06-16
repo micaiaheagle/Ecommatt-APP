@@ -9,10 +9,19 @@ interface SettingsProps {
   onAddUser: (user: User) => void;
   onUpdatePassword: (password: string) => void;
   onLogout: () => void;
-  onOpenEmailSetup: () => void; // New Prop
+  onOpenEmailSetup: () => void;
+  onOpenVisitorLog: () => void; // New
+  onOpenKnowledgeHub: () => void; // New
+  onOpenSupport: () => void; // New
+  onOpenBackup: () => void; // New
+  onOpenRestore: () => void; // New
 }
 
-const Settings: React.FC<SettingsProps> = ({ currentUser, allUsers, onAddUser, onUpdatePassword, onLogout, onOpenEmailSetup }) => {
+const Settings: React.FC<SettingsProps> = ({ 
+    currentUser, allUsers, onAddUser, onUpdatePassword, onLogout, 
+    onOpenEmailSetup, onOpenVisitorLog, onOpenKnowledgeHub, onOpenSupport,
+    onOpenBackup, onOpenRestore
+}) => {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   
   // New User State
@@ -79,7 +88,23 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, allUsers, onAddUser, o
             </div>
         </div>
 
-        {/* Notifications & Communications (New Section) */}
+        {/* Tools & Compliance Grid (NEW) */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+            <button onClick={onOpenVisitorLog} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-2 hover:border-ecomattGreen transition">
+                <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center text-xl"><i className="fas fa-clipboard-check"></i></div>
+                <span className="text-[10px] font-bold text-gray-600">Visitor Log</span>
+            </button>
+            <button onClick={onOpenKnowledgeHub} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-2 hover:border-ecomattGreen transition">
+                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-xl"><i className="fas fa-book"></i></div>
+                <span className="text-[10px] font-bold text-gray-600">SOPs & Manuals</span>
+            </button>
+            <button onClick={onOpenSupport} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-2 hover:border-ecomattGreen transition">
+                <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center text-xl"><i className="fas fa-headset"></i></div>
+                <span className="text-[10px] font-bold text-gray-600">Help Center</span>
+            </button>
+        </div>
+
+        {/* Notifications & Communications */}
         <div className="mb-6">
             <h3 className="text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Notifications</h3>
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden p-4">
@@ -98,6 +123,47 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, allUsers, onAddUser, o
                         className="text-xs bg-gray-50 border border-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold hover:bg-gray-100"
                     >
                         Setup
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {/* Data Management (Moved from standalone to props) */}
+        <div className="mb-6">
+            <h3 className="text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Data Management</h3>
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden p-4">
+                <div className="flex justify-between items-center mb-4 border-b border-gray-50 pb-3">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
+                            <i className="fas fa-download"></i>
+                        </div>
+                        <div>
+                            <span className="block text-sm font-bold text-gray-700">Backup Database</span>
+                            <span className="block text-[10px] text-gray-400">Save detailed JSON record</span>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={onOpenBackup}
+                        className="text-xs bg-gray-50 border border-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold hover:bg-gray-100"
+                    >
+                        Export
+                    </button>
+                </div>
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
+                            <i className="fas fa-upload"></i>
+                        </div>
+                        <div>
+                            <span className="block text-sm font-bold text-gray-700">Restore Database</span>
+                            <span className="block text-[10px] text-gray-400">Load from JSON file</span>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={onOpenRestore}
+                        className="text-xs bg-gray-50 border border-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold hover:bg-gray-100"
+                    >
+                        Import
                     </button>
                 </div>
             </div>
