@@ -30,6 +30,16 @@ import VisitorLog from './components/VisitorLog';
 import KnowledgeHub from './components/KnowledgeHub'; 
 import Support from './components/Support'; 
 import Onboarding from './components/Onboarding';
+import Inventory from './components/Inventory';
+import HRTeam from './components/HRTeam';
+import SalesCRM from './components/SalesCRM';
+import AnalyticsHub from './components/AnalyticsHub';
+import Genetics from './components/Genetics';
+import Biosecurity from './components/Biosecurity';
+import FeedMill from './components/FeedMill';
+import IoTDevices from './components/IoTDevices';
+import MarketInsights from './components/MarketInsights';
+import DocumentCenter from './components/DocumentCenter';
 import { Pig, Task, PigStatus, PigStage, FeedInventory, HealthRecord, FinanceRecord, BudgetRecord, LoanRecord, ViewState, User, UserRole, TimelineEvent, NotificationConfig, VisitorRecord, Medication } from './types';
 import { loadData, saveData, STORAGE_KEYS } from './services/storageService';
 
@@ -143,8 +153,8 @@ const INITIAL_USERS: User[] = [
 ];
 
 const ROLE_PERMISSIONS: Record<UserRole, ViewState[]> = {
-    'Farm Manager': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Finance, ViewState.AI_Tools, ViewState.Settings, ViewState.Analytics],
-    'Herdsman': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations],
+    'Farm Manager': Object.values(ViewState),
+    'Herdsman': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.Inventory],
     'General Worker': [ViewState.Dashboard, ViewState.Operations],
     'Veterinarian': [ViewState.Dashboard, ViewState.Pigs, ViewState.Operations, ViewState.AI_Tools]
 };
@@ -573,14 +583,25 @@ const App: React.FC = () => {
                />;
       
       case ViewState.Analytics:
-        // Placeholder for Analytics hub if not already implemented fully or needs specific routing
-        // Assuming AnalyticsHub is imported if used, but based on the previous context, we might rely on IntelligentCore or Dashboard.
-        // If Analytics was added previously, ensure it's handled here.
-        // For now, redirect to Dashboard if component missing, or load AnalyticsHub.
-        // Let's assume AnalyticsHub was created in a previous step.
-        // I'll skip explicit AnalyticsHub import/render here to avoid errors if it wasn't fully persisted, 
-        // but the ViewState exists.
-        return <Dashboard pigs={pigs} tasks={tasks} financeRecords={financeRecords} feeds={feeds} onViewChange={handleNavClick} />;
+        return <AnalyticsHub />;
+      case ViewState.CRM:
+        return <SalesCRM />;
+      case ViewState.Inventory:
+        return <Inventory />;
+      case ViewState.HRTeam:
+        return <HRTeam />;
+      case ViewState.Genetics:
+        return <Genetics />;
+      case ViewState.Biosecurity:
+        return <Biosecurity />;
+      case ViewState.FeedMill:
+        return <FeedMill />;
+      case ViewState.IoTDevices:
+        return <IoTDevices />;
+      case ViewState.MarketInsights:
+        return <MarketInsights />;
+      case ViewState.DocumentCenter:
+        return <DocumentCenter />;
 
       default:
         return <Dashboard pigs={pigs} tasks={tasks} financeRecords={financeRecords} feeds={feeds} onViewChange={handleNavClick} />;

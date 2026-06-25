@@ -181,5 +181,13 @@ export enum ViewState {
   AI_Tools = 'AI_Tools',
   Settings = 'Settings',
   Analytics = 'Analytics',
-  CRM = 'CRM'
+  CRM = 'CRM',
+  Inventory = 'Inventory',
+  HRTeam = 'HRTeam',
+  Genetics = 'Genetics',
+  Biosecurity = 'Biosecurity',
+  FeedMill = 'FeedMill',
+  IoTDevices = 'IoTDevices',
+  MarketInsights = 'MarketInsights',
+  DocumentCenter = 'DocumentCenter'
 }

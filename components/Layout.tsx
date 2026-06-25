@@ -16,6 +16,7 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ currentView, setView, children, onAddClick, onQuickAction, currentUser, onLogout }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'Syncing' | 'Offline' | 'Up to date'>('Up to date');
   
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -35,7 +36,35 @@ const Layout: React.FC<LayoutProps> = ({ currentView, setView, children, onAddCl
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    
+    // Sync Status Simulation
+    const handleOnline = () => {
+        setSyncStatus('Syncing');
+        setTimeout(() => setSyncStatus('Up to date'), 2000);
+    };
+    const handleOffline = () => setSyncStatus('Offline');
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    if (!navigator.onLine) {
+        setSyncStatus('Offline');
+    } else {
+        setSyncStatus('Syncing');
+        const timer = setTimeout(() => setSyncStatus('Up to date'), 1500);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+            clearTimeout(timer);
+        };
+    }
+
+    return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   // Define Nav Items with required Roles
@@ -43,7 +72,17 @@ const Layout: React.FC<LayoutProps> = ({ currentView, setView, children, onAddCl
     { id: ViewState.Dashboard, icon: 'fa-tachometer-alt', label: 'Dashboard', roles: [] },
     { id: ViewState.Pigs, icon: 'fa-database', label: 'Pig Database', roles: ['Farm Manager', 'Herdsman', 'Veterinarian'] },
     { id: ViewState.Operations, icon: 'fa-clipboard-list', label: 'Tasks & Ops', roles: ['Farm Manager', 'Herdsman', 'Veterinarian', 'General Worker'] },
+    { id: ViewState.FeedMill, icon: 'fa-seedling', label: 'Feed Mill & Formulator', roles: ['Farm Manager', 'Herdsman'] },
+    { id: ViewState.Genetics, icon: 'fa-dna', label: 'Genetics & Breeding', roles: ['Farm Manager', 'Veterinarian'] },
+    { id: ViewState.Biosecurity, icon: 'fa-shield-virus', label: 'Biosecurity', roles: ['Farm Manager', 'Veterinarian'] },
+    { id: ViewState.Inventory, icon: 'fa-boxes', label: 'Inventory & Assets', roles: ['Farm Manager', 'Herdsman'] },
+    { id: ViewState.IoTDevices, icon: 'fa-wifi', label: 'IoT & Sensors', roles: ['Farm Manager'] },
     { id: ViewState.Finance, icon: 'fa-chart-pie', label: 'Financials', roles: ['Farm Manager'] },
+    { id: ViewState.CRM, icon: 'fa-users-cog', label: 'Sales & CRM', roles: ['Farm Manager'] },
+    { id: ViewState.MarketInsights, icon: 'fa-globe', label: 'Market Insights', roles: ['Farm Manager'] },
+    { id: ViewState.HRTeam, icon: 'fa-id-badge', label: 'HR & Team', roles: ['Farm Manager'] },
+    { id: ViewState.DocumentCenter, icon: 'fa-folder-open', label: 'Document Center', roles: ['Farm Manager'] },
+    { id: ViewState.Analytics, icon: 'fa-chart-line', label: 'Reports & Analytics', roles: ['Farm Manager'] },
     { id: ViewState.AI_Tools, icon: 'fa-brain', label: 'Intelligent Core', roles: ['Farm Manager', 'Veterinarian'] },
     { id: ViewState.Settings, icon: 'fa-cog', label: 'Settings', roles: ['Farm Manager'] },
   ];
@@ -128,6 +167,19 @@ const Layout: React.FC<LayoutProps> = ({ currentView, setView, children, onAddCl
 
            {/* Right Actions */}
            <div className="flex items-center gap-4">
+              {/* Sync Status Indicator */}
+              <div className="hidden sm:flex items-center gap-2 text-xs font-bold bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200">
+                  {syncStatus === 'Syncing' && (
+                      <><i className="fas fa-sync fa-spin text-blue-500"></i> <span className="text-gray-600">Syncing...</span></>
+                  )}
+                  {syncStatus === 'Offline' && (
+                      <><i className="fas fa-exclamation-triangle text-red-500"></i> <span className="text-gray-600">Offline</span></>
+                  )}
+                  {syncStatus === 'Up to date' && (
+                      <><i className="fas fa-check-circle text-green-500"></i> <span className="text-gray-600">All data up to date</span></>
+                  )}
+              </div>
+
               {/* Quick Create Menu */}
               <QuickCreateMenu onAction={onQuickAction} />
 

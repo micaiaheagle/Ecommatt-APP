@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { FinanceRecord } from '../types';
+import { exportFinancialReport } from '../services/pdfExport';
 
 interface FinanceProps {
   records: FinanceRecord[];
@@ -45,7 +46,12 @@ const Finance: React.FC<FinanceProps> = ({
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-gray-900">Cash Flow</h2>
-          <span className="bg-white px-3 py-1 rounded-full text-xs font-bold shadow-sm border border-gray-100">Nov 2025</span>
+          <div className="flex items-center gap-2">
+            <button onClick={() => exportFinancialReport(records)} className="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition flex items-center gap-1">
+                <i className="fas fa-file-pdf"></i> Export PDF
+            </button>
+            <span className="bg-white px-3 py-1.5 rounded-full text-xs font-bold shadow-sm border border-gray-100">Nov 2025</span>
+          </div>
       </div>
 
       {/* Main Stats Card */}

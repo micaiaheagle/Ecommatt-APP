@@ -1,12 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { FeedInventory, HealthRecord, Task } from '../types';
+import TaskCalendar from './TaskCalendar';
+import { exportHealthReport } from '../services/pdfExport';
 
 interface OperationsProps {
   feeds: FeedInventory[];
   healthRecords: HealthRecord[];
   tasks: Task[];
-  initialTab?: 'Tasks' | 'Feed' | 'Health';
+  initialTab?: 'Tasks' | 'Feed' | 'Health' | 'Calendar';
   pigFilter?: string;
   onOpenFeedLogger: () => void;
   onOpenFeedFormulator: () => void;
@@ -23,7 +25,7 @@ const Operations: React.FC<OperationsProps> = ({
     onOpenFeedFormulator,
     onOpenMedicalCabinet
 }) => {
-  const [activeTab, setActiveTab] = useState<'Tasks' | 'Feed' | 'Health'>('Tasks');
+  const [activeTab, setActiveTab] = useState<'Tasks' | 'Feed' | 'Health' | 'Calendar'>('Tasks');
   const [sortBy, setSortBy] = useState<'dueDate' | 'priority'>('dueDate');
 
   useEffect(() => {
@@ -61,15 +63,14 @@ const Operations: React.FC<OperationsProps> = ({
       {/* Header & Tabs */}
       <div className="flex justify-between items-center mb-4">
          <h2 className="text-2xl font-bold text-gray-900">Operations</h2>
-         <button className="text-ecomattGreen text-sm font-bold bg-green-50 px-3 py-1 rounded-lg">Calendar</button>
       </div>
 
-      <div className="flex bg-white p-1 rounded-xl mb-6 shadow-sm border border-gray-100">
-        {['Tasks', 'Feed', 'Health'].map(tab => (
+      <div className="flex bg-white p-1 rounded-xl mb-6 shadow-sm border border-gray-100 overflow-x-auto no-scrollbar">
+        {['Tasks', 'Calendar', 'Feed', 'Health'].map(tab => (
             <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                className={`flex-1 py-2 px-4 whitespace-nowrap text-xs font-bold rounded-lg transition-all ${
                     activeTab === tab 
                     ? 'bg-ecomattBlack text-white shadow-md' 
                     : 'text-gray-500 hover:bg-gray-50'
@@ -79,6 +80,11 @@ const Operations: React.FC<OperationsProps> = ({
             </button>
         ))}
       </div>
+
+      {/* Calendar View */}
+      {activeTab === 'Calendar' && (
+          <TaskCalendar tasks={tasks} />
+      )}
 
       {/* Tasks View (Screen 04) */}
       {activeTab === 'Tasks' && (
@@ -218,9 +224,17 @@ const Operations: React.FC<OperationsProps> = ({
                 </div>
             )}
 
-            <h3 className="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">
-                {pigFilter ? 'Pig Health History' : 'Recent Logs'}
-            </h3>
+            <div className="flex justify-between items-center mb-3">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    {pigFilter ? 'Pig Health History' : 'Recent Logs'}
+                </h3>
+                <button 
+                    onClick={() => exportHealthReport(healthRecords.filter(rec => !pigFilter || rec.pigId === pigFilter))}
+                    className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 transition flex items-center gap-1"
+                >
+                    <i className="fas fa-file-pdf"></i> Export
+                </button>
+            </div>
             
             <div className="space-y-3">
                 {healthRecords
